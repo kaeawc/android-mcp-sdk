@@ -1,5 +1,7 @@
 package dev.jasonpearson.mcpandroidsdk.models
 
+import io.modelcontextprotocol.kotlin.sdk.*
+
 /** Sampling-related data models for MCP */
 
 /** Model preferences for sampling */

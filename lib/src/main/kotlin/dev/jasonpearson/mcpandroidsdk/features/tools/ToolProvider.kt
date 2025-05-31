@@ -4,9 +4,8 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
-import dev.jasonpearson.mcpandroidsdk.*
 import dev.jasonpearson.mcpandroidsdk.models.*
-import io.modelcontextprotocol.kotlin.sdk.Tool
+import io.modelcontextprotocol.kotlin.sdk.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.serialization.json.*
 
@@ -24,7 +23,7 @@ class ToolProvider(private val context: Context) {
 
     // Storage for custom tools
     private val customTools =
-        ConcurrentHashMap<String, Pair<Tool, suspend (Map<String, Any>) -> ToolCallResult>>()
+        ConcurrentHashMap<String, Pair<Tool, suspend (Map<String, Any>) -> CallToolResult>>()
 
     /** Get all available tools including built-in and custom tools */
     fun getAllTools(): List<Tool> {
@@ -34,14 +33,14 @@ class ToolProvider(private val context: Context) {
     }
 
     /** Call a specific tool by name with the provided arguments */
-    suspend fun callTool(name: String, arguments: Map<String, Any>): ToolCallResult {
+    suspend fun callTool(name: String, arguments: Map<String, Any>): CallToolResult {
         Log.d(TAG, "Calling tool: $name with arguments: $arguments")
 
         return when {
             customTools.containsKey(name) -> {
                 val handler = customTools[name]?.second
                 handler?.invoke(arguments)
-                    ?: ToolCallResult(
+                    ?: CallToolResult(
                         content =
                             listOf(TextContent(text = "Custom tool handler not found for $name")),
                         isError = true,
@@ -49,7 +48,7 @@ class ToolProvider(private val context: Context) {
             }
             name in getBuiltInToolNames() -> callBuiltInTool(name, arguments)
             else ->
-                ToolCallResult(
+                CallToolResult(
                     content = listOf(TextContent(text = "Tool not found: $name")),
                     isError = true,
                 )
@@ -57,7 +56,7 @@ class ToolProvider(private val context: Context) {
     }
 
     /** Add a custom tool with its handler */
-    fun addTool(tool: Tool, handler: suspend (Map<String, Any>) -> ToolCallResult) {
+    fun addTool(tool: Tool, handler: suspend (Map<String, Any>) -> CallToolResult) {
         customTools[tool.name] = Pair(tool, handler)
         Log.i(TAG, "Added custom tool: ${tool.name}")
     }
@@ -87,7 +86,7 @@ class ToolProvider(private val context: Context) {
     }
 
     /** Handle built-in tool calls */
-    private suspend fun callBuiltInTool(name: String, arguments: Map<String, Any>): ToolCallResult {
+    private suspend fun callBuiltInTool(name: String, arguments: Map<String, Any>): CallToolResult {
         Log.d(TAG, "Calling built-in tool: $name")
         return try {
             when (name) {
@@ -97,14 +96,14 @@ class ToolProvider(private val context: Context) {
                 "memory_info" -> getMemoryInfo()
                 "battery_info" -> getBatteryInfo()
                 else ->
-                    ToolCallResult(
+                    CallToolResult(
                         content = listOf(TextContent(text = "Unknown built-in tool: $name")),
                         isError = true,
                     )
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error calling built-in tool $name", e)
-            ToolCallResult(
+            CallToolResult(
                 content = listOf(TextContent(text = "Error executing tool $name: ${e.message}")),
                 isError = true,
             )
@@ -210,7 +209,7 @@ class ToolProvider(private val context: Context) {
 
     // Built-in tool implementations
 
-    private fun getDeviceInfo(): ToolCallResult {
+    private fun getDeviceInfo(): CallToolResult {
         val deviceInfo = buildString {
             appendLine("Device Information:")
             appendLine("- Model: ${Build.MODEL}")
@@ -224,10 +223,10 @@ class ToolProvider(private val context: Context) {
             appendLine("- Fingerprint: ${Build.FINGERPRINT}")
         }
 
-        return ToolCallResult(content = listOf(TextContent(text = deviceInfo)), isError = false)
+        return CallToolResult(content = listOf(TextContent(text = deviceInfo)), isError = false)
     }
 
-    private fun getAppInfo(arguments: Map<String, Any>): ToolCallResult {
+    private fun getAppInfo(arguments: Map<String, Any>): CallToolResult {
         val packageName = arguments["package_name"] as? String ?: context.packageName
 
         return try {
@@ -253,16 +252,16 @@ class ToolProvider(private val context: Context) {
                 appendLine("- Data Directory: ${appInfo.dataDir}")
             }
 
-            ToolCallResult(content = listOf(TextContent(text = info)), isError = false)
+            CallToolResult(content = listOf(TextContent(text = info)), isError = false)
         } catch (e: PackageManager.NameNotFoundException) {
-            ToolCallResult(
+            CallToolResult(
                 content = listOf(TextContent(text = "Package not found: $packageName")),
                 isError = true,
             )
         }
     }
 
-    private fun getSystemTime(arguments: Map<String, Any>): ToolCallResult {
+    private fun getSystemTime(arguments: Map<String, Any>): CallToolResult {
         val format = arguments["format"] as? String ?: "iso"
         val timezone = arguments["timezone"] as? String
 
@@ -312,10 +311,10 @@ class ToolProvider(private val context: Context) {
             appendLine("- Uptime: ${android.os.SystemClock.elapsedRealtime()} ms")
         }
 
-        return ToolCallResult(content = listOf(TextContent(text = timeInfo)), isError = false)
+        return CallToolResult(content = listOf(TextContent(text = timeInfo)), isError = false)
     }
 
-    private fun getMemoryInfo(): ToolCallResult {
+    private fun getMemoryInfo(): CallToolResult {
         val activityManager =
             context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
         val memoryInfo = android.app.ActivityManager.MemoryInfo()
@@ -343,10 +342,10 @@ class ToolProvider(private val context: Context) {
             appendLine("- Heap Usage: ${(usedMemory * 100 / maxMemory)}%")
         }
 
-        return ToolCallResult(content = listOf(TextContent(text = info)), isError = false)
+        return CallToolResult(content = listOf(TextContent(text = info)), isError = false)
     }
 
-    private fun getBatteryInfo(): ToolCallResult {
+    private fun getBatteryInfo(): CallToolResult {
         val batteryManager =
             context.getSystemService(Context.BATTERY_SERVICE) as android.os.BatteryManager
 
@@ -443,7 +442,7 @@ class ToolProvider(private val context: Context) {
             }
         }
 
-        return ToolCallResult(content = listOf(TextContent(text = info)), isError = false)
+        return CallToolResult(content = listOf(TextContent(text = info)), isError = false)
     }
 
     private fun formatBytes(bytes: Long): String {

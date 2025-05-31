@@ -126,13 +126,13 @@ class McpServerManager private constructor() {
     }
 
     /** Call a tool by name */
-    suspend fun callTool(name: String, arguments: Map<String, Any>): ToolCallResult {
+    suspend fun callTool(name: String, arguments: Map<String, Any>): CallToolResult {
         checkInitialized()
         return comprehensiveServer!!.callTool(name, arguments)
     }
 
     /** Add a custom tool */
-    fun addTool(tool: Tool, handler: suspend (Map<String, Any>) -> ToolCallResult) {
+    fun addTool(tool: Tool, handler: suspend (Map<String, Any>) -> CallToolResult) {
         checkInitialized()
         comprehensiveServer!!.addTool(tool, handler)
     }
@@ -152,13 +152,13 @@ class McpServerManager private constructor() {
     }
 
     /** Read a resource by URI */
-    suspend fun readResource(uri: String): ResourceContent {
+    suspend fun readResource(uri: String): AndroidResourceContent {
         checkInitialized()
         return comprehensiveServer!!.readResource(uri)
     }
 
     /** Add a custom resource */
-    fun addResource(resource: Resource, contentProvider: suspend () -> ResourceContent) {
+    fun addResource(resource: Resource, contentProvider: suspend () -> AndroidResourceContent) {
         checkInitialized()
         comprehensiveServer!!.addResource(resource, contentProvider)
     }
@@ -187,7 +187,7 @@ class McpServerManager private constructor() {
     suspend fun getPrompt(
         name: String,
         arguments: Map<String, Any?> = emptyMap(),
-    ): dev.jasonpearson.mcpandroidsdk.models.GetPromptResult {
+    ): GetPromptResult {
         checkInitialized()
         return comprehensiveServer!!.getPrompt(name, arguments)
     }
@@ -195,8 +195,7 @@ class McpServerManager private constructor() {
     /** Add a custom prompt */
     fun addPrompt(
         prompt: Prompt,
-        handler:
-            suspend (Map<String, Any?>) -> dev.jasonpearson.mcpandroidsdk.models.GetPromptResult,
+        handler: suspend (Map<String, Any?>) -> GetPromptResult,
     ) {
         checkInitialized()
         comprehensiveServer!!.addPrompt(prompt, handler)
@@ -205,13 +204,13 @@ class McpServerManager private constructor() {
     // Root operations
 
     /** Get all roots */
-    fun getRoots(): List<dev.jasonpearson.mcpandroidsdk.models.Root> {
+    fun getRoots(): List<Root> {
         checkInitialized()
         return comprehensiveServer!!.getRoots()
     }
 
     /** Add a root directory */
-    fun addRoot(root: dev.jasonpearson.mcpandroidsdk.models.Root) {
+    fun addRoot(root: Root) {
         checkInitialized()
         comprehensiveServer!!.addRoot(root)
     }

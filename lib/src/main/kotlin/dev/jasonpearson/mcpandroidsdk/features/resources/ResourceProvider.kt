@@ -21,7 +21,7 @@ class ResourceProvider(private val context: Context) {
     }
 
     private val customResources =
-        ConcurrentHashMap<String, Pair<Resource, suspend () -> ResourceContent>>()
+        ConcurrentHashMap<String, Pair<Resource, suspend () -> AndroidResourceContent>>()
     private val customResourceTemplates = ConcurrentHashMap<String, ResourceTemplate>()
     private val subscriptions = ConcurrentHashMap<String, Boolean>()
 
@@ -37,7 +37,7 @@ class ResourceProvider(private val context: Context) {
         return builtIn + custom
     }
 
-    suspend fun readResource(uri: String): ResourceContent {
+    suspend fun readResource(uri: String): AndroidResourceContent {
         Log.d(TAG, "Reading resource: $uri")
         customResources[uri]?.let {
             return it.second()
@@ -49,10 +49,10 @@ class ResourceProvider(private val context: Context) {
             return readFileResource(uri)
         }
 
-        return ResourceContent(uri = uri, text = "Resource not found: $uri")
+        return AndroidResourceContent(uri = uri, text = "Resource not found: $uri")
     }
 
-    fun addResource(resource: Resource, contentProvider: suspend () -> ResourceContent) {
+    fun addResource(resource: Resource, contentProvider: suspend () -> AndroidResourceContent) {
         customResources[resource.uri] = Pair(resource, contentProvider)
         Log.i(TAG, "Added custom resource: ${resource.uri}")
     }
@@ -101,12 +101,12 @@ class ResourceProvider(private val context: Context) {
         )
     }
 
-    private suspend fun readFileResource(fileUri: String): ResourceContent {
+    private suspend fun readFileResource(fileUri: String): AndroidResourceContent {
         return withContext(Dispatchers.IO) {
             try {
                 val parsedUri = Uri.parse(fileUri)
                 if (parsedUri.scheme != "file" || parsedUri.path == null) {
-                    return@withContext ResourceContent(
+                    return@withContext AndroidResourceContent(
                         uri = fileUri,
                         text = "Invalid file URI scheme or path.",
                     )
@@ -119,31 +119,31 @@ class ResourceProvider(private val context: Context) {
                 // Security check: Ensure the path is within the app's filesDir
                 if (!requestedFile.canonicalPath.startsWith(appFilesDir.canonicalPath)) {
                     Log.w(TAG, "Attempt to access file outside app's private directory: $fileUri")
-                    return@withContext ResourceContent(
+                    return@withContext AndroidResourceContent(
                         uri = fileUri,
                         text = "Access denied to file path.",
                     )
                 }
 
                 if (!requestedFile.exists() || !requestedFile.isFile) {
-                    return@withContext ResourceContent(
+                    return@withContext AndroidResourceContent(
                         uri = fileUri,
                         text = "File not found or is not a regular file: ${requestedFile.path}",
                     )
                 }
 
                 val content = requestedFile.readText()
-                ResourceContent(
+                AndroidResourceContent(
                     uri = fileUri,
                     text = content,
                     mimeType = "text/plain",
                 ) // Infer mime type for real use cases
             } catch (e: IOException) {
                 Log.e(TAG, "Error reading file resource $fileUri", e)
-                ResourceContent(uri = fileUri, text = "Error reading file: ${e.message}")
+                AndroidResourceContent(uri = fileUri, text = "Error reading file: ${e.message}")
             } catch (e: SecurityException) {
                 Log.e(TAG, "Security error reading file resource $fileUri", e)
-                ResourceContent(uri = fileUri, text = "Security error reading file: ${e.message}")
+                AndroidResourceContent(uri = fileUri, text = "Security error reading file: ${e.message}")
             }
         }
     }

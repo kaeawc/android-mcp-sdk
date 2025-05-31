@@ -2,9 +2,8 @@ package dev.jasonpearson.mcpandroidsdk.features.prompts
 
 import android.content.Context
 import android.util.Log
-import dev.jasonpearson.mcpandroidsdk.*
 import dev.jasonpearson.mcpandroidsdk.models.*
-import io.modelcontextprotocol.kotlin.sdk.Prompt
+import io.modelcontextprotocol.kotlin.sdk.*
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -46,7 +45,7 @@ class PromptProvider(private val context: Context) {
                         messages =
                             listOf(
                                 PromptMessage(
-                                    role = MessageRole.USER,
+                                    role = Role.user,
                                     content =
                                         TextContent(
                                             text =
@@ -64,7 +63,7 @@ class PromptProvider(private val context: Context) {
                     messages =
                         listOf(
                             PromptMessage(
-                                role = MessageRole.USER,
+                                role = Role.user,
                                 content = TextContent(text = "Error: Prompt not found: $name"),
                             )
                         ),
@@ -127,7 +126,7 @@ class PromptProvider(private val context: Context) {
                         messages =
                             listOf(
                                 PromptMessage(
-                                    role = MessageRole.USER,
+                                    role = Role.user,
                                     content =
                                         TextContent(text = "Error: Unknown built-in prompt: $name"),
                                 )
@@ -141,7 +140,7 @@ class PromptProvider(private val context: Context) {
                 messages =
                     listOf(
                         PromptMessage(
-                            role = MessageRole.USER,
+                            role = Role.user,
                             content =
                                 TextContent(text = "Error executing prompt $name: ${e.message}"),
                         )
@@ -288,7 +287,7 @@ class PromptProvider(private val context: Context) {
             description = "Analyze Android log output focusing on $focusArea",
             messages =
                 listOf(
-                    PromptMessage(role = MessageRole.USER, content = TextContent(text = promptText))
+                    PromptMessage(role = Role.user, content = TextContent(text = promptText))
                 ),
         )
     }
@@ -319,7 +318,7 @@ class PromptProvider(private val context: Context) {
                 "Generate $language Android code for $functionality using $architecture architecture",
             messages =
                 listOf(
-                    PromptMessage(role = MessageRole.USER, content = TextContent(text = promptText))
+                    PromptMessage(role = Role.user, content = TextContent(text = promptText))
                 ),
         )
     }
@@ -351,7 +350,7 @@ class PromptProvider(private val context: Context) {
             description = "Explain Android error and provide solutions",
             messages =
                 listOf(
-                    PromptMessage(role = MessageRole.USER, content = TextContent(text = promptText))
+                    PromptMessage(role = Role.user, content = TextContent(text = promptText))
                 ),
         )
     }
@@ -384,7 +383,7 @@ class PromptProvider(private val context: Context) {
             description = "Create $testType tests for Android code",
             messages =
                 listOf(
-                    PromptMessage(role = MessageRole.USER, content = TextContent(text = promptText))
+                    PromptMessage(role = Role.user, content = TextContent(text = promptText))
                 ),
         )
     }
@@ -418,7 +417,7 @@ class PromptProvider(private val context: Context) {
             description = "Review Android code focusing on $focusAreas",
             messages =
                 listOf(
-                    PromptMessage(role = MessageRole.USER, content = TextContent(text = promptText))
+                    PromptMessage(role = Role.user, content = TextContent(text = promptText))
                 ),
         )
     }
