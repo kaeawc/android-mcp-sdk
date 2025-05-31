@@ -17,7 +17,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import dev.jasonpearson.mcpandroidsdk.McpStartup
 import dev.jasonpearson.sampleandroidmcp.ui.theme.SampleAndroidMCPTheme
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -60,7 +59,9 @@ class MainActivity : ComponentActivity() {
                     Log.i(TAG, "Server info: $serverInfo")
 
                     // Try to get transport info
-                    if (serverInfo is dev.jasonpearson.mcpandroidsdk.models.ComprehensiveServerInfo) {
+                    if (
+                        serverInfo is dev.jasonpearson.mcpandroidsdk.models.ComprehensiveServerInfo
+                    ) {
                         Log.i(TAG, "Transport info: ${serverInfo.transportInfo}")
                     }
                 } else {
@@ -91,14 +92,21 @@ fun McpServerDemo(modifier: Modifier = Modifier) {
 
                 val info = manager.getServerInfo()
                 info?.let { mcpServerInfo ->
-                    val infoMap = mapOf(
-                        "Name" to mcpServerInfo.name,
-                        "Version" to mcpServerInfo.version,
-                        "SDK Version" to mcpServerInfo.sdkVersion,
-                        "Running" to mcpServerInfo.isRunning.toString(),
-                        "Initialized" to (mcpServerInfo as? dev.jasonpearson.mcpandroidsdk.models.ComprehensiveServerInfo)?.isInitialized?.toString(),
-                        "Tools" to mcpServerInfo.toolCount.toString()
-                    ).filterValues { it != null } as Map<String, Any>
+                    val infoMap =
+                        mapOf(
+                                "Name" to mcpServerInfo.name,
+                                "Version" to mcpServerInfo.version,
+                                "SDK Version" to mcpServerInfo.sdkVersion,
+                                "Running" to mcpServerInfo.isRunning.toString(),
+                                "Initialized" to
+                                    (mcpServerInfo
+                                            as?
+                                            dev.jasonpearson.mcpandroidsdk.models.ComprehensiveServerInfo)
+                                        ?.isInitialized
+                                        ?.toString(),
+                                "Tools" to mcpServerInfo.toolCount.toString(),
+                            )
+                            .filterValues { it != null } as Map<String, Any>
 
                     serverInfoMap = infoMap
                 }
@@ -119,34 +127,26 @@ fun McpServerDemo(modifier: Modifier = Modifier) {
     }
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = modifier.fillMaxSize().padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(
-            text = "Android MCP Server Demo",
-            style = MaterialTheme.typography.headlineMedium
-        )
+        Text(text = "Android MCP Server Demo", style = MaterialTheme.typography.headlineMedium)
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Card {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
+            Column(modifier = Modifier.padding(16.dp)) {
                 Text(
                     text = "Server Status: $serverStatus",
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodyLarge,
                 )
 
                 Text(
                     text = "Running: ${if (isServerRunning) "Yes" else "No"}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (isServerRunning)
-                        MaterialTheme.colorScheme.primary
-                    else
-                        MaterialTheme.colorScheme.error
+                    color =
+                        if (isServerRunning) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.error,
                 )
             }
         }
@@ -155,35 +155,26 @@ fun McpServerDemo(modifier: Modifier = Modifier) {
 
         if (serverInfoMap.isNotEmpty()) {
             Card {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = "Server Information",
-                        style = MaterialTheme.typography.titleMedium
-                    )
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(text = "Server Information", style = MaterialTheme.typography.titleMedium)
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    LazyColumn(
-                        modifier = Modifier.height(120.dp)
-                    ) {
+                    LazyColumn(modifier = Modifier.height(120.dp)) {
                         items(serverInfoMap.toList()) { (key, value) ->
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 2.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
                             ) {
                                 Text(
                                     text = "$key:",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier.weight(1f),
                                 )
                                 Text(
                                     text = value.toString(),
                                     style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier.weight(1f),
                                 )
                             }
                         }
@@ -197,35 +188,29 @@ fun McpServerDemo(modifier: Modifier = Modifier) {
         // Transport Information Card
         if (transportInfoMap.isNotEmpty()) {
             Card {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
+                Column(modifier = Modifier.padding(16.dp)) {
                     Text(
                         text = "Transport Information",
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.titleMedium,
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    LazyColumn(
-                        modifier = Modifier.height(150.dp)
-                    ) {
+                    LazyColumn(modifier = Modifier.height(150.dp)) {
                         items(transportInfoMap.toList()) { (key, value) ->
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 2.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
                             ) {
                                 Text(
                                     text = "$key:",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier.weight(1f),
                                 )
                                 Text(
                                     text = value.toString(),
                                     style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier.weight(1f),
                                 )
                             }
                         }
@@ -238,13 +223,8 @@ fun McpServerDemo(modifier: Modifier = Modifier) {
 
         // Transport Test Controls
         Card {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(
-                    text = "Transport Test",
-                    style = MaterialTheme.typography.titleMedium
-                )
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(text = "Transport Test", style = MaterialTheme.typography.titleMedium)
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -252,17 +232,19 @@ fun McpServerDemo(modifier: Modifier = Modifier) {
                     onClick = {
                         if (McpStartup.isInitialized()) {
                             val manager = McpStartup.getManager()
-                            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main)
+                            kotlinx.coroutines
+                                .CoroutineScope(kotlinx.coroutines.Dispatchers.Main)
                                 .launch {
                                     try {
                                         val testMessage =
                                             """{"jsonrpc": "2.0", "method": "ping", "id": 1, "timestamp": ${System.currentTimeMillis()}}"""
                                         val result = manager.broadcastMessage(testMessage)
-                                        messageStatus = if (result.isSuccess) {
-                                            "Message sent successfully"
-                                        } else {
-                                            "Failed: ${result.exceptionOrNull()?.message}"
-                                        }
+                                        messageStatus =
+                                            if (result.isSuccess) {
+                                                "Message sent successfully"
+                                            } else {
+                                                "Failed: ${result.exceptionOrNull()?.message}"
+                                            }
                                     } catch (e: Exception) {
                                         messageStatus = "Error: ${e.message}"
                                     }
@@ -271,7 +253,7 @@ fun McpServerDemo(modifier: Modifier = Modifier) {
                             messageStatus = "Server not initialized"
                         }
                     },
-                    enabled = isServerRunning
+                    enabled = isServerRunning,
                 ) {
                     Text("Send Test Message")
                 }
@@ -281,10 +263,10 @@ fun McpServerDemo(modifier: Modifier = Modifier) {
                     Text(
                         text = "Status: $messageStatus",
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (messageStatus.contains("successfully"))
-                            MaterialTheme.colorScheme.primary
-                        else
-                            MaterialTheme.colorScheme.error
+                        color =
+                            if (messageStatus.contains("successfully"))
+                                MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.error,
                     )
                 }
             }
@@ -293,25 +275,23 @@ fun McpServerDemo(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(16.dp))
 
         Card(
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            )
+            colors =
+                CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
         ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
+            Column(modifier = Modifier.padding(16.dp)) {
                 Text(
                     text = "Transport Usage",
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "WebSocket: ws://localhost:8080/mcp\nHTTP/SSE: http://localhost:8081/mcp/\n\nUse adb port forwarding to access from workstation:\nadb forward tcp:8080 tcp:8080\nadb forward tcp:8081 tcp:8081",
+                    text =
+                        "WebSocket: ws://localhost:8080/mcp\nHTTP/SSE: http://localhost:8081/mcp/\n\nUse adb port forwarding to access from workstation:\nadb forward tcp:8080 tcp:8080\nadb forward tcp:8081 tcp:8081",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
             }
         }
@@ -321,7 +301,5 @@ fun McpServerDemo(modifier: Modifier = Modifier) {
 @Preview(showBackground = true)
 @Composable
 fun McpServerDemoPreview() {
-    SampleAndroidMCPTheme {
-        McpServerDemo()
-    }
+    SampleAndroidMCPTheme { McpServerDemo() }
 }

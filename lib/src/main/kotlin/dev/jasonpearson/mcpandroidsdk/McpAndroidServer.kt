@@ -15,7 +15,8 @@ import kotlinx.coroutines.*
  * in Android applications with MCP Kotlin SDK integration and transport support.
  *
  * This library integrates the MCP Kotlin SDK (io.modelcontextprotocol:kotlin-sdk:0.5.0) to enable
- * Android apps to host MCP servers and expose them to MCP clients via WebSocket and HTTP/SSE transports.
+ * Android apps to host MCP servers and expose them to MCP clients via WebSocket and HTTP/SSE
+ * transports.
  */
 class McpAndroidServer
 private constructor(
@@ -90,7 +91,7 @@ private constructor(
         isInitialized.set(true)
         Log.i(
             TAG,
-            "MCP server initialized successfully with ${availableTools.size} tools and transports"
+            "MCP server initialized successfully with ${availableTools.size} tools and transports",
         )
     }
 
@@ -119,7 +120,7 @@ private constructor(
                         mcpServer?.let {
                             Log.i(
                                 TAG,
-                                "Starting MCP server with SDK integration and transport support"
+                                "Starting MCP server with SDK integration and transport support",
                             )
                             while (isActive && isRunning.get()) {
                                 delay(1000)
@@ -198,7 +199,7 @@ private constructor(
             resourceCount = if (isInitialized()) resourceProvider.getAllResources().size else 0,
             promptCount = if (isInitialized()) promptProvider.getAllPrompts().size else 0,
             rootCount = 0,
-            transportInfo = getTransportInfo()
+            transportInfo = getTransportInfo(),
         )
     }
 
@@ -209,7 +210,7 @@ private constructor(
             "transport_manager_running" to transportManager.isRunning,
             "available_transports" to listOf("websocket", "http_sse"),
             "transport_details" to transportManager.getConnectionInfo(),
-            "transport_statuses" to transportManager.getTransportStatuses()
+            "transport_statuses" to transportManager.getTransportStatuses(),
         )
     }
 
@@ -295,12 +296,13 @@ private constructor(
     // Private helper methods
 
     private fun startMessageHandling() {
-        messageHandlerJob = serverScope.launch {
-            transportManager.getIncomingMessages()?.collect { message ->
-                Log.d(TAG, "Received message from transport: $message")
-                handleIncomingMessage(message)
+        messageHandlerJob =
+            serverScope.launch {
+                transportManager.getIncomingMessages()?.collect { message ->
+                    Log.d(TAG, "Received message from transport: $message")
+                    handleIncomingMessage(message)
+                }
             }
-        }
     }
 
     private suspend fun handleIncomingMessage(message: String) {

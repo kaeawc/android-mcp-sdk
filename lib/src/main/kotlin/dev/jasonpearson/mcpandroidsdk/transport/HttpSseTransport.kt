@@ -10,26 +10,24 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.serialization.json.Json
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * HTTP with Server-Sent Events (SSE) transport implementation for MCP communication.
- * 
+ *
  * This transport provides:
  * - HTTP POST endpoint for client-to-server messages
  * - Server-Sent Events (SSE) endpoint for server-to-client messages
  * - RESTful API for MCP protocol communication
  */
-class HttpSseTransport(
-    private val config: TransportConfig = TransportConfig()
-) : McpTransport {
+class HttpSseTransport(private val config: TransportConfig = TransportConfig()) : McpTransport {
 
     companion object {
         private const val TAG = "HttpSseTransport"
@@ -39,12 +37,13 @@ class HttpSseTransport(
     }
 
     private val _isRunning = AtomicBoolean(false)
-    override val isRunning: Boolean get() = _isRunning.get()
+    override val isRunning: Boolean
+        get() = _isRunning.get()
 
     private var server: EmbeddedServer<*, *>? = null
     private val connectionCount = AtomicInteger(0)
     private val sseConnections = ConcurrentHashMap<String, Channel<String>>()
-    
+
     // Channel for incoming messages from clients
     private val messageChannel = Channel<String>(Channel.UNLIMITED)
     override val incomingMessages: Flow<String> = messageChannel.receiveAsFlow()
@@ -52,39 +51,36 @@ class HttpSseTransport(
     override suspend fun start(): Result<Unit> = runCatching {
         if (_isRunning.compareAndSet(false, true)) {
             Log.i(TAG, "Starting HTTP/SSE transport on ${config.host}:${config.port}")
-            
-            server = embeddedServer(Netty, port = config.port, host = config.host) {
-                install(ContentNegotiation) {
-                    json(Json {
-                        prettyPrint = true
-                        isLenient = true
-                        ignoreUnknownKeys = true
-                    })
-                }
-                
-                routing {
-                    // HTTP POST endpoint for client messages
-                    post(MESSAGE_ENDPOINT) {
-                        handleIncomingMessage(call)
+
+            server =
+                embeddedServer(Netty, port = config.port, host = config.host) {
+                    install(ContentNegotiation) {
+                        json(
+                            Json {
+                                prettyPrint = true
+                                isLenient = true
+                                ignoreUnknownKeys = true
+                            }
+                        )
                     }
-                    
-                    // Server-Sent Events endpoint for server messages
-                    get(SSE_ENDPOINT) {
-                        handleSseConnection(call)
-                    }
-                    
-                    // Status endpoint
-                    get(STATUS_ENDPOINT) {
-                        handleStatusRequest(call)
-                    }
-                    
-                    // Health check endpoint
-                    get("/health") {
-                        call.respond(HttpStatusCode.OK, mapOf("status" to "healthy"))
+
+                    routing {
+                        // HTTP POST endpoint for client messages
+                        post(MESSAGE_ENDPOINT) { handleIncomingMessage(call) }
+
+                        // Server-Sent Events endpoint for server messages
+                        get(SSE_ENDPOINT) { handleSseConnection(call) }
+
+                        // Status endpoint
+                        get(STATUS_ENDPOINT) { handleStatusRequest(call) }
+
+                        // Health check endpoint
+                        get("/health") {
+                            call.respond(HttpStatusCode.OK, mapOf("status" to "healthy"))
+                        }
                     }
                 }
-            }
-            
+
             server?.start(wait = false)
             Log.i(TAG, "HTTP/SSE transport started successfully")
         } else {
@@ -95,7 +91,7 @@ class HttpSseTransport(
     override suspend fun stop(): Result<Unit> = runCatching {
         if (_isRunning.compareAndSet(true, false)) {
             Log.i(TAG, "Stopping HTTP/SSE transport...")
-            
+
             // Close all SSE connections
             sseConnections.values.forEach { channel ->
                 try {
@@ -105,14 +101,14 @@ class HttpSseTransport(
                 }
             }
             sseConnections.clear()
-            
+
             // Stop the server
             server?.stop(1000, 5000)
             server = null
-            
+
             // Close the message channel
             messageChannel.close()
-            
+
             connectionCount.set(0)
             Log.i(TAG, "HTTP/SSE transport stopped successfully")
         } else {
@@ -124,9 +120,9 @@ class HttpSseTransport(
         if (!isRunning) {
             throw IllegalStateException("Transport is not running")
         }
-        
+
         val connectionsToRemove = mutableListOf<String>()
-        
+
         sseConnections.forEach { (connectionId, channel) ->
             try {
                 if (!channel.isClosedForSend) {
@@ -140,14 +136,14 @@ class HttpSseTransport(
                 connectionsToRemove.add(connectionId)
             }
         }
-        
+
         // Remove failed connections
         connectionsToRemove.forEach { connectionId ->
             sseConnections.remove(connectionId)?.close()
             connectionCount.decrementAndGet()
             Log.d(TAG, "Removed failed SSE connection: $connectionId")
         }
-        
+
         Log.d(TAG, "Broadcast SSE message to ${sseConnections.size} active connections")
     }
 
@@ -156,20 +152,19 @@ class HttpSseTransport(
             "type" to "http_sse",
             "host" to config.host,
             "port" to config.port,
-            "endpoints" to mapOf(
-                "message" to "http://${config.host}:${config.port}$MESSAGE_ENDPOINT",
-                "events" to "http://${config.host}:${config.port}$SSE_ENDPOINT",
-                "status" to "http://${config.host}:${config.port}$STATUS_ENDPOINT"
-            ),
+            "endpoints" to
+                mapOf(
+                    "message" to "http://${config.host}:${config.port}$MESSAGE_ENDPOINT",
+                    "events" to "http://${config.host}:${config.port}$SSE_ENDPOINT",
+                    "status" to "http://${config.host}:${config.port}$STATUS_ENDPOINT",
+                ),
             "isRunning" to isRunning,
             "connectionCount" to connectionCount.get(),
-            "activeConnections" to sseConnections.keys.toList()
+            "activeConnections" to sseConnections.keys.toList(),
         )
     }
 
-    /**
-     * Get current transport status
-     */
+    /** Get current transport status */
     fun getStatus(): TransportStatus {
         return TransportStatus(
             type = "http_sse",
@@ -177,14 +172,16 @@ class HttpSseTransport(
             connectionCount = connectionCount.get(),
             port = config.port,
             host = config.host,
-            metadata = mapOf(
-                "endpoints" to mapOf(
-                    "message" to "http://${config.host}:${config.port}$MESSAGE_ENDPOINT",
-                    "events" to "http://${config.host}:${config.port}$SSE_ENDPOINT",
-                    "status" to "http://${config.host}:${config.port}$STATUS_ENDPOINT"
+            metadata =
+                mapOf(
+                    "endpoints" to
+                        mapOf(
+                            "message" to "http://${config.host}:${config.port}$MESSAGE_ENDPOINT",
+                            "events" to "http://${config.host}:${config.port}$SSE_ENDPOINT",
+                            "status" to "http://${config.host}:${config.port}$STATUS_ENDPOINT",
+                        ),
+                    "activeConnections" to sseConnections.keys.toList(),
                 ),
-                "activeConnections" to sseConnections.keys.toList()
-            )
         )
     }
 
@@ -192,16 +189,16 @@ class HttpSseTransport(
         try {
             val message = call.receiveText()
             Log.d(TAG, "Received HTTP message: $message")
-            
+
             // Send message to the incoming message channel
             messageChannel.trySend(message)
-            
+
             call.respond(HttpStatusCode.OK, mapOf("status" to "received"))
         } catch (e: Exception) {
             Log.e(TAG, "Error handling incoming HTTP message", e)
             call.respond(
                 HttpStatusCode.BadRequest,
-                mapOf("error" to "Failed to process message: ${e.message}")
+                mapOf("error" to "Failed to process message: ${e.message}"),
             )
         }
     }
@@ -209,34 +206,35 @@ class HttpSseTransport(
     private suspend fun handleSseConnection(call: ApplicationCall) {
         val connectionId = generateConnectionId()
         connectionCount.incrementAndGet()
-        
+
         Log.i(TAG, "New SSE connection: $connectionId (total: ${connectionCount.get()})")
-        
+
         call.response.headers.append(HttpHeaders.ContentType, "text/event-stream")
         call.response.headers.append(HttpHeaders.CacheControl, "no-cache")
         call.response.headers.append(HttpHeaders.Connection, "keep-alive")
         call.response.headers.append("Access-Control-Allow-Origin", "*")
-        
+
         try {
             // Create a channel for this connection
             val connectionChannel = Channel<String>(Channel.UNLIMITED)
             sseConnections[connectionId] = connectionChannel
-            
+
             // Send initial connection message
             call.respondTextWriter {
                 write("data: {\"type\": \"connection\", \"id\": \"$connectionId\"}\n\n")
                 flush()
-                
+
                 // Keep the connection alive and send messages
                 var lastPing = System.currentTimeMillis()
-                
-                while (!connectionChannel.isClosedForReceive && sseConnections.containsKey(connectionId)) {
+
+                while (
+                    !connectionChannel.isClosedForReceive &&
+                        sseConnections.containsKey(connectionId)
+                ) {
                     try {
                         // Check for messages with timeout
-                        val result = withTimeoutOrNull(1000) {
-                            connectionChannel.receive()
-                        }
-                        
+                        val result = withTimeoutOrNull(1000) { connectionChannel.receive() }
+
                         if (result != null) {
                             write(result)
                             flush()
@@ -260,7 +258,10 @@ class HttpSseTransport(
         } finally {
             sseConnections.remove(connectionId)?.close()
             connectionCount.decrementAndGet()
-            Log.i(TAG, "SSE connection $connectionId disconnected (remaining: ${connectionCount.get()})")
+            Log.i(
+                TAG,
+                "SSE connection $connectionId disconnected (remaining: ${connectionCount.get()})",
+            )
         }
     }
 
