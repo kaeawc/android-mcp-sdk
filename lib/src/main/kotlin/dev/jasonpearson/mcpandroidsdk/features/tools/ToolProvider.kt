@@ -7,14 +7,14 @@ import android.util.Log
 import dev.jasonpearson.mcpandroidsdk.*
 import dev.jasonpearson.mcpandroidsdk.models.*
 import io.modelcontextprotocol.kotlin.sdk.Tool
-import kotlinx.serialization.json.*
 import java.util.concurrent.ConcurrentHashMap
+import kotlinx.serialization.json.*
 
 /**
  * Provider for MCP tools that exposes Android-specific functionality to MCP clients.
  *
- * This class manages a collection of tools that can be called by MCP clients to interact
- * with Android system functionality and application data.
+ * This class manages a collection of tools that can be called by MCP clients to interact with
+ * Android system functionality and application data.
  */
 class ToolProvider(private val context: Context) {
 
@@ -23,50 +23,46 @@ class ToolProvider(private val context: Context) {
     }
 
     // Storage for custom tools
-    private val customTools = ConcurrentHashMap<String, Pair<Tool, suspend (Map<String, Any>) -> ToolCallResult>>()
+    private val customTools =
+        ConcurrentHashMap<String, Pair<Tool, suspend (Map<String, Any>) -> ToolCallResult>>()
 
-    /**
-     * Get all available tools including built-in and custom tools
-     */
+    /** Get all available tools including built-in and custom tools */
     fun getAllTools(): List<Tool> {
         val builtInTools = createBuiltInTools()
         val customToolList = customTools.values.map { it.first }
         return builtInTools + customToolList
     }
 
-    /**
-     * Call a specific tool by name with the provided arguments
-     */
+    /** Call a specific tool by name with the provided arguments */
     suspend fun callTool(name: String, arguments: Map<String, Any>): ToolCallResult {
         Log.d(TAG, "Calling tool: $name with arguments: $arguments")
 
         return when {
             customTools.containsKey(name) -> {
                 val handler = customTools[name]?.second
-                handler?.invoke(arguments) ?: ToolCallResult(
-                    content = listOf(TextContent(text = "Custom tool handler not found for $name")),
-                    isError = true
-                )
+                handler?.invoke(arguments)
+                    ?: ToolCallResult(
+                        content =
+                            listOf(TextContent(text = "Custom tool handler not found for $name")),
+                        isError = true,
+                    )
             }
             name in getBuiltInToolNames() -> callBuiltInTool(name, arguments)
-            else -> ToolCallResult(
-                content = listOf(TextContent(text = "Tool not found: $name")),
-                isError = true
-            )
+            else ->
+                ToolCallResult(
+                    content = listOf(TextContent(text = "Tool not found: $name")),
+                    isError = true,
+                )
         }
     }
 
-    /**
-     * Add a custom tool with its handler
-     */
+    /** Add a custom tool with its handler */
     fun addTool(tool: Tool, handler: suspend (Map<String, Any>) -> ToolCallResult) {
         customTools[tool.name] = Pair(tool, handler)
         Log.i(TAG, "Added custom tool: ${tool.name}")
     }
 
-    /**
-     * Remove a custom tool
-     */
+    /** Remove a custom tool */
     fun removeTool(name: String): Boolean {
         val removed = customTools.remove(name) != null
         if (removed) {
@@ -75,32 +71,22 @@ class ToolProvider(private val context: Context) {
         return removed
     }
 
-    /**
-     * Create built-in Android-specific tools
-     */
+    /** Create built-in Android-specific tools */
     private fun createBuiltInTools(): List<Tool> {
         return listOf(
             createDeviceInfoTool(),
             createAppInfoTool(),
             createSystemTimeTool(),
             createMemoryInfoTool(),
-            createBatteryInfoTool()
+            createBatteryInfoTool(),
         )
     }
 
     private fun getBuiltInToolNames(): Set<String> {
-        return setOf(
-            "device_info",
-            "app_info",
-            "system_time",
-            "memory_info",
-            "battery_info"
-        )
+        return setOf("device_info", "app_info", "system_time", "memory_info", "battery_info")
     }
 
-    /**
-     * Handle built-in tool calls
-     */
+    /** Handle built-in tool calls */
     private suspend fun callBuiltInTool(name: String, arguments: Map<String, Any>): ToolCallResult {
         Log.d(TAG, "Calling built-in tool: $name")
         return try {
@@ -110,16 +96,17 @@ class ToolProvider(private val context: Context) {
                 "system_time" -> getSystemTime(arguments)
                 "memory_info" -> getMemoryInfo()
                 "battery_info" -> getBatteryInfo()
-                else -> ToolCallResult(
-                    content = listOf(TextContent(text = "Unknown built-in tool: $name")),
-                    isError = true
-                )
+                else ->
+                    ToolCallResult(
+                        content = listOf(TextContent(text = "Unknown built-in tool: $name")),
+                        isError = true,
+                    )
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error calling built-in tool $name", e)
             ToolCallResult(
                 content = listOf(TextContent(text = "Error executing tool $name: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }
@@ -130,10 +117,7 @@ class ToolProvider(private val context: Context) {
         return Tool(
             name = "device_info",
             description = "Get information about the Android device",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {},
-                required = emptyList()
-            )
+            inputSchema = Tool.Input(properties = buildJsonObject {}, required = emptyList()),
         )
     }
 
@@ -141,18 +125,25 @@ class ToolProvider(private val context: Context) {
         return Tool(
             name = "app_info",
             description = "Get information about installed applications",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {
-                    put("package_name", buildJsonObject {
-                        put("type", JsonPrimitive("string"))
-                        put(
-                            "description",
-                            JsonPrimitive("Package name of the app (optional, if not provided returns current app info)")
-                        )
-                    })
-                },
-                required = emptyList()
-            )
+            inputSchema =
+                Tool.Input(
+                    properties =
+                        buildJsonObject {
+                            put(
+                                "package_name",
+                                buildJsonObject {
+                                    put("type", JsonPrimitive("string"))
+                                    put(
+                                        "description",
+                                        JsonPrimitive(
+                                            "Package name of the app (optional, if not provided returns current app info)"
+                                        ),
+                                    )
+                                },
+                            )
+                        },
+                    required = emptyList(),
+                ),
         )
     }
 
@@ -160,31 +151,44 @@ class ToolProvider(private val context: Context) {
         return Tool(
             name = "system_time",
             description = "Get current system time in various formats",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {
-                    put("format", buildJsonObject {
-                        put("type", JsonPrimitive("string"))
-                        put(
-                            "description",
-                            JsonPrimitive("Time format (iso, timestamp, readable)")
-                        )
-                        put("enum", buildJsonArray {
-                            add(JsonPrimitive("iso"))
-                            add(JsonPrimitive("timestamp"))
-                            add(JsonPrimitive("readable"))
-                        })
-                        put("default", JsonPrimitive("iso"))
-                    })
-                    put("timezone", buildJsonObject {
-                        put("type", JsonPrimitive("string"))
-                        put(
-                            "description",
-                            JsonPrimitive("Timezone (optional, defaults to system timezone)")
-                        )
-                    })
-                },
-                required = emptyList()
-            )
+            inputSchema =
+                Tool.Input(
+                    properties =
+                        buildJsonObject {
+                            put(
+                                "format",
+                                buildJsonObject {
+                                    put("type", JsonPrimitive("string"))
+                                    put(
+                                        "description",
+                                        JsonPrimitive("Time format (iso, timestamp, readable)"),
+                                    )
+                                    put(
+                                        "enum",
+                                        buildJsonArray {
+                                            add(JsonPrimitive("iso"))
+                                            add(JsonPrimitive("timestamp"))
+                                            add(JsonPrimitive("readable"))
+                                        },
+                                    )
+                                    put("default", JsonPrimitive("iso"))
+                                },
+                            )
+                            put(
+                                "timezone",
+                                buildJsonObject {
+                                    put("type", JsonPrimitive("string"))
+                                    put(
+                                        "description",
+                                        JsonPrimitive(
+                                            "Timezone (optional, defaults to system timezone)"
+                                        ),
+                                    )
+                                },
+                            )
+                        },
+                    required = emptyList(),
+                ),
         )
     }
 
@@ -192,10 +196,7 @@ class ToolProvider(private val context: Context) {
         return Tool(
             name = "memory_info",
             description = "Get current memory usage information",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {},
-                required = emptyList()
-            )
+            inputSchema = Tool.Input(properties = buildJsonObject {}, required = emptyList()),
         )
     }
 
@@ -203,10 +204,7 @@ class ToolProvider(private val context: Context) {
         return Tool(
             name = "battery_info",
             description = "Get current battery status and information",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {},
-                required = emptyList()
-            )
+            inputSchema = Tool.Input(properties = buildJsonObject {}, required = emptyList()),
         )
     }
 
@@ -226,10 +224,7 @@ class ToolProvider(private val context: Context) {
             appendLine("- Fingerprint: ${Build.FINGERPRINT}")
         }
 
-        return ToolCallResult(
-            content = listOf(TextContent(text = deviceInfo)),
-            isError = false
-        )
+        return ToolCallResult(content = listOf(TextContent(text = deviceInfo)), isError = false)
     }
 
     private fun getAppInfo(arguments: Map<String, Any>): ToolCallResult {
@@ -249,19 +244,20 @@ class ToolProvider(private val context: Context) {
                 appendLine("- Version Code: ${packageInfo.longVersionCode}")
                 appendLine("- Target SDK: ${appInfo.targetSdkVersion}")
                 appendLine("- Min SDK: ${appInfo.minSdkVersion}")
-                appendLine("- Install Time: ${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(java.util.Date(packageInfo.firstInstallTime))}")
-                appendLine("- Update Time: ${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(java.util.Date(packageInfo.lastUpdateTime))}")
+                appendLine(
+                    "- Install Time: ${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(java.util.Date(packageInfo.firstInstallTime))}"
+                )
+                appendLine(
+                    "- Update Time: ${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(java.util.Date(packageInfo.lastUpdateTime))}"
+                )
                 appendLine("- Data Directory: ${appInfo.dataDir}")
             }
 
-            ToolCallResult(
-                content = listOf(TextContent(text = info)),
-                isError = false
-            )
+            ToolCallResult(content = listOf(TextContent(text = info)), isError = false)
         } catch (e: PackageManager.NameNotFoundException) {
             ToolCallResult(
                 content = listOf(TextContent(text = "Package not found: $packageName")),
-                isError = true
+                isError = true,
             )
         }
     }
@@ -283,13 +279,18 @@ class ToolProvider(private val context: Context) {
                     appendLine("- Timestamp: $currentTime")
                 }
                 "readable" -> {
-                    val readableTime = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss z").format(java.util.Date(currentTime))
+                    val readableTime =
+                        java.text
+                            .SimpleDateFormat("yyyy-MM-dd HH:mm:ss z")
+                            .format(java.util.Date(currentTime))
                     appendLine("- Readable Format: $readableTime")
                 }
                 else -> {
                     appendLine("- ISO Format: ${java.time.Instant.ofEpochMilli(currentTime)}")
                     appendLine("- Timestamp: $currentTime")
-                    appendLine("- Readable Format: ${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss z").format(java.util.Date(currentTime))}")
+                    appendLine(
+                        "- Readable Format: ${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss z").format(java.util.Date(currentTime))}"
+                    )
                 }
             }
 
@@ -299,7 +300,9 @@ class ToolProvider(private val context: Context) {
                     val tz = java.util.TimeZone.getTimeZone(timezone)
                     val formatter = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss z")
                     formatter.timeZone = tz
-                    appendLine("- Time in $timezone: ${formatter.format(java.util.Date(currentTime))}")
+                    appendLine(
+                        "- Time in $timezone: ${formatter.format(java.util.Date(currentTime))}"
+                    )
                 } catch (e: Exception) {
                     appendLine("- Error with timezone $timezone: ${e.message}")
                 }
@@ -309,14 +312,12 @@ class ToolProvider(private val context: Context) {
             appendLine("- Uptime: ${android.os.SystemClock.elapsedRealtime()} ms")
         }
 
-        return ToolCallResult(
-            content = listOf(TextContent(text = timeInfo)),
-            isError = false
-        )
+        return ToolCallResult(content = listOf(TextContent(text = timeInfo)), isError = false)
     }
 
     private fun getMemoryInfo(): ToolCallResult {
-        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+        val activityManager =
+            context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
         val memoryInfo = android.app.ActivityManager.MemoryInfo()
         activityManager.getMemoryInfo(memoryInfo)
 
@@ -342,36 +343,46 @@ class ToolProvider(private val context: Context) {
             appendLine("- Heap Usage: ${(usedMemory * 100 / maxMemory)}%")
         }
 
-        return ToolCallResult(
-            content = listOf(TextContent(text = info)),
-            isError = false
-        )
+        return ToolCallResult(content = listOf(TextContent(text = info)), isError = false)
     }
 
     private fun getBatteryInfo(): ToolCallResult {
-        val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as android.os.BatteryManager
+        val batteryManager =
+            context.getSystemService(Context.BATTERY_SERVICE) as android.os.BatteryManager
 
         val info = buildString {
             appendLine("Battery Information:")
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                val level = batteryManager.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY)
+                val level =
+                    batteryManager.getIntProperty(
+                        android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY
+                    )
                 appendLine("- Battery Level: $level%")
 
                 val isCharging = batteryManager.isCharging
                 appendLine("- Charging: $isCharging")
 
-                val chargeCounter = batteryManager.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER)
+                val chargeCounter =
+                    batteryManager.getIntProperty(
+                        android.os.BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER
+                    )
                 if (chargeCounter > 0) {
                     appendLine("- Charge Counter: $chargeCounter μAh")
                 }
 
-                val currentNow = batteryManager.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
+                val currentNow =
+                    batteryManager.getIntProperty(
+                        android.os.BatteryManager.BATTERY_PROPERTY_CURRENT_NOW
+                    )
                 if (currentNow != Integer.MIN_VALUE) {
                     appendLine("- Current: ${currentNow / 1000f} mA")
                 }
 
-                val energyCounter = batteryManager.getLongProperty(android.os.BatteryManager.BATTERY_PROPERTY_ENERGY_COUNTER)
+                val energyCounter =
+                    batteryManager.getLongProperty(
+                        android.os.BatteryManager.BATTERY_PROPERTY_ENERGY_COUNTER
+                    )
                 if (energyCounter > 0) {
                     appendLine("- Energy Counter: ${energyCounter / 1000000f} Wh")
                 }
@@ -380,39 +391,47 @@ class ToolProvider(private val context: Context) {
             }
 
             // Get battery intent info
-            val batteryIntent = context.registerReceiver(null, android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED))
+            val batteryIntent =
+                context.registerReceiver(
+                    null,
+                    android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED),
+                )
             batteryIntent?.let { intent ->
                 val status = intent.getIntExtra(android.os.BatteryManager.EXTRA_STATUS, -1)
-                val statusText = when (status) {
-                    android.os.BatteryManager.BATTERY_STATUS_CHARGING -> "Charging"
-                    android.os.BatteryManager.BATTERY_STATUS_DISCHARGING -> "Discharging"
-                    android.os.BatteryManager.BATTERY_STATUS_FULL -> "Full"
-                    android.os.BatteryManager.BATTERY_STATUS_NOT_CHARGING -> "Not Charging"
-                    else -> "Unknown"
-                }
+                val statusText =
+                    when (status) {
+                        android.os.BatteryManager.BATTERY_STATUS_CHARGING -> "Charging"
+                        android.os.BatteryManager.BATTERY_STATUS_DISCHARGING -> "Discharging"
+                        android.os.BatteryManager.BATTERY_STATUS_FULL -> "Full"
+                        android.os.BatteryManager.BATTERY_STATUS_NOT_CHARGING -> "Not Charging"
+                        else -> "Unknown"
+                    }
                 appendLine("- Status: $statusText")
 
                 val health = intent.getIntExtra(android.os.BatteryManager.EXTRA_HEALTH, -1)
-                val healthText = when (health) {
-                    android.os.BatteryManager.BATTERY_HEALTH_GOOD -> "Good"
-                    android.os.BatteryManager.BATTERY_HEALTH_OVERHEAT -> "Overheat"
-                    android.os.BatteryManager.BATTERY_HEALTH_DEAD -> "Dead"
-                    android.os.BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE -> "Over Voltage"
-                    android.os.BatteryManager.BATTERY_HEALTH_COLD -> "Cold"
-                    else -> "Unknown"
-                }
+                val healthText =
+                    when (health) {
+                        android.os.BatteryManager.BATTERY_HEALTH_GOOD -> "Good"
+                        android.os.BatteryManager.BATTERY_HEALTH_OVERHEAT -> "Overheat"
+                        android.os.BatteryManager.BATTERY_HEALTH_DEAD -> "Dead"
+                        android.os.BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE -> "Over Voltage"
+                        android.os.BatteryManager.BATTERY_HEALTH_COLD -> "Cold"
+                        else -> "Unknown"
+                    }
                 appendLine("- Health: $healthText")
 
                 val plugged = intent.getIntExtra(android.os.BatteryManager.EXTRA_PLUGGED, -1)
-                val pluggedText = when (plugged) {
-                    android.os.BatteryManager.BATTERY_PLUGGED_AC -> "AC"
-                    android.os.BatteryManager.BATTERY_PLUGGED_USB -> "USB"
-                    android.os.BatteryManager.BATTERY_PLUGGED_WIRELESS -> "Wireless"
-                    else -> "Not Plugged"
-                }
+                val pluggedText =
+                    when (plugged) {
+                        android.os.BatteryManager.BATTERY_PLUGGED_AC -> "AC"
+                        android.os.BatteryManager.BATTERY_PLUGGED_USB -> "USB"
+                        android.os.BatteryManager.BATTERY_PLUGGED_WIRELESS -> "Wireless"
+                        else -> "Not Plugged"
+                    }
                 appendLine("- Power Source: $pluggedText")
 
-                val temperature = intent.getIntExtra(android.os.BatteryManager.EXTRA_TEMPERATURE, -1)
+                val temperature =
+                    intent.getIntExtra(android.os.BatteryManager.EXTRA_TEMPERATURE, -1)
                 if (temperature > 0) {
                     appendLine("- Temperature: ${temperature / 10f}°C")
                 }
@@ -424,10 +443,7 @@ class ToolProvider(private val context: Context) {
             }
         }
 
-        return ToolCallResult(
-            content = listOf(TextContent(text = info)),
-            isError = false
-        )
+        return ToolCallResult(content = listOf(TextContent(text = info)), isError = false)
     }
 
     private fun formatBytes(bytes: Long): String {

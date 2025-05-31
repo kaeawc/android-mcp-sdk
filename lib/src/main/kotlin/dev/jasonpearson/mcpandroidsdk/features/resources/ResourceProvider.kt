@@ -13,16 +13,15 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/**
- * Provider for MCP resources, allowing the server to expose Android-specific data.
- */
+/** Provider for MCP resources, allowing the server to expose Android-specific data. */
 class ResourceProvider(private val context: Context) {
 
     companion object {
         private const val TAG = "ResourceProvider"
     }
 
-    private val customResources = ConcurrentHashMap<String, Pair<Resource, suspend () -> ResourceContent>>()
+    private val customResources =
+        ConcurrentHashMap<String, Pair<Resource, suspend () -> ResourceContent>>()
     private val customResourceTemplates = ConcurrentHashMap<String, ResourceTemplate>()
     private val subscriptions = ConcurrentHashMap<String, Boolean>()
 
@@ -49,7 +48,7 @@ class ResourceProvider(private val context: Context) {
         if (uri.startsWith("file://")) {
             return readFileResource(uri)
         }
-        
+
         return ResourceContent(uri = uri, text = "Resource not found: $uri")
     }
 
@@ -80,14 +79,14 @@ class ResourceProvider(private val context: Context) {
                 uri = "android://app/info",
                 name = "Application Information",
                 description = "Basic information about the host application.",
-                mimeType = "text/plain"
+                mimeType = "text/plain",
             ),
             Resource(
                 uri = "android://device/info",
                 name = "Device Information",
                 description = "Basic information about the Android device.",
-                mimeType = "text/plain"
-            )
+                mimeType = "text/plain",
+            ),
         )
     }
 
@@ -97,17 +96,20 @@ class ResourceProvider(private val context: Context) {
                 uriTemplate = "file://{path}",
                 name = "File Content",
                 description = "Read content of a file from app's private storage.",
-                mimeType = "text/plain"
+                mimeType = "text/plain",
             )
         )
     }
-    
+
     private suspend fun readFileResource(fileUri: String): ResourceContent {
         return withContext(Dispatchers.IO) {
             try {
                 val parsedUri = Uri.parse(fileUri)
                 if (parsedUri.scheme != "file" || parsedUri.path == null) {
-                    return@withContext ResourceContent(uri = fileUri, text = "Invalid file URI scheme or path.")
+                    return@withContext ResourceContent(
+                        uri = fileUri,
+                        text = "Invalid file URI scheme or path.",
+                    )
                 }
 
                 // Restrict to app's internal files directory for security
@@ -117,15 +119,25 @@ class ResourceProvider(private val context: Context) {
                 // Security check: Ensure the path is within the app's filesDir
                 if (!requestedFile.canonicalPath.startsWith(appFilesDir.canonicalPath)) {
                     Log.w(TAG, "Attempt to access file outside app's private directory: $fileUri")
-                    return@withContext ResourceContent(uri = fileUri, text = "Access denied to file path.")
+                    return@withContext ResourceContent(
+                        uri = fileUri,
+                        text = "Access denied to file path.",
+                    )
                 }
 
                 if (!requestedFile.exists() || !requestedFile.isFile) {
-                    return@withContext ResourceContent(uri = fileUri, text = "File not found or is not a regular file: ${requestedFile.path}")
+                    return@withContext ResourceContent(
+                        uri = fileUri,
+                        text = "File not found or is not a regular file: ${requestedFile.path}",
+                    )
                 }
 
                 val content = requestedFile.readText()
-                ResourceContent(uri = fileUri, text = content, mimeType = "text/plain") // Infer mime type for real use cases
+                ResourceContent(
+                    uri = fileUri,
+                    text = content,
+                    mimeType = "text/plain",
+                ) // Infer mime type for real use cases
             } catch (e: IOException) {
                 Log.e(TAG, "Error reading file resource $fileUri", e)
                 ResourceContent(uri = fileUri, text = "Error reading file: ${e.message}")

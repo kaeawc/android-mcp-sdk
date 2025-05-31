@@ -3,9 +3,7 @@ package dev.jasonpearson.mcpandroidsdk
 import org.junit.Assert.*
 import org.junit.Test
 
-/**
- * Unit tests for McpServerManager
- */
+/** Unit tests for McpServerManager */
 class McpServerManagerTest {
 
     @Test
@@ -62,7 +60,7 @@ class McpServerManagerTest {
         assertEquals(
             "Should match static method",
             ComprehensiveMcpServer.getMcpSdkVersion(),
-            version1
+            version1,
         )
     }
 
@@ -76,7 +74,7 @@ class McpServerManagerTest {
         } catch (e: IllegalStateException) {
             assertTrue(
                 "Should contain initialization message",
-                e.message?.contains("not initialized") == true
+                e.message?.contains("not initialized") == true,
             )
         }
 
@@ -86,7 +84,7 @@ class McpServerManagerTest {
         } catch (e: IllegalStateException) {
             assertTrue(
                 "Should contain initialization message",
-                e.message?.contains("not initialized") == true
+                e.message?.contains("not initialized") == true,
             )
         }
 
@@ -96,7 +94,7 @@ class McpServerManagerTest {
         } catch (e: IllegalStateException) {
             assertTrue(
                 "Should contain initialization message",
-                e.message?.contains("not initialized") == true
+                e.message?.contains("not initialized") == true,
             )
         }
 
@@ -106,7 +104,7 @@ class McpServerManagerTest {
         } catch (e: IllegalStateException) {
             assertTrue(
                 "Should contain initialization message",
-                e.message?.contains("not initialized") == true
+                e.message?.contains("not initialized") == true,
             )
         }
     }

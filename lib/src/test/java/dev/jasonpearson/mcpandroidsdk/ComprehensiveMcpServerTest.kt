@@ -3,9 +3,7 @@ package dev.jasonpearson.mcpandroidsdk
 import org.junit.Assert.*
 import org.junit.Test
 
-/**
- * Unit tests for ComprehensiveMcpServer
- */
+/** Unit tests for ComprehensiveMcpServer */
 class ComprehensiveMcpServerTest {
 
     @Test
@@ -15,19 +13,20 @@ class ComprehensiveMcpServerTest {
 
     @Test
     fun `ComprehensiveServerInfo should create correctly`() {
-        val info = ComprehensiveServerInfo(
-            name = "Test Server",
-            version = "1.0.0",
-            sdkVersion = "0.5.0",
-            isRunning = false,
-            isInitialized = true,
-            capabilities = ServerCapabilities(),
-            toolCount = 5,
-            resourceCount = 3,
-            promptCount = 4,
-            rootCount = 2
-        )
-        
+        val info =
+            ComprehensiveServerInfo(
+                name = "Test Server",
+                version = "1.0.0",
+                sdkVersion = "0.5.0",
+                isRunning = false,
+                isInitialized = true,
+                capabilities = ServerCapabilities(),
+                toolCount = 5,
+                resourceCount = 3,
+                promptCount = 4,
+                rootCount = 2,
+            )
+
         assertEquals("Test Server", info.name)
         assertEquals("1.0.0", info.version)
         assertEquals("0.5.0", info.sdkVersion)
@@ -41,12 +40,13 @@ class ComprehensiveMcpServerTest {
 
     @Test
     fun `ServerCapabilities should create with all features`() {
-        val capabilities = ServerCapabilities(
-            tools = ToolsCapability(listChanged = true),
-            resources = ResourcesCapability(subscribe = true, listChanged = true),
-            prompts = PromptsCapability(listChanged = true)
-        )
-        
+        val capabilities =
+            ServerCapabilities(
+                tools = ToolsCapability(listChanged = true),
+                resources = ResourcesCapability(subscribe = true, listChanged = true),
+                prompts = PromptsCapability(listChanged = true),
+            )
+
         assertNotNull(capabilities.tools)
         assertNotNull(capabilities.resources)
         assertNotNull(capabilities.prompts)

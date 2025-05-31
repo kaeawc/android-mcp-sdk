@@ -10,8 +10,8 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * Provider for MCP prompts that enables servers to expose reusable prompt templates.
  *
- * Prompts provide standardized ways to interact with LLMs and can include dynamic
- * arguments and resource context.
+ * Prompts provide standardized ways to interact with LLMs and can include dynamic arguments and
+ * resource context.
  */
 class PromptProvider(private val context: Context) {
 
@@ -23,62 +23,62 @@ class PromptProvider(private val context: Context) {
     private val customPrompts =
         ConcurrentHashMap<String, Pair<Prompt, suspend (Map<String, Any?>) -> GetPromptResult>>()
 
-    /**
-     * Get all available prompts including built-in and custom prompts
-     */
+    /** Get all available prompts including built-in and custom prompts */
     fun getAllPrompts(): List<Prompt> {
         val builtInPrompts = createBuiltInPrompts()
         val customPromptList = customPrompts.values.map { it.first }
         return builtInPrompts + customPromptList
     }
 
-    /**
-     * Get a specific prompt by name with the provided arguments
-     */
+    /** Get a specific prompt by name with the provided arguments */
     suspend fun getPrompt(
         name: String,
-        arguments: Map<String, Any?> = emptyMap()
+        arguments: Map<String, Any?> = emptyMap(),
     ): GetPromptResult {
         Log.d(TAG, "Getting prompt: $name with arguments: $arguments")
 
         return when {
             customPrompts.containsKey(name) -> {
                 val handler = customPrompts[name]?.second
-                handler?.invoke(arguments) ?: GetPromptResult(
-                    description = "Custom prompt handler not found for $name",
-                    messages = listOf(
-                        PromptMessage(
-                            role = MessageRole.USER,
-                            content = TextContent(text = "Error: Custom prompt handler not found for $name")
-                        )
+                handler?.invoke(arguments)
+                    ?: GetPromptResult(
+                        description = "Custom prompt handler not found for $name",
+                        messages =
+                            listOf(
+                                PromptMessage(
+                                    role = MessageRole.USER,
+                                    content =
+                                        TextContent(
+                                            text =
+                                                "Error: Custom prompt handler not found for $name"
+                                        ),
+                                )
+                            ),
                     )
-                )
             }
 
             name in getBuiltInPromptNames() -> getBuiltInPrompt(name, arguments)
-            else -> GetPromptResult(
-                description = "Prompt not found: $name",
-                messages = listOf(
-                    PromptMessage(
-                        role = MessageRole.USER,
-                        content = TextContent(text = "Error: Prompt not found: $name")
-                    )
+            else ->
+                GetPromptResult(
+                    description = "Prompt not found: $name",
+                    messages =
+                        listOf(
+                            PromptMessage(
+                                role = MessageRole.USER,
+                                content = TextContent(text = "Error: Prompt not found: $name"),
+                            )
+                        ),
                 )
-            )
         }
     }
 
-    /**
-     * Add a custom prompt with its handler
-     */
+    /** Add a custom prompt with its handler */
     fun addPrompt(prompt: Prompt, handler: suspend (Map<String, Any?>) -> GetPromptResult) {
         customPrompts[prompt.name] = Pair(prompt, handler)
         Log.i(TAG, "Added custom prompt: ${prompt.name}")
     }
 
-    /**
-     * Remove a custom prompt
-     */
+    /** Remove a custom prompt */
     fun removePrompt(name: String): Boolean {
         val removed = customPrompts.remove(name) != null
         if (removed) {
@@ -87,16 +87,14 @@ class PromptProvider(private val context: Context) {
         return removed
     }
 
-    /**
-     * Create built-in Android-specific prompts
-     */
+    /** Create built-in Android-specific prompts */
     private fun createBuiltInPrompts(): List<Prompt> {
         return listOf(
             createAnalyzeLogPrompt(),
             createGenerateCodePrompt(),
             createExplainErrorPrompt(),
             createCreateTestPrompt(),
-            createReviewCodePrompt()
+            createReviewCodePrompt(),
         )
     }
 
@@ -106,16 +104,14 @@ class PromptProvider(private val context: Context) {
             "generate_android_code",
             "explain_android_error",
             "create_android_test",
-            "review_android_code"
+            "review_android_code",
         )
     }
 
-    /**
-     * Handle built-in prompt requests
-     */
+    /** Handle built-in prompt requests */
     private suspend fun getBuiltInPrompt(
         name: String,
-        arguments: Map<String, Any?>
+        arguments: Map<String, Any?>,
     ): GetPromptResult {
         Log.d(TAG, "Getting built-in prompt: $name")
         return try {
@@ -125,26 +121,31 @@ class PromptProvider(private val context: Context) {
                 "explain_android_error" -> explainAndroidError(arguments)
                 "create_android_test" -> createAndroidTest(arguments)
                 "review_android_code" -> reviewAndroidCode(arguments)
-                else -> GetPromptResult(
-                    description = "Unknown built-in prompt: $name",
-                    messages = listOf(
-                        PromptMessage(
-                            role = MessageRole.USER,
-                            content = TextContent(text = "Error: Unknown built-in prompt: $name")
-                        )
+                else ->
+                    GetPromptResult(
+                        description = "Unknown built-in prompt: $name",
+                        messages =
+                            listOf(
+                                PromptMessage(
+                                    role = MessageRole.USER,
+                                    content =
+                                        TextContent(text = "Error: Unknown built-in prompt: $name"),
+                                )
+                            ),
                     )
-                )
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error getting built-in prompt $name", e)
             GetPromptResult(
                 description = "Error executing prompt $name: ${e.message}",
-                messages = listOf(
-                    PromptMessage(
-                        role = MessageRole.USER,
-                        content = TextContent(text = "Error executing prompt $name: ${e.message}")
-                    )
-                )
+                messages =
+                    listOf(
+                        PromptMessage(
+                            role = MessageRole.USER,
+                            content =
+                                TextContent(text = "Error executing prompt $name: ${e.message}"),
+                        )
+                    ),
             )
         }
     }
@@ -155,18 +156,20 @@ class PromptProvider(private val context: Context) {
         return Prompt(
             name = "analyze_android_log",
             description = "Analyze Android log output for errors, warnings, and issues",
-            arguments = listOf(
-                io.modelcontextprotocol.kotlin.sdk.PromptArgument(
-                    name = "logData",
-                    description = "Android log output to analyze",
-                    required = true
+            arguments =
+                listOf(
+                    io.modelcontextprotocol.kotlin.sdk.PromptArgument(
+                        name = "logData",
+                        description = "Android log output to analyze",
+                        required = true,
+                    ),
+                    io.modelcontextprotocol.kotlin.sdk.PromptArgument(
+                        name = "focusArea",
+                        description =
+                            "Specific area to focus on (crashes, performance, security, etc.)",
+                        required = false,
+                    ),
                 ),
-                io.modelcontextprotocol.kotlin.sdk.PromptArgument(
-                    name = "focusArea",
-                    description = "Specific area to focus on (crashes, performance, security, etc.)",
-                    required = false
-                )
-            )
         )
     }
 
@@ -174,23 +177,24 @@ class PromptProvider(private val context: Context) {
         return Prompt(
             name = "generate_android_code",
             description = "Generate Android code for specific functionality",
-            arguments = listOf(
-                io.modelcontextprotocol.kotlin.sdk.PromptArgument(
-                    name = "functionality",
-                    description = "Description of the functionality to implement",
-                    required = true
+            arguments =
+                listOf(
+                    io.modelcontextprotocol.kotlin.sdk.PromptArgument(
+                        name = "functionality",
+                        description = "Description of the functionality to implement",
+                        required = true,
+                    ),
+                    io.modelcontextprotocol.kotlin.sdk.PromptArgument(
+                        name = "language",
+                        description = "Programming language (Kotlin, Java)",
+                        required = false,
+                    ),
+                    io.modelcontextprotocol.kotlin.sdk.PromptArgument(
+                        name = "architecture",
+                        description = "Architecture pattern (MVVM, MVP, MVI, etc.)",
+                        required = false,
+                    ),
                 ),
-                io.modelcontextprotocol.kotlin.sdk.PromptArgument(
-                    name = "language",
-                    description = "Programming language (Kotlin, Java)",
-                    required = false
-                ),
-                io.modelcontextprotocol.kotlin.sdk.PromptArgument(
-                    name = "architecture",
-                    description = "Architecture pattern (MVVM, MVP, MVI, etc.)",
-                    required = false
-                )
-            )
         )
     }
 
@@ -198,18 +202,19 @@ class PromptProvider(private val context: Context) {
         return Prompt(
             name = "explain_android_error",
             description = "Explain Android error messages and provide solutions",
-            arguments = listOf(
-                io.modelcontextprotocol.kotlin.sdk.PromptArgument(
-                    name = "errorMessage",
-                    description = "The error message or stack trace",
-                    required = true
+            arguments =
+                listOf(
+                    io.modelcontextprotocol.kotlin.sdk.PromptArgument(
+                        name = "errorMessage",
+                        description = "The error message or stack trace",
+                        required = true,
+                    ),
+                    io.modelcontextprotocol.kotlin.sdk.PromptArgument(
+                        name = "context",
+                        description = "Additional context about when the error occurred",
+                        required = false,
+                    ),
                 ),
-                io.modelcontextprotocol.kotlin.sdk.PromptArgument(
-                    name = "context",
-                    description = "Additional context about when the error occurred",
-                    required = false
-                )
-            )
         )
     }
 
@@ -217,37 +222,41 @@ class PromptProvider(private val context: Context) {
         return Prompt(
             name = "create_android_test",
             description = "Create unit or instrumentation tests for Android code",
-            arguments = listOf(
-                io.modelcontextprotocol.kotlin.sdk.PromptArgument(
-                    name = "codeToTest",
-                    description = "The code that needs to be tested",
-                    required = true
+            arguments =
+                listOf(
+                    io.modelcontextprotocol.kotlin.sdk.PromptArgument(
+                        name = "codeToTest",
+                        description = "The code that needs to be tested",
+                        required = true,
+                    ),
+                    io.modelcontextprotocol.kotlin.sdk.PromptArgument(
+                        name = "testType",
+                        description = "Type of test (unit, integration, ui)",
+                        required = false,
+                    ),
                 ),
-                io.modelcontextprotocol.kotlin.sdk.PromptArgument(
-                    name = "testType",
-                    description = "Type of test (unit, integration, ui)",
-                    required = false
-                )
-            )
         )
     }
 
     private fun createReviewCodePrompt(): Prompt {
         return Prompt(
             name = "review_android_code",
-            description = "Review Android code for best practices, performance, and potential issues",
-            arguments = listOf(
-                io.modelcontextprotocol.kotlin.sdk.PromptArgument(
-                    name = "code",
-                    description = "The code to review",
-                    required = true
+            description =
+                "Review Android code for best practices, performance, and potential issues",
+            arguments =
+                listOf(
+                    io.modelcontextprotocol.kotlin.sdk.PromptArgument(
+                        name = "code",
+                        description = "The code to review",
+                        required = true,
+                    ),
+                    io.modelcontextprotocol.kotlin.sdk.PromptArgument(
+                        name = "focusAreas",
+                        description =
+                            "Specific areas to focus on (performance, security, maintainability, etc.)",
+                        required = false,
+                    ),
                 ),
-                io.modelcontextprotocol.kotlin.sdk.PromptArgument(
-                    name = "focusAreas",
-                    description = "Specific areas to focus on (performance, security, maintainability, etc.)",
-                    required = false
-                )
-            )
         )
     }
 
@@ -277,12 +286,10 @@ class PromptProvider(private val context: Context) {
 
         return GetPromptResult(
             description = "Analyze Android log output focusing on $focusArea",
-            messages = listOf(
-                PromptMessage(
-                    role = MessageRole.USER,
-                    content = TextContent(text = promptText)
-                )
-            )
+            messages =
+                listOf(
+                    PromptMessage(role = MessageRole.USER, content = TextContent(text = promptText))
+                ),
         )
     }
 
@@ -308,13 +315,12 @@ class PromptProvider(private val context: Context) {
         }
 
         return GetPromptResult(
-            description = "Generate $language Android code for $functionality using $architecture architecture",
-            messages = listOf(
-                PromptMessage(
-                    role = MessageRole.USER,
-                    content = TextContent(text = promptText)
-                )
-            )
+            description =
+                "Generate $language Android code for $functionality using $architecture architecture",
+            messages =
+                listOf(
+                    PromptMessage(role = MessageRole.USER, content = TextContent(text = promptText))
+                ),
         )
     }
 
@@ -343,12 +349,10 @@ class PromptProvider(private val context: Context) {
 
         return GetPromptResult(
             description = "Explain Android error and provide solutions",
-            messages = listOf(
-                PromptMessage(
-                    role = MessageRole.USER,
-                    content = TextContent(text = promptText)
-                )
-            )
+            messages =
+                listOf(
+                    PromptMessage(role = MessageRole.USER, content = TextContent(text = promptText))
+                ),
         )
     }
 
@@ -357,7 +361,9 @@ class PromptProvider(private val context: Context) {
         val testType = arguments["testType"] as? String ?: "unit"
 
         val promptText = buildString {
-            appendLine("Please create comprehensive $testType tests for the following Android code:")
+            appendLine(
+                "Please create comprehensive $testType tests for the following Android code:"
+            )
             appendLine()
             appendLine("Code to test:")
             appendLine("```kotlin")
@@ -376,12 +382,10 @@ class PromptProvider(private val context: Context) {
 
         return GetPromptResult(
             description = "Create $testType tests for Android code",
-            messages = listOf(
-                PromptMessage(
-                    role = MessageRole.USER,
-                    content = TextContent(text = promptText)
-                )
-            )
+            messages =
+                listOf(
+                    PromptMessage(role = MessageRole.USER, content = TextContent(text = promptText))
+                ),
         )
     }
 
@@ -412,12 +416,10 @@ class PromptProvider(private val context: Context) {
 
         return GetPromptResult(
             description = "Review Android code focusing on $focusAreas",
-            messages = listOf(
-                PromptMessage(
-                    role = MessageRole.USER,
-                    content = TextContent(text = promptText)
-                )
-            )
+            messages =
+                listOf(
+                    PromptMessage(role = MessageRole.USER, content = TextContent(text = promptText))
+                ),
         )
     }
 }

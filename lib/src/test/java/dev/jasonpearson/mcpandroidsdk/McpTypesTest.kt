@@ -3,9 +3,7 @@ package dev.jasonpearson.mcpandroidsdk
 import org.junit.Assert.*
 import org.junit.Test
 
-/**
- * Unit tests for MCP types and data structures
- */
+/** Unit tests for MCP types and data structures */
 class McpTypesTest {
 
     @Test
@@ -18,10 +16,7 @@ class McpTypesTest {
 
     @Test
     fun `ImageContent should create correct instance`() {
-        val content = ImageContent(
-            data = "base64data",
-            mimeType = "image/png"
-        )
+        val content = ImageContent(data = "base64data", mimeType = "image/png")
 
         assertEquals("image", content.type)
         assertEquals("base64data", content.data)
@@ -30,11 +25,8 @@ class McpTypesTest {
 
     @Test
     fun `EmbeddedResource should create correct instance`() {
-        val resource = ResourceData(
-            uri = "file://test.txt",
-            text = "test content",
-            mimeType = "text/plain"
-        )
+        val resource =
+            ResourceData(uri = "file://test.txt", text = "test content", mimeType = "text/plain")
         val content = EmbeddedResource(resource = resource)
 
         assertEquals("resource", content.type)
@@ -45,11 +37,8 @@ class McpTypesTest {
 
     @Test
     fun `ResourceData should handle text content`() {
-        val resource = ResourceData(
-            uri = "file://test.txt",
-            text = "test content",
-            mimeType = "text/plain"
-        )
+        val resource =
+            ResourceData(uri = "file://test.txt", text = "test content", mimeType = "text/plain")
 
         assertEquals("file://test.txt", resource.uri)
         assertEquals("test content", resource.text)
@@ -59,11 +48,12 @@ class McpTypesTest {
 
     @Test
     fun `ResourceData should handle binary content`() {
-        val resource = ResourceData(
-            uri = "file://test.png",
-            blob = "base64encodeddata",
-            mimeType = "image/png"
-        )
+        val resource =
+            ResourceData(
+                uri = "file://test.png",
+                blob = "base64encodeddata",
+                mimeType = "image/png",
+            )
 
         assertEquals("file://test.png", resource.uri)
         assertNull(resource.text)
@@ -80,10 +70,7 @@ class McpTypesTest {
     @Test
     fun `PromptMessage should create correct instance`() {
         val content = TextContent(text = "Test message")
-        val message = PromptMessage(
-            role = MessageRole.USER,
-            content = content
-        )
+        val message = PromptMessage(role = MessageRole.USER, content = content)
 
         assertEquals(MessageRole.USER, message.role)
         assertEquals(content, message.content)
@@ -92,10 +79,7 @@ class McpTypesTest {
     @Test
     fun `ToolCallResult should handle success case`() {
         val content = listOf(TextContent(text = "Success"))
-        val result = ToolCallResult(
-            content = content,
-            isError = false
-        )
+        val result = ToolCallResult(content = content, isError = false)
 
         assertEquals(content, result.content)
         assertFalse(result.isError)
@@ -104,10 +88,7 @@ class McpTypesTest {
     @Test
     fun `ToolCallResult should handle error case`() {
         val content = listOf(TextContent(text = "Error occurred"))
-        val result = ToolCallResult(
-            content = content,
-            isError = true
-        )
+        val result = ToolCallResult(content = content, isError = true)
 
         assertEquals(content, result.content)
         assertTrue(result.isError)
@@ -126,11 +107,12 @@ class McpTypesTest {
 
     @Test
     fun `ServerCapabilities should create with all capabilities`() {
-        val capabilities = ServerCapabilities(
-            prompts = PromptsCapability(listChanged = true),
-            resources = ResourcesCapability(subscribe = true, listChanged = true),
-            tools = ToolsCapability(listChanged = true)
-        )
+        val capabilities =
+            ServerCapabilities(
+                prompts = PromptsCapability(listChanged = true),
+                resources = ResourcesCapability(subscribe = true, listChanged = true),
+                tools = ToolsCapability(listChanged = true),
+            )
 
         assertTrue(capabilities.prompts?.listChanged ?: false)
         assertTrue(capabilities.resources?.subscribe ?: false)
@@ -141,12 +123,13 @@ class McpTypesTest {
     @Test
     fun `ModelPreferences should create with hints and priorities`() {
         val hints = listOf(ModelHint("claude-3"), ModelHint("gpt-4"))
-        val preferences = ModelPreferences(
-            hints = hints,
-            costPriority = 0.8f,
-            speedPriority = 0.6f,
-            intelligencePriority = 0.9f
-        )
+        val preferences =
+            ModelPreferences(
+                hints = hints,
+                costPriority = 0.8f,
+                speedPriority = 0.6f,
+                intelligencePriority = 0.9f,
+            )
 
         assertEquals(2, preferences.hints.size)
         assertEquals("claude-3", preferences.hints[0].name)
@@ -158,22 +141,19 @@ class McpTypesTest {
 
     @Test
     fun `SamplingRequest should create with all parameters`() {
-        val messages = listOf(
-            PromptMessage(MessageRole.USER, TextContent(text = "Hello"))
-        )
-        val preferences = ModelPreferences(
-            hints = listOf(ModelHint("claude-3"))
-        )
-        val request = SamplingRequest(
-            messages = messages,
-            modelPreferences = preferences,
-            systemPrompt = "You are helpful",
-            includeContext = "thisServer",
-            maxTokens = 1000,
-            temperature = 0.7f,
-            stopSequences = listOf("STOP"),
-            metadata = mapOf("key" to "value")
-        )
+        val messages = listOf(PromptMessage(MessageRole.USER, TextContent(text = "Hello")))
+        val preferences = ModelPreferences(hints = listOf(ModelHint("claude-3")))
+        val request =
+            SamplingRequest(
+                messages = messages,
+                modelPreferences = preferences,
+                systemPrompt = "You are helpful",
+                includeContext = "thisServer",
+                maxTokens = 1000,
+                temperature = 0.7f,
+                stopSequences = listOf("STOP"),
+                metadata = mapOf("key" to "value"),
+            )
 
         assertEquals(messages, request.messages)
         assertEquals(preferences, request.modelPreferences)
@@ -187,10 +167,7 @@ class McpTypesTest {
 
     @Test
     fun `Implementation should create correct instance`() {
-        val impl = Implementation(
-            name = "Android MCP SDK",
-            version = "1.0.0"
-        )
+        val impl = Implementation(name = "Android MCP SDK", version = "1.0.0")
 
         assertEquals("Android MCP SDK", impl.name)
         assertEquals("1.0.0", impl.version)
@@ -198,10 +175,7 @@ class McpTypesTest {
 
     @Test
     fun `Root should create correct instance`() {
-        val root = Root(
-            uri = "file:///app/files",
-            name = "App Files"
-        )
+        val root = Root(uri = "file:///app/files", name = "App Files")
 
         assertEquals("file:///app/files", root.uri)
         assertEquals("App Files", root.name)

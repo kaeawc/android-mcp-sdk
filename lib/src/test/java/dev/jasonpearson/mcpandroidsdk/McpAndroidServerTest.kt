@@ -3,9 +3,7 @@ package dev.jasonpearson.mcpandroidsdk
 import org.junit.Assert.*
 import org.junit.Test
 
-/**
- * Unit tests for McpAndroidServer
- */
+/** Unit tests for McpAndroidServer */
 class McpAndroidServerTest {
 
     @Test
@@ -15,12 +13,13 @@ class McpAndroidServerTest {
 
     @Test
     fun `ServerInfo should have correct properties`() {
-        val serverInfo = ServerInfo(
-            name = "test-server",
-            version = "1.0.0",
-            sdkVersion = "0.5.0",
-            isRunning = false
-        )
+        val serverInfo =
+            ServerInfo(
+                name = "test-server",
+                version = "1.0.0",
+                sdkVersion = "0.5.0",
+                isRunning = false,
+            )
 
         assertEquals("test-server", serverInfo.name)
         assertEquals("1.0.0", serverInfo.version)
@@ -30,12 +29,13 @@ class McpAndroidServerTest {
 
     @Test
     fun `ServerInfo should support running state`() {
-        val runningServer = ServerInfo(
-            name = "running-server",
-            version = "2.0.0",
-            sdkVersion = "0.5.0",
-            isRunning = true
-        )
+        val runningServer =
+            ServerInfo(
+                name = "running-server",
+                version = "2.0.0",
+                sdkVersion = "0.5.0",
+                isRunning = true,
+            )
 
         assertTrue("Server should be marked as running", runningServer.isRunning)
     }
@@ -52,22 +52,15 @@ class McpAndroidServerTest {
 
     @Test
     fun `ToolExecutionResult should handle success and failure cases`() {
-        val successResult = ToolExecutionResult(
-            success = true,
-            result = "Success!",
-            error = null
-        )
-        
+        val successResult = ToolExecutionResult(success = true, result = "Success!", error = null)
+
         assertTrue(successResult.success)
         assertEquals("Success!", successResult.result)
         assertNull(successResult.error)
-        
-        val failureResult = ToolExecutionResult(
-            success = false,
-            result = null,
-            error = "Something went wrong"
-        )
-        
+
+        val failureResult =
+            ToolExecutionResult(success = false, result = null, error = "Something went wrong")
+
         assertFalse(failureResult.success)
         assertNull(failureResult.result)
         assertEquals("Something went wrong", failureResult.error)

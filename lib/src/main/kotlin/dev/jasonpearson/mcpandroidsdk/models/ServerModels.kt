@@ -2,13 +2,9 @@ package dev.jasonpearson.mcpandroidsdk.models
 
 import android.content.Context
 
-/**
- * Server-specific data models
- */
+/** Server-specific data models */
 
-/**
- * Information about the MCP server
- */
+/** Information about the MCP server */
 data class ServerInfo(
     val name: String,
     val version: String,
@@ -17,9 +13,7 @@ data class ServerInfo(
     val toolCount: Int = 0,
 )
 
-/**
- * Comprehensive server information
- */
+/** Comprehensive server information */
 data class ComprehensiveServerInfo(
     val name: String,
     val version: String,
@@ -30,12 +24,10 @@ data class ComprehensiveServerInfo(
     val toolCount: Int,
     val resourceCount: Int,
     val promptCount: Int,
-    val rootCount: Int
+    val rootCount: Int,
 )
 
-/**
- * Represents an Android-specific tool that can be executed by the MCP server
- */
+/** Represents an Android-specific tool that can be executed by the MCP server */
 data class AndroidTool(
     val name: String,
     val description: String,
@@ -47,7 +39,5 @@ data class AndroidTool(
     }
 }
 
-/**
- * Result of executing a tool
- */
+/** Result of executing a tool */
 data class ToolExecutionResult(val success: Boolean, val result: String?, val error: String?)
