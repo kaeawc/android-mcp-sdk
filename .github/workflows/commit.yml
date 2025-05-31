@@ -1,0 +1,232 @@
+name: "Commit"
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  checks: write
+  security-events: write
+  pull-requests: write
+
+jobs:
+  unit-tests:
+    name: "Unit Tests"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Git Checkout"
+        uses: actions/checkout@v4
+
+      - uses: ./.github/actions/gradle-task-run
+        with:
+          gradle-tasks: "testDebugUnitTest"
+          reuse-configuration-cache: true
+          gradle-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+  validate-xml:
+    name: "Validate XML"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Git Checkout"
+        uses: actions/checkout@v4
+
+      - name: "Run XMLStarlet"
+        shell: "bash"
+        run: |
+          sudo apt-get update
+          sudo apt-get install xmlstarlet
+          ci/validate_xml.sh
+
+  ktfmt:
+    name: "ktfmt"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Git Checkout"
+        uses: actions/checkout@v4
+
+      - name: "Run ktfmt"
+        shell: "bash"
+        run: |
+          INSTALL_KTFMT_WHEN_MISSING=true ONLY_TOUCHED_FILES=false ci/validate_ktfmt.sh
+
+  validate-shell-scripts:
+    name: "Validate Shell Scripts"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Git Checkout"
+        uses: actions/checkout@v4
+
+      - name: "Run ShellCheck"
+        shell: "bash"
+        run: |
+          ci/validate_shell_scripts.sh
+
+  build-library:
+    name: "Build Library"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Git Checkout"
+        uses: actions/checkout@v4
+
+      - uses: ./.github/actions/gradle-task-run
+        with:
+          gradle-tasks: ":lib:compileKotlinDebug"
+          reuse-configuration-cache: true
+          gradle-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+      - name: "Store AAR"
+        uses: actions/upload-artifact@v4.4.0
+        with:
+          name: apk
+          path: sample/build/outputs/aar/lib-debug.aar
+
+  build-apk:
+    name: "Build APK"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Git Checkout"
+        uses: actions/checkout@v4
+
+      - uses: ./.github/actions/gradle-task-run
+        with:
+          gradle-tasks: "assembleDebug"
+          reuse-configuration-cache: true
+          gradle-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+      - name: "Store APK"
+        uses: actions/upload-artifact@v4.4.0
+        with:
+          name: apk
+          path: sample/build/outputs/apk/debug/sample-debug.apk
+
+  build-base-apk:
+    name: "Build Base APK"
+    if: github.ref_name != 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Git Checkout"
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          ref: ${{ github.event.pull_request.base.sha }}
+
+      - name: "Build APK from PR base SHA"
+        uses: ./.github/actions/gradle-task-run
+        with:
+          gradle-tasks: "assembleDebug"
+          reuse-configuration-cache: true
+          gradle-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+          optional-suffix: "-base"
+
+      - name: "Change APK file name"
+        shell: "bash"
+        run: |
+          mv sample/build/outputs/apk/debug/sample-debug.apk sample/build/outputs/apk/debug/sample-base-debug.apk
+
+      - name: "Store Base APK"
+        uses: actions/upload-artifact@v4.4.0
+        with:
+          name: base-apk
+          path: sample/build/outputs/apk/debug/sample-base-debug.apk
+
+  build-test-apk:
+    name: "Build Test APK"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Git Checkout"
+        uses: actions/checkout@v4
+
+      - uses: ./.github/actions/gradle-task-run
+        with:
+          gradle-tasks: "assembleAndroidTest"
+          reuse-configuration-cache: false
+          optional-suffix: "-test"
+
+      - name: "Store Test APK"
+        uses: actions/upload-artifact@v4.4.0
+        with:
+          name: test-apk
+          path: sample/build/outputs/apk/androidTest/debug/sample-debug-androidTest.apk
+
+  diff-apk-from-base:
+    name: "Diff APK from Base"
+    runs-on: ubuntu-latest
+    if: github.secret_source == 'Actions' && github.ref_name != 'main'
+    needs:
+      - build-apk
+      - build-base-apk
+    steps:
+      - uses: actions/download-artifact@v4.1.8
+        with:
+          name: apk
+
+      - uses: actions/download-artifact@v4.1.8
+        with:
+          name: base-apk
+
+      - id: diffuse
+        uses: usefulness/diffuse-action@v1
+        with:
+          old-file-path: sample-base-debug.apk
+          new-file-path: sample-debug.apk
+
+      - uses: peter-evans/find-comment@v3
+        id: find-comment
+        if: ${{ github.event.pull_request }}
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body-includes: Diffuse output
+
+      - uses: peter-evans/create-or-update-comment@v4
+        if: ${{ github.event.pull_request }}
+        with:
+          body: |
+            Diffuse output:
+            
+            ${{ steps.diffuse.outputs.diff-gh-comment }}
+          edit-mode: replace
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/upload-artifact@v4.4.0
+        with:
+          name: diffuse-output
+          path: ${{ steps.diffuse.outputs.diff-file }}
+
+  ui-tests:
+    name: "Android UI Tests"
+    runs-on: ubuntu-latest
+    if: github.secret_source == 'Actions'
+    needs:
+      - build-apk
+      - build-test-apk
+    steps:
+      - name: "Git Checkout"
+        uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4.1.8
+        with:
+          name: apk
+
+      - uses: actions/download-artifact@v4.1.8
+        with:
+          name: test-apk
+
+      - name: "Run tests on emulator.wtf"
+        uses: emulator-wtf/run-tests@v0
+        with:
+          api-token: ${{ secrets.EW_API_TOKEN }}
+          app: sample-debug.apk
+          test: sample-debug-androidTest.apk
+          outputs-dir: build/test-results
+          record-video: true
+
+      - name: "Publish Test Report"
+        uses: mikepenz/action-junit-report@v4
+        if: always() # always run even if the tests fail
+        with:
+          check_name: "UI Test Report"
+          report_paths: 'build/test-results/**/*.xml'

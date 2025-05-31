@@ -1,0 +1,22 @@
+# Please see the documentation for all configuration options:
+# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+
+version: 2
+registries:
+  maven-google:
+    type: maven-repository
+    url: "https://dl.google.com/dl/android/maven2/"
+  maven-central:
+    type: maven-repository
+    url: "https://repo.maven.apache.org/maven2/"
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/" # Location of package manifests
+    target-branch: "main"
+    schedule:
+      interval: "daily"
+      time: "08:00"
+      timezone: "EST"
+    registries:
+      - maven-google
+      - maven-central

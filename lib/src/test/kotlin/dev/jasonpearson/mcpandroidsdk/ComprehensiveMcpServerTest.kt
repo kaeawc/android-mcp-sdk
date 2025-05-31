@@ -1,5 +1,6 @@
 package dev.jasonpearson.mcpandroidsdk
 
+import dev.jasonpearson.mcpandroidsdk.models.*
 import org.junit.Assert.*
 import org.junit.Test
 
