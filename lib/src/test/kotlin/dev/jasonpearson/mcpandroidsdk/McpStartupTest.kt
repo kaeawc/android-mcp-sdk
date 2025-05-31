@@ -43,7 +43,7 @@ class McpStartupTest {
         if (result.isFailure) {
             throw RuntimeException(
                 "Failed to initialize manager for testing",
-                result.exceptionOrNull()
+                result.exceptionOrNull(),
             )
         }
 
