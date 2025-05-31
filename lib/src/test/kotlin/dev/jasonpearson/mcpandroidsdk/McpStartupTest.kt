@@ -32,8 +32,8 @@ class McpStartupTest {
     }
 
     /**
-     * Create a minimal initialized manager for testing without expensive operations.
-     * This bypasses transport setup, SDK reflection, and feature provider initialization.
+     * Create a minimal initialized manager for testing without expensive operations. This bypasses
+     * transport setup, SDK reflection, and feature provider initialization.
      */
     private fun createTestInitializedManager(): McpServerManager {
         val manager = McpServerManager.getInstance()
@@ -52,17 +52,16 @@ class McpStartupTest {
         return manager
     }
 
-    /**
-     * Minimal mock server for testing
-     */
+    /** Minimal mock server for testing */
     private class MockMcpServer {
-        fun getServerInfo() = dev.jasonpearson.mcpandroidsdk.models.ServerInfo(
-            name = "Test Server",
-            version = "1.0.0",
-            sdkVersion = "0.5.0",
-            isRunning = false,
-            toolCount = 0
-        )
+        fun getServerInfo() =
+            dev.jasonpearson.mcpandroidsdk.models.ServerInfo(
+                name = "Test Server",
+                version = "1.0.0",
+                sdkVersion = "0.5.0",
+                isRunning = false,
+                toolCount = 0,
+            )
     }
 
     @Test
