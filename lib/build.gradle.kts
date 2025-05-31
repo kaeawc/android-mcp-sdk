@@ -25,10 +25,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        val javaVer = JavaVersion.toVersion(libs.versions.javaVersion.get())
+        sourceCompatibility = javaVer
+        targetCompatibility = javaVer
     }
-    kotlinOptions { jvmTarget = "11" }
+    kotlinOptions { jvmTarget = libs.versions.javaVersion.get() }
 
     testOptions {
         unitTests {
@@ -42,19 +43,19 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-    implementation("io.modelcontextprotocol:kotlin-sdk:0.5.0")
-    implementation("io.modelcontextprotocol:kotlin-sdk-jvm:0.5.0")
-    implementation("androidx.startup:startup-runtime:1.2.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+    implementation(libs.mcp.kotlin.sdk)
+    implementation(libs.kotlin.sdk.jvm)
+    implementation(libs.androidx.startup.runtime)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.serialization.json)
 
     testImplementation(libs.junit)
-    testImplementation("org.mockito:mockito-core:5.7.0")
-    testImplementation("org.mockito:mockito-android:5.7.0")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
-    testImplementation("org.robolectric:robolectric:4.11.1")
-    testImplementation("androidx.test:core:1.5.0")
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.android)
+    testImplementation(libs.mockito.kotlin)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.core)
 
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

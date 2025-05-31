@@ -28,10 +28,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        val javaVer = JavaVersion.toVersion(libs.versions.javaVersion.get())
+        sourceCompatibility = javaVer
+        targetCompatibility = javaVer
     }
-    kotlinOptions { jvmTarget = "11" }
+    kotlinOptions { jvmTarget = libs.versions.javaVersion.get() }
     buildFeatures { compose = true }
 }
 

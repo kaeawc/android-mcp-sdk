@@ -12,7 +12,7 @@ if ! command -v shellcheck &>/dev/null; then
 fi
 
 # Start the timer
-start_time=$(bash -c "$(pwd)/scripts/get_timestamp.sh")
+start_time=$(bash -c "$(pwd)/scripts/utils/get_timestamp.sh")
 
 # Find shell scripts and validate in parallel
 # shellcheck disable=SC2016
@@ -21,7 +21,7 @@ errors=$(git ls-files --cached --others --exclude-standard -z |
   xargs -0 -n 1 -P "$(nproc)" bash -c 'shellcheck "$0"' 2>&1)
 
 # Calculate total elapsed time
-end_time=$(bash -c "$(pwd)/scripts/get_timestamp.sh")
+end_time=$(bash -c "$(pwd)/scripts/utils/get_timestamp.sh")
 total_elapsed=$((end_time - start_time))
 
 # Check and report errors

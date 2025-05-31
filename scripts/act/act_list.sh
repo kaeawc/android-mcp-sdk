@@ -6,7 +6,7 @@ INSTALL_ACT_WHEN_MISSING=${INSTALL_ACT_WHEN_MISSING:-false}
 if ! command -v act &>/dev/null; then
     echo "act missing"
     if [[ "${INSTALL_ACT_WHEN_MISSING}" == "true" ]]; then
-      scripts/install_act.sh
+      scripts/act/install_act.sh
       # Ensure act is in PATH for subsequent commands
       export PATH="$HOME/bin:$PATH"
     else
@@ -45,7 +45,7 @@ act --list
 
 echo ""
 echo "Usage examples:"
-echo "  Validate all jobs (dry run):     ./scripts/validate_act.sh"
-echo "  Validate specific job:           ACT_JOB=ktfmt ./scripts/validate_act.sh"
-echo "  Run pull_request event:          ACT_EVENT=pull_request ACT_DRY_RUN=false ./scripts/apply_act.sh"
-echo "  Run with custom Dockerfile:      USE_CUSTOM_DOCKERFILE=true ./scripts/validate_act.sh"
+echo "  Validate all jobs (dry run):     ./scripts/act/validate_act.sh"
+echo "  Validate specific job:           ACT_JOB=ktfmt ./scripts/act/validate_act.sh"
+echo "  Run pull_request event:          ACT_EVENT=pull_request ./scripts/act/apply_act.sh"
+echo "  Run with custom Dockerfile:      USE_CUSTOM_DOCKERFILE=true ./scripts/act/validate_act.sh"

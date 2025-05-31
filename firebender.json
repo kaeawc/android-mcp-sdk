@@ -1,27 +1,26 @@
 {
+  "mcpServers": {
+    "jetbrains": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@jetbrains/mcp-proxy"
+      ],
+      "env": {
+        "IDE_PORT": "63341"
+      }
+    }
+  },
   "rules": [
     "This is an Android library project to enable running MCP Servers hosted by Android apps.",
-    "The goal of the project is to expose an MCP server to an Android engineer running an MCP client on their adb connected workstation.",
-    "Building the library should be done via `./gradlew :lib:compileDebug`",
-    "Building the project should be done via `./gradlew :sample:assembleDebug`",
-    "ktfmt should be used for lint",
-    "To format Kotlin code: `./scripts/apply_ktfmt.sh` (use ONLY_TOUCHED_FILES=false to format all files)",
-    "To validate Kotlin formatting: `./scripts/validate_ktfmt.sh` (use ONLY_TOUCHED_FILES=false to check all files)",
-    "To validate shell scripts: `./scripts/validate_shell_scripts.sh`",
-    "To validate XML files: `./scripts/validate_xml.sh`",
-    "To check git clean state: `./scripts/git_assert_clean_state.sh`",
-    "To install ktfmt if missing: `./scripts/install_ktfmt.sh` or set INSTALL_KTFMT_WHEN_MISSING=true when running other scripts",
-    "act should be used for local GitHub Actions testing",
-    "To install act if missing: `./scripts/install_act.sh` or set INSTALL_ACT_WHEN_MISSING=true when running other scripts",
-    "To list available GitHub Actions jobs: `./scripts/act_list.sh`",
-    "To validate GitHub Actions workflows locally: `./scripts/validate_act.sh` (use ACT_DRY_RUN=true for dry run, ACT_JOB=job-name for specific jobs)",
-    "To run GitHub Actions workflows locally: `./scripts/apply_act.sh` (use ACT_EVENT=pull_request, ACT_JOB=job-name for specific tests)",
-    "When making changes to .github/workflows files, always test locally with act before pushing",
-    "Examples: `ACT_JOB=ktfmt ./scripts/validate_act.sh` or `ACT_EVENT=pull_request ACT_DRY_RUN=false ./scripts/apply_act.sh`",
-    "The ci/Dockerfile provides a complete Android development environment with Azul JDK 23, Android SDK, ktfmt, act, xmlstarlet, and shellcheck (optional)",
+    "The goal of the project is to expose an MCP server to an Android engineer running an MCP client on",
+    "their adb connected workstation.",
     {
-      "filePathMatches": "**/*",
-      "rulesPaths": [ "README.md" ]
+      "filePathMatches": "*",
+      "rulesPaths": [
+        "README.md",
+        "docs/ai/validation.md"
+      ]
     }
   ]
 }

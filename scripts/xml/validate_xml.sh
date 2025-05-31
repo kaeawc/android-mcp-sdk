@@ -21,7 +21,7 @@ if [[ $(! command -v xml &>/dev/null) && $(! command -v xmlstarlet &>/dev/null) 
 fi
 
 # Start the timer
-start_time=$(bash -c "$(pwd)/scripts/get_timestamp.sh")
+start_time=$(bash -c "$(pwd)/scripts/utils/get_timestamp.sh")
 
 # Need to export this function for xargs bash to see it
 export -f validate_xml
@@ -33,7 +33,7 @@ errors=$(git ls-files --cached --others --exclude-standard -z |
   xargs -0 -n 1 -P "$(nproc)" bash -c 'validate_xml val -w -b -e "$0"' 2>&1)
 
 # Calculate total elapsed time
-end_time=$(bash -c "$(pwd)/scripts/get_timestamp.sh")
+end_time=$(bash -c "$(pwd)/scripts/utils/get_timestamp.sh")
 total_elapsed=$((end_time - start_time))
 
 # Check and report errors
