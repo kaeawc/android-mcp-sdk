@@ -27,8 +27,7 @@ class McpServerManager private constructor() {
         }
     }
 
-    @Volatile
-    private var mcpServer: McpAndroidServer? = null
+    @Volatile private var mcpServer: McpAndroidServer? = null
 
     @Volatile private var isInitialized = false
 
@@ -45,11 +44,12 @@ class McpServerManager private constructor() {
 
         Log.d(TAG, "Initializing McpServerManager")
 
-        mcpServer = McpAndroidServer.createServer(
-            context = context,
-            name = serverName,
-            version = serverVersion,
-        )
+        mcpServer =
+            McpAndroidServer.createServer(
+                context = context,
+                name = serverName,
+                version = serverVersion,
+            )
 
         mcpServer?.initialize()?.getOrThrow()
 
@@ -168,7 +168,7 @@ class McpServerManager private constructor() {
     /** Call an MCP tool by name */
     suspend fun callMcpTool(
         name: String,
-        arguments: Map<String, Any>
+        arguments: Map<String, Any>,
     ): io.modelcontextprotocol.kotlin.sdk.CallToolResult {
         checkInitialized()
         return mcpServer!!.callMcpTool(name, arguments)
@@ -206,8 +206,8 @@ class McpServerManager private constructor() {
     }
 
     /**
-     * Reset the singleton instance for testing purposes only.
-     * This method should NEVER be called in production code.
+     * Reset the singleton instance for testing purposes only. This method should NEVER be called in
+     * production code.
      */
     @VisibleForTesting
     fun resetForTesting() {

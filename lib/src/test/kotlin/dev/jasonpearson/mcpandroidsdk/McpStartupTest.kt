@@ -2,12 +2,11 @@ package dev.jasonpearson.mcpandroidsdk
 
 import android.content.Context
 import android.util.Log
-import androidx.startup.AppInitializer
 import androidx.test.core.app.ApplicationProvider
 import org.junit.After
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
-import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -65,15 +64,16 @@ class McpStartupTest {
         val customVersion = "1.2.3"
 
         // Custom initialization should succeed
-        val result = McpStartup.initializeWithCustomConfig(
-            context = context,
-            serverName = customName,
-            serverVersion = customVersion
-        )
+        val result =
+            McpStartup.initializeWithCustomConfig(
+                context = context,
+                serverName = customName,
+                serverVersion = customVersion,
+            )
 
         assertTrue(result.isSuccess)
         val manager = result.getOrThrow()
-        
+
         assertNotNull(manager)
         assertTrue(McpStartup.isInitialized())
         assertTrue(manager.isInitialized())
@@ -96,7 +96,7 @@ class McpStartupTest {
     fun `test getManager returns manager when initialized`() {
         // Initialize first
         McpStartup.initializeManually(context)
-        
+
         // Now getManager should work
         val manager = McpStartup.getManager()
         assertNotNull(manager)
@@ -120,7 +120,7 @@ class McpStartupTest {
         Log.d("TEST", "After manual init - isInitialized: ${McpStartup.isInitialized()}")
         assertTrue(
             "McpStartup should report initialized after manual init",
-            McpStartup.isInitialized()
+            McpStartup.isInitialized(),
         )
     }
 
@@ -161,7 +161,6 @@ class McpStartupTest {
             val startupState = McpStartup.isInitialized()
             Log.d("TEST", "McpStartup isInitialized after init: $startupState")
             assertTrue("McpStartup should report initialized", startupState)
-
         } catch (e: Exception) {
             Log.e("TEST", "Exception during manual init", e)
             throw e

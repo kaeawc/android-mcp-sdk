@@ -109,10 +109,8 @@ private constructor(
     ): GetPromptResult = serverImpl.getPrompt(name, arguments)
 
     /** Add a custom prompt */
-    fun addPrompt(
-        prompt: Prompt,
-        handler: suspend (Map<String, Any?>) -> GetPromptResult,
-    ) = serverImpl.addPrompt(prompt, handler)
+    fun addPrompt(prompt: Prompt, handler: suspend (Map<String, Any?>) -> GetPromptResult) =
+        serverImpl.addPrompt(prompt, handler)
 
     // Root operations
 

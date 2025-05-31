@@ -1,17 +1,12 @@
 package dev.jasonpearson.mcpandroidsdk.features.tools
 
 import android.content.Context
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import android.os.Build
-import android.os.Environment
-import android.os.StatFs
-import android.provider.Settings
 import android.util.Log
 import dev.jasonpearson.mcpandroidsdk.models.*
 import io.modelcontextprotocol.kotlin.sdk.*
-import kotlinx.serialization.json.*
 import java.util.concurrent.ConcurrentHashMap
+import kotlinx.serialization.json.*
 
 /**
  * Enhanced tool provider with comprehensive Android-specific functionality.
@@ -48,17 +43,20 @@ class AndroidSpecificToolProvider(private val context: Context) {
         return when {
             customTools.containsKey(name) -> {
                 val handler = customTools[name]?.second
-                handler?.invoke(arguments) ?: CallToolResult(
-                    content = listOf(TextContent(text = "Custom tool handler not found for $name")),
-                    isError = true
-                )
+                handler?.invoke(arguments)
+                    ?: CallToolResult(
+                        content =
+                            listOf(TextContent(text = "Custom tool handler not found for $name")),
+                        isError = true,
+                    )
             }
 
             name in getBuiltInToolNames() -> callBuiltInTool(name, arguments)
-            else -> CallToolResult(
-                content = listOf(TextContent(text = "Tool not found: $name")),
-                isError = true
-            )
+            else ->
+                CallToolResult(
+                    content = listOf(TextContent(text = "Tool not found: $name")),
+                    isError = true,
+                )
         }
     }
 
@@ -104,18 +102,27 @@ class AndroidSpecificToolProvider(private val context: Context) {
 
             // Security Tools
             createPermissionsInfoTool(),
-            createSecuritySettingsTool()
+            createSecuritySettingsTool(),
         )
     }
 
     private fun getBuiltInToolNames(): Set<String> {
         return setOf(
-            "device_info", "system_info", "hardware_info",
-            "app_info", "installed_apps_list",
-            "network_info", "connectivity_status",
-            "storage_info", "directory_listing",
-            "system_time", "memory_info", "battery_info", "cpu_info",
-            "permissions_info", "security_settings"
+            "device_info",
+            "system_info",
+            "hardware_info",
+            "app_info",
+            "installed_apps_list",
+            "network_info",
+            "connectivity_status",
+            "storage_info",
+            "directory_listing",
+            "system_time",
+            "memory_info",
+            "battery_info",
+            "cpu_info",
+            "permissions_info",
+            "security_settings",
         )
     }
 
@@ -150,16 +157,17 @@ class AndroidSpecificToolProvider(private val context: Context) {
                 "permissions_info" -> getPermissionsInfo()
                 "security_settings" -> getSecuritySettings()
 
-                else -> CallToolResult(
-                    content = listOf(TextContent(text = "Unknown built-in tool: $name")),
-                    isError = true
-                )
+                else ->
+                    CallToolResult(
+                        content = listOf(TextContent(text = "Unknown built-in tool: $name")),
+                        isError = true,
+                    )
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error calling built-in tool $name", e)
             CallToolResult(
                 content = listOf(TextContent(text = "Error executing tool $name: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }
@@ -169,16 +177,18 @@ class AndroidSpecificToolProvider(private val context: Context) {
     private fun createDeviceInfoTool(): Tool {
         return Tool(
             name = "device_info",
-            description = "Get comprehensive device information including model, manufacturer, OS version",
-            inputSchema = Tool.Input(properties = buildJsonObject {}, required = emptyList())
+            description =
+                "Get comprehensive device information including model, manufacturer, OS version",
+            inputSchema = Tool.Input(properties = buildJsonObject {}, required = emptyList()),
         )
     }
 
     private fun createSystemInfoTool(): Tool {
         return Tool(
             name = "system_info",
-            description = "Get detailed system information including build details and SDK versions",
-            inputSchema = Tool.Input(properties = buildJsonObject {}, required = emptyList())
+            description =
+                "Get detailed system information including build details and SDK versions",
+            inputSchema = Tool.Input(properties = buildJsonObject {}, required = emptyList()),
         )
     }
 
@@ -186,7 +196,7 @@ class AndroidSpecificToolProvider(private val context: Context) {
         return Tool(
             name = "hardware_info",
             description = "Get hardware information including CPU, display, and sensor details",
-            inputSchema = Tool.Input(properties = buildJsonObject {}, required = emptyList())
+            inputSchema = Tool.Input(properties = buildJsonObject {}, required = emptyList()),
         )
     }
 
@@ -194,15 +204,23 @@ class AndroidSpecificToolProvider(private val context: Context) {
         return Tool(
             name = "app_info",
             description = "Get detailed information about a specific application",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {
-                    put("package_name", buildJsonObject {
-                        put("type", JsonPrimitive("string"))
-                        put("description", JsonPrimitive("Package name of the app (optional)"))
-                    })
-                },
-                required = emptyList()
-            )
+            inputSchema =
+                Tool.Input(
+                    properties =
+                        buildJsonObject {
+                            put(
+                                "package_name",
+                                buildJsonObject {
+                                    put("type", JsonPrimitive("string"))
+                                    put(
+                                        "description",
+                                        JsonPrimitive("Package name of the app (optional)"),
+                                    )
+                                },
+                            )
+                        },
+                    required = emptyList(),
+                ),
         )
     }
 
@@ -210,21 +228,35 @@ class AndroidSpecificToolProvider(private val context: Context) {
         return Tool(
             name = "installed_apps_list",
             description = "Get list of installed applications with filtering options",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {
-                    put("include_system", buildJsonObject {
-                        put("type", JsonPrimitive("boolean"))
-                        put("description", JsonPrimitive("Include system apps in the list"))
-                        put("default", JsonPrimitive(false))
-                    })
-                    put("limit", buildJsonObject {
-                        put("type", JsonPrimitive("integer"))
-                        put("description", JsonPrimitive("Maximum number of apps to return"))
-                        put("default", JsonPrimitive(50))
-                    })
-                },
-                required = emptyList()
-            )
+            inputSchema =
+                Tool.Input(
+                    properties =
+                        buildJsonObject {
+                            put(
+                                "include_system",
+                                buildJsonObject {
+                                    put("type", JsonPrimitive("boolean"))
+                                    put(
+                                        "description",
+                                        JsonPrimitive("Include system apps in the list"),
+                                    )
+                                    put("default", JsonPrimitive(false))
+                                },
+                            )
+                            put(
+                                "limit",
+                                buildJsonObject {
+                                    put("type", JsonPrimitive("integer"))
+                                    put(
+                                        "description",
+                                        JsonPrimitive("Maximum number of apps to return"),
+                                    )
+                                    put("default", JsonPrimitive(50))
+                                },
+                            )
+                        },
+                    required = emptyList(),
+                ),
         )
     }
 
@@ -232,7 +264,7 @@ class AndroidSpecificToolProvider(private val context: Context) {
         return Tool(
             name = "network_info",
             description = "Get current network connection information",
-            inputSchema = Tool.Input(properties = buildJsonObject {}, required = emptyList())
+            inputSchema = Tool.Input(properties = buildJsonObject {}, required = emptyList()),
         )
     }
 
@@ -240,7 +272,7 @@ class AndroidSpecificToolProvider(private val context: Context) {
         return Tool(
             name = "connectivity_status",
             description = "Get detailed network connectivity status and capabilities",
-            inputSchema = Tool.Input(properties = buildJsonObject {}, required = emptyList())
+            inputSchema = Tool.Input(properties = buildJsonObject {}, required = emptyList()),
         )
     }
 
@@ -248,27 +280,35 @@ class AndroidSpecificToolProvider(private val context: Context) {
         return Tool(
             name = "storage_info",
             description = "Get storage information for internal and external storage",
-            inputSchema = Tool.Input(properties = buildJsonObject {}, required = emptyList())
+            inputSchema = Tool.Input(properties = buildJsonObject {}, required = emptyList()),
         )
     }
 
     private fun createDirectoryListingTool(): Tool {
         return Tool(
             name = "directory_listing",
-            description = "List contents of a directory (restricted to app's accessible directories)",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {
-                    put("path", buildJsonObject {
-                        put("type", JsonPrimitive("string"))
-                        put(
-                            "description",
-                            JsonPrimitive("Directory path to list (relative to app's files directory)")
-                        )
-                        put("default", JsonPrimitive("."))
-                    })
-                },
-                required = emptyList()
-            )
+            description =
+                "List contents of a directory (restricted to app's accessible directories)",
+            inputSchema =
+                Tool.Input(
+                    properties =
+                        buildJsonObject {
+                            put(
+                                "path",
+                                buildJsonObject {
+                                    put("type", JsonPrimitive("string"))
+                                    put(
+                                        "description",
+                                        JsonPrimitive(
+                                            "Directory path to list (relative to app's files directory)"
+                                        ),
+                                    )
+                                    put("default", JsonPrimitive("."))
+                                },
+                            )
+                        },
+                    required = emptyList(),
+                ),
         )
     }
 
@@ -276,26 +316,37 @@ class AndroidSpecificToolProvider(private val context: Context) {
         return Tool(
             name = "system_time",
             description = "Get current system time in various formats and timezones",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {
-                    put("format", buildJsonObject {
-                        put("type", JsonPrimitive("string"))
-                        put("description", JsonPrimitive("Time format"))
-                        put("enum", buildJsonArray {
-                            add(JsonPrimitive("iso"))
-                            add(JsonPrimitive("timestamp"))
-                            add(JsonPrimitive("readable"))
-                            add(JsonPrimitive("all"))
-                        })
-                        put("default", JsonPrimitive("all"))
-                    })
-                    put("timezone", buildJsonObject {
-                        put("type", JsonPrimitive("string"))
-                        put("description", JsonPrimitive("Timezone (optional)"))
-                    })
-                },
-                required = emptyList()
-            )
+            inputSchema =
+                Tool.Input(
+                    properties =
+                        buildJsonObject {
+                            put(
+                                "format",
+                                buildJsonObject {
+                                    put("type", JsonPrimitive("string"))
+                                    put("description", JsonPrimitive("Time format"))
+                                    put(
+                                        "enum",
+                                        buildJsonArray {
+                                            add(JsonPrimitive("iso"))
+                                            add(JsonPrimitive("timestamp"))
+                                            add(JsonPrimitive("readable"))
+                                            add(JsonPrimitive("all"))
+                                        },
+                                    )
+                                    put("default", JsonPrimitive("all"))
+                                },
+                            )
+                            put(
+                                "timezone",
+                                buildJsonObject {
+                                    put("type", JsonPrimitive("string"))
+                                    put("description", JsonPrimitive("Timezone (optional)"))
+                                },
+                            )
+                        },
+                    required = emptyList(),
+                ),
         )
     }
 
@@ -303,7 +354,7 @@ class AndroidSpecificToolProvider(private val context: Context) {
         return Tool(
             name = "memory_info",
             description = "Get comprehensive memory usage information",
-            inputSchema = Tool.Input(properties = buildJsonObject {}, required = emptyList())
+            inputSchema = Tool.Input(properties = buildJsonObject {}, required = emptyList()),
         )
     }
 
@@ -311,7 +362,7 @@ class AndroidSpecificToolProvider(private val context: Context) {
         return Tool(
             name = "battery_info",
             description = "Get detailed battery status and health information",
-            inputSchema = Tool.Input(properties = buildJsonObject {}, required = emptyList())
+            inputSchema = Tool.Input(properties = buildJsonObject {}, required = emptyList()),
         )
     }
 
@@ -319,7 +370,7 @@ class AndroidSpecificToolProvider(private val context: Context) {
         return Tool(
             name = "cpu_info",
             description = "Get CPU information and current load statistics",
-            inputSchema = Tool.Input(properties = buildJsonObject {}, required = emptyList())
+            inputSchema = Tool.Input(properties = buildJsonObject {}, required = emptyList()),
         )
     }
 
@@ -327,7 +378,7 @@ class AndroidSpecificToolProvider(private val context: Context) {
         return Tool(
             name = "permissions_info",
             description = "Get information about app permissions and their status",
-            inputSchema = Tool.Input(properties = buildJsonObject {}, required = emptyList())
+            inputSchema = Tool.Input(properties = buildJsonObject {}, required = emptyList()),
         )
     }
 
@@ -335,11 +386,12 @@ class AndroidSpecificToolProvider(private val context: Context) {
         return Tool(
             name = "security_settings",
             description = "Get information about device security settings",
-            inputSchema = Tool.Input(properties = buildJsonObject {}, required = emptyList())
+            inputSchema = Tool.Input(properties = buildJsonObject {}, required = emptyList()),
         )
     }
 
-    // Tool implementations (placeholder methods - these would be implemented with actual functionality)
+    // Tool implementations (placeholder methods - these would be implemented with actual
+    // functionality)
 
     private fun getDeviceInfo(): CallToolResult {
         val deviceInfo = buildString {
@@ -357,10 +409,7 @@ class AndroidSpecificToolProvider(private val context: Context) {
             appendLine("Display: ${Build.DISPLAY}")
         }
 
-        return CallToolResult(
-            content = listOf(TextContent(text = deviceInfo)),
-            isError = false
-        )
+        return CallToolResult(content = listOf(TextContent(text = deviceInfo)), isError = false)
     }
 
     private fun getSystemInfo(): CallToolResult {
@@ -379,10 +428,7 @@ class AndroidSpecificToolProvider(private val context: Context) {
             }
         }
 
-        return CallToolResult(
-            content = listOf(TextContent(text = systemInfo)),
-            isError = false
-        )
+        return CallToolResult(content = listOf(TextContent(text = systemInfo)), isError = false)
     }
 
     private fun getHardwareInfo(): CallToolResult {
@@ -407,94 +453,93 @@ class AndroidSpecificToolProvider(private val context: Context) {
             appendLine("  - Scaled Density: ${metrics.scaledDensity}")
         }
 
-        return CallToolResult(
-            content = listOf(TextContent(text = hardwareInfo)),
-            isError = false
-        )
+        return CallToolResult(content = listOf(TextContent(text = hardwareInfo)), isError = false)
     }
 
     // Placeholder implementations for other tools - these would be fully implemented
     private fun getAppInfo(arguments: Map<String, Any>): CallToolResult {
         return CallToolResult(
             content = listOf(TextContent(text = "App info tool - implementation pending")),
-            isError = false
+            isError = false,
         )
     }
 
     private fun getInstalledAppsList(arguments: Map<String, Any>): CallToolResult {
         return CallToolResult(
-            content = listOf(TextContent(text = "Installed apps list tool - implementation pending")),
-            isError = false
+            content =
+                listOf(TextContent(text = "Installed apps list tool - implementation pending")),
+            isError = false,
         )
     }
 
     private fun getNetworkInfo(): CallToolResult {
         return CallToolResult(
             content = listOf(TextContent(text = "Network info tool - implementation pending")),
-            isError = false
+            isError = false,
         )
     }
 
     private fun getConnectivityStatus(): CallToolResult {
         return CallToolResult(
-            content = listOf(TextContent(text = "Connectivity status tool - implementation pending")),
-            isError = false
+            content =
+                listOf(TextContent(text = "Connectivity status tool - implementation pending")),
+            isError = false,
         )
     }
 
     private fun getStorageInfo(): CallToolResult {
         return CallToolResult(
             content = listOf(TextContent(text = "Storage info tool - implementation pending")),
-            isError = false
+            isError = false,
         )
     }
 
     private fun getDirectoryListing(arguments: Map<String, Any>): CallToolResult {
         return CallToolResult(
             content = listOf(TextContent(text = "Directory listing tool - implementation pending")),
-            isError = false
+            isError = false,
         )
     }
 
     private fun getSystemTime(arguments: Map<String, Any>): CallToolResult {
         return CallToolResult(
             content = listOf(TextContent(text = "System time tool - implementation pending")),
-            isError = false
+            isError = false,
         )
     }
 
     private fun getMemoryInfo(): CallToolResult {
         return CallToolResult(
             content = listOf(TextContent(text = "Memory info tool - implementation pending")),
-            isError = false
+            isError = false,
         )
     }
 
     private fun getBatteryInfo(): CallToolResult {
         return CallToolResult(
             content = listOf(TextContent(text = "Battery info tool - implementation pending")),
-            isError = false
+            isError = false,
         )
     }
 
     private fun getCpuInfo(): CallToolResult {
         return CallToolResult(
             content = listOf(TextContent(text = "CPU info tool - implementation pending")),
-            isError = false
+            isError = false,
         )
     }
 
     private fun getPermissionsInfo(): CallToolResult {
         return CallToolResult(
             content = listOf(TextContent(text = "Permissions info tool - implementation pending")),
-            isError = false
+            isError = false,
         )
     }
 
     private fun getSecuritySettings(): CallToolResult {
         return CallToolResult(
             content = listOf(TextContent(text = "Security settings tool - implementation pending")),
-            isError = false
+            isError = false,
         )
     }
 }

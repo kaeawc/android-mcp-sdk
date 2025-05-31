@@ -11,7 +11,6 @@ import androidx.startup.Initializer
  * eliminating the need for manual initialization in Application.onCreate().
  *
  * To enable automatic initialization, add the following to your AndroidManifest.xml:
- *
  * ```xml
  * <provider
  *     android:name="androidx.startup.InitializationProvider"
@@ -36,11 +35,12 @@ class McpServerManagerInitializer : Initializer<McpServerManager> {
         val manager = McpServerManager.getInstance()
 
         // Initialize with default configuration
-        val result = manager.initialize(
-            context = context.applicationContext,
-            serverName = "Android MCP Server",
-            serverVersion = "1.0.0"
-        )
+        val result =
+            manager.initialize(
+                context = context.applicationContext,
+                serverName = "Android MCP Server",
+                serverVersion = "1.0.0",
+            )
 
         result.fold(
             onSuccess = {
@@ -48,7 +48,7 @@ class McpServerManagerInitializer : Initializer<McpServerManager> {
             },
             onFailure = { exception ->
                 Log.e(TAG, "Failed to initialize McpServerManager via AndroidX Startup", exception)
-            }
+            },
         )
 
         return manager

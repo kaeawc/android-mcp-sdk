@@ -2,12 +2,12 @@ package dev.jasonpearson.mcpandroidsdk
 
 import android.content.Context
 import android.util.Log
-import dev.jasonpearson.mcpandroidsdk.features.tools.ToolProvider
-import dev.jasonpearson.mcpandroidsdk.features.resources.ResourceProvider
 import dev.jasonpearson.mcpandroidsdk.features.prompts.PromptProvider
+import dev.jasonpearson.mcpandroidsdk.features.resources.ResourceProvider
+import dev.jasonpearson.mcpandroidsdk.features.tools.ToolProvider
 import dev.jasonpearson.mcpandroidsdk.models.*
-import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.*
 
 /**
  * Android-specific wrapper for MCP Server functionality. Provides easy integration of MCP servers
@@ -103,12 +103,13 @@ private constructor(
                             while (isActive && isRunning.get()) {
                                 delay(1000)
                             }
-                        } ?: run {
-                            Log.i(TAG, "Running in fallback mode without SDK")
-                            while (isActive && isRunning.get()) {
-                                delay(1000)
-                            }
                         }
+                            ?: run {
+                                Log.i(TAG, "Running in fallback mode without SDK")
+                                while (isActive && isRunning.get()) {
+                                    delay(1000)
+                                }
+                            }
                     } catch (e: Exception) {
                         Log.e(TAG, "Server error", e)
                         throw e
@@ -164,7 +165,7 @@ private constructor(
             toolCount = availableTools.size,
             resourceCount = if (isInitialized()) resourceProvider.getAllResources().size else 0,
             promptCount = if (isInitialized()) promptProvider.getAllPrompts().size else 0,
-            rootCount = 0
+            rootCount = 0,
         )
     }
 
@@ -211,14 +212,19 @@ private constructor(
     /** Call an MCP tool */
     suspend fun callMcpTool(
         name: String,
-        arguments: Map<String, Any>
+        arguments: Map<String, Any>,
     ): io.modelcontextprotocol.kotlin.sdk.CallToolResult {
         return if (isInitialized()) {
             toolProvider.callTool(name, arguments)
         } else {
             io.modelcontextprotocol.kotlin.sdk.CallToolResult(
-                content = listOf(io.modelcontextprotocol.kotlin.sdk.TextContent(text = "Server not initialized")),
-                isError = true
+                content =
+                    listOf(
+                        io.modelcontextprotocol.kotlin.sdk.TextContent(
+                            text = "Server not initialized"
+                        )
+                    ),
+                isError = true,
             )
         }
     }
@@ -274,11 +280,8 @@ private constructor(
     private fun createAndroidServerCapabilities(): ServerCapabilities {
         return ServerCapabilities(
             tools = ToolsCapability(listChanged = true),
-            resources = ResourcesCapability(
-                subscribe = true,
-                listChanged = true
-            ),
-            prompts = PromptsCapability(listChanged = true)
+            resources = ResourcesCapability(subscribe = true, listChanged = true),
+            prompts = PromptsCapability(listChanged = true),
         )
     }
 

@@ -7,7 +7,7 @@ data class AndroidResourceContent(
     val uri: String,
     val text: String?,
     val blob: ByteArray? = null,
-    val mimeType: String = "text/plain"
+    val mimeType: String = "text/plain",
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -7,8 +7,8 @@ import androidx.startup.AppInitializer
 /**
  * Utility class for managing MCP server initialization with AndroidX Startup.
  *
- * This class provides convenient methods for both automatic and manual initialization
- * of the MCP server manager.
+ * This class provides convenient methods for both automatic and manual initialization of the MCP
+ * server manager.
  */
 object McpStartup {
 
@@ -17,8 +17,8 @@ object McpStartup {
     /**
      * Manually initialize the MCP server manager using AndroidX Startup.
      *
-     * This method is useful if you've disabled automatic initialization in the manifest
-     * but still want to use the AndroidX Startup infrastructure.
+     * This method is useful if you've disabled automatic initialization in the manifest but still
+     * want to use the AndroidX Startup infrastructure.
      *
      * @param context Application or other context
      * @return The initialized McpServerManager instance
@@ -60,7 +60,7 @@ object McpStartup {
         if (!manager.isInitialized()) {
             throw IllegalStateException(
                 "McpServerManager is not initialized. " +
-                        "Ensure AndroidX Startup is configured correctly or call initializeManually()."
+                    "Ensure AndroidX Startup is configured correctly or call initializeManually()."
             )
         }
         return manager
@@ -69,8 +69,7 @@ object McpStartup {
     /**
      * Initialize with custom configuration.
      *
-     * This bypasses AndroidX Startup and directly initializes the manager with
-     * custom parameters.
+     * This bypasses AndroidX Startup and directly initializes the manager with custom parameters.
      *
      * @param context Application context
      * @param serverName Custom server name
@@ -80,16 +79,18 @@ object McpStartup {
     fun initializeWithCustomConfig(
         context: Context,
         serverName: String,
-        serverVersion: String
+        serverVersion: String,
     ): Result<McpServerManager> = runCatching {
         Log.d(TAG, "Custom initialization with name: $serverName, version: $serverVersion")
 
         val manager = McpServerManager.getInstance()
-        manager.initialize(
-            context = context.applicationContext,
-            serverName = serverName,
-            serverVersion = serverVersion
-        ).getOrThrow()
+        manager
+            .initialize(
+                context = context.applicationContext,
+                serverName = serverName,
+                serverVersion = serverVersion,
+            )
+            .getOrThrow()
 
         manager
     }

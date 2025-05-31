@@ -143,7 +143,10 @@ class ResourceProvider(private val context: Context) {
                 AndroidResourceContent(uri = fileUri, text = "Error reading file: ${e.message}")
             } catch (e: SecurityException) {
                 Log.e(TAG, "Security error reading file resource $fileUri", e)
-                AndroidResourceContent(uri = fileUri, text = "Security error reading file: ${e.message}")
+                AndroidResourceContent(
+                    uri = fileUri,
+                    text = "Security error reading file: ${e.message}",
+                )
             }
         }
     }
