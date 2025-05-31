@@ -1,6 +1,7 @@
 package dev.jasonpearson.mcpandroidsdk
 
 import org.junit.Assert.*
+import org.junit.Assert.fail
 import org.junit.Test
 
 /** Unit tests for McpServerManager */
@@ -79,7 +80,7 @@ class McpServerManagerTest {
         }
 
         try {
-            manager.getTools()
+            manager.getAndroidTools()
             fail("Should throw IllegalStateException when not initialized")
         } catch (e: IllegalStateException) {
             assertTrue(
@@ -89,7 +90,7 @@ class McpServerManagerTest {
         }
 
         try {
-            manager.getResources()
+            manager.getMcpResources()
             fail("Should throw IllegalStateException when not initialized")
         } catch (e: IllegalStateException) {
             assertTrue(
@@ -99,7 +100,7 @@ class McpServerManagerTest {
         }
 
         try {
-            manager.getPrompts()
+            manager.getMcpPrompts()
             fail("Should throw IllegalStateException when not initialized")
         } catch (e: IllegalStateException) {
             assertTrue(
