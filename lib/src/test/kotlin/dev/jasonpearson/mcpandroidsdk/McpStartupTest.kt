@@ -38,31 +38,20 @@ class McpStartupTest {
     private fun createTestInitializedManager(): McpServerManager {
         val manager = McpServerManager.getInstance()
 
-        // Use reflection to mark as initialized without full initialization
-        val managerClass = manager.javaClass
-        val isInitializedField = managerClass.getDeclaredField("isInitialized")
-        isInitializedField.isAccessible = true
-        isInitializedField.setBoolean(manager, true)
-
-        // Create a minimal mock server
-        val mcpServerField = managerClass.getDeclaredField("mcpServer")
-        mcpServerField.isAccessible = true
-        mcpServerField.set(manager, MockMcpServer())
+        // Use proper initialization instead of reflection to avoid type issues
+        val result = manager.initialize(context, "Test Server", "1.0.0")
+        if (result.isFailure) {
+            throw RuntimeException(
+                "Failed to initialize manager for testing",
+                result.exceptionOrNull()
+            )
+        }
 
         return manager
     }
 
-    /** Minimal mock server for testing */
-    private class MockMcpServer {
-        fun getServerInfo() =
-            dev.jasonpearson.mcpandroidsdk.models.ServerInfo(
-                name = "Test Server",
-                version = "1.0.0",
-                sdkVersion = "0.5.0",
-                isRunning = false,
-                toolCount = 0,
-            )
-    }
+    /** Minimal mock server for testing - no longer needed since we use proper initialization */
+    // private class MockMcpServer { ... }
 
     @Test
     fun `test manual initialization with McpStartup`() {
