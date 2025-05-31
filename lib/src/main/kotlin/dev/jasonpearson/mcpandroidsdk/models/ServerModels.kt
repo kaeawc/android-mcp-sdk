@@ -25,6 +25,7 @@ data class ComprehensiveServerInfo(
     val resourceCount: Int,
     val promptCount: Int,
     val rootCount: Int,
+    val transportInfo: Map<String, Any> = emptyMap(),
 )
 
 /** Represents an Android-specific tool that can be executed by the MCP server */
