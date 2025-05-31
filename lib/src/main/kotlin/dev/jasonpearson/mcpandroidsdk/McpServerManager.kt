@@ -2,6 +2,7 @@ package dev.jasonpearson.mcpandroidsdk
 
 import android.content.Context
 import android.util.Log
+import androidx.annotation.VisibleForTesting
 import dev.jasonpearson.mcpandroidsdk.models.*
 import io.modelcontextprotocol.kotlin.sdk.*
 import kotlinx.coroutines.*
@@ -242,6 +243,20 @@ class McpServerManager private constructor() {
         isInitialized = false
         comprehensiveServer = null
         Log.d(TAG, "McpServerManager cleaned up")
+    }
+
+    /**
+     * Reset the singleton instance for testing purposes only.
+     * This method should NEVER be called in production code.
+     */
+    @VisibleForTesting
+    fun resetForTesting() {
+        synchronized(this) {
+            isInitialized = false
+            comprehensiveServer = null
+            INSTANCE = null
+            Log.d(TAG, "McpServerManager reset for testing")
+        }
     }
 
     // Private helper methods
