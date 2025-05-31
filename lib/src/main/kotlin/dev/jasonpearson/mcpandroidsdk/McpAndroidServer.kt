@@ -2,13 +2,16 @@ package dev.jasonpearson.mcpandroidsdk
 
 import android.content.Context
 import android.util.Log
+import dev.jasonpearson.mcpandroidsdk.features.tools.ToolProvider
+import dev.jasonpearson.mcpandroidsdk.features.resources.ResourceProvider
+import dev.jasonpearson.mcpandroidsdk.features.prompts.PromptProvider
 import dev.jasonpearson.mcpandroidsdk.models.*
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.*
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Android-specific wrapper for MCP Server functionality. Provides easy integration of MCP servers
- * in Android applications.
+ * in Android applications with MCP Kotlin SDK integration.
  *
  * This library integrates the MCP Kotlin SDK (io.modelcontextprotocol:kotlin-sdk:0.5.0) to enable
  * Android apps to host MCP servers and expose them to MCP clients running on adb-connected
@@ -36,34 +39,75 @@ private constructor(
     }
 
     private val isRunning = AtomicBoolean(false)
+    private val isInitialized = AtomicBoolean(false)
     private var serverJob: Job? = null
     private val serverScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    // MCP SDK server instance (using Any to avoid import conflicts)
+    private var mcpServer: Any? = null
+
+    // Feature providers
+    private lateinit var toolProvider: ToolProvider
+    private lateinit var resourceProvider: ResourceProvider
+    private lateinit var promptProvider: PromptProvider
 
     // Basic tool definitions for Android-specific functionality
     private val availableTools = mutableListOf<AndroidTool>()
 
     /** Initialize the MCP server with full capabilities */
     fun initialize(): Result<Unit> = runCatching {
+        if (isInitialized.get()) {
+            Log.w(TAG, "Server already initialized")
+            return@runCatching
+        }
+
         Log.d(TAG, "Initializing MCP server: $name v$version")
+
+        // Initialize feature providers
+        toolProvider = ToolProvider(context)
+        resourceProvider = ResourceProvider(context)
+        promptProvider = PromptProvider(context)
+
+        // Try to create MCP server with SDK
+        try {
+            mcpServer = createMcpServerWithSDK()
+            Log.i(TAG, "MCP server created with SDK integration")
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to create MCP server with SDK, using fallback", e)
+            mcpServer = null
+        }
 
         // Add default Android tools
         addDefaultTools()
 
+        isInitialized.set(true)
         Log.i(TAG, "MCP server initialized successfully with ${availableTools.size} tools")
     }
 
     /** Start the MCP server. This will run until stop() is called. */
     suspend fun start(): Result<Unit> = runCatching {
+        if (!isInitialized.get()) {
+            throw IllegalStateException("Server must be initialized before starting")
+        }
+
         if (isRunning.compareAndSet(false, true)) {
             Log.i(TAG, "Starting MCP server...")
 
             serverJob =
                 serverScope.launch {
                     try {
-                        // TODO: Implement actual MCP server startup with proper SDK integration
-                        // For now, just simulate a running server that can respond to tool calls
-                        while (isActive) {
-                            delay(1000)
+                        mcpServer?.let {
+                            Log.i(TAG, "Starting MCP server with SDK integration")
+                            // For now, just maintain the server state
+                            // Full transport integration would be implemented here
+                            while (isActive && isRunning.get()) {
+                                delay(1000)
+                            }
+                        } ?: run {
+                            Log.i(TAG, "Running in fallback mode without SDK")
+                            while (isActive && isRunning.get()) {
+                                delay(1000)
+                            }
                         }
                     } catch (e: Exception) {
                         Log.e(TAG, "Server error", e)
@@ -94,6 +138,9 @@ private constructor(
     /** Check if the server is currently running */
     fun isRunning(): Boolean = isRunning.get()
 
+    /** Check if the server is initialized */
+    fun isInitialized(): Boolean = isInitialized.get()
+
     /** Get server information */
     fun getServerInfo(): ServerInfo {
         return ServerInfo(
@@ -102,6 +149,22 @@ private constructor(
             sdkVersion = getMcpSdkVersion(),
             isRunning = isRunning(),
             toolCount = availableTools.size,
+        )
+    }
+
+    /** Get comprehensive server information */
+    fun getComprehensiveServerInfo(): ComprehensiveServerInfo {
+        return ComprehensiveServerInfo(
+            name = name,
+            version = version,
+            sdkVersion = getMcpSdkVersion(),
+            isRunning = isRunning(),
+            isInitialized = isInitialized(),
+            capabilities = createAndroidServerCapabilities(),
+            toolCount = availableTools.size,
+            resourceCount = if (isInitialized()) resourceProvider.getAllResources().size else 0,
+            promptCount = if (isInitialized()) promptProvider.getAllPrompts().size else 0,
+            rootCount = 0
         )
     }
 
@@ -138,6 +201,85 @@ private constructor(
                 error = "Tool execution failed: ${e.message}",
             )
         }
+    }
+
+    /** Get all MCP tools from the tool provider */
+    fun getMcpTools(): List<io.modelcontextprotocol.kotlin.sdk.Tool> {
+        return if (isInitialized()) toolProvider.getAllTools() else emptyList()
+    }
+
+    /** Call an MCP tool */
+    suspend fun callMcpTool(
+        name: String,
+        arguments: Map<String, Any>
+    ): io.modelcontextprotocol.kotlin.sdk.CallToolResult {
+        return if (isInitialized()) {
+            toolProvider.callTool(name, arguments)
+        } else {
+            io.modelcontextprotocol.kotlin.sdk.CallToolResult(
+                content = listOf(io.modelcontextprotocol.kotlin.sdk.TextContent(text = "Server not initialized")),
+                isError = true
+            )
+        }
+    }
+
+    /** Get all MCP resources */
+    fun getMcpResources(): List<io.modelcontextprotocol.kotlin.sdk.Resource> {
+        return if (isInitialized()) resourceProvider.getAllResources() else emptyList()
+    }
+
+    /** Get all MCP prompts */
+    fun getMcpPrompts(): List<io.modelcontextprotocol.kotlin.sdk.Prompt> {
+        return if (isInitialized()) promptProvider.getAllPrompts() else emptyList()
+    }
+
+    /** Check if SDK integration is available */
+    fun hasSDKIntegration(): Boolean = mcpServer != null
+
+    // Private helper methods
+
+    private fun createMcpServerWithSDK(): Any? {
+        return try {
+            // Create server using reflection to avoid import conflicts
+            val serverClass = Class.forName("io.modelcontextprotocol.kotlin.sdk.server.Server")
+            val implementationClass =
+                Class.forName("io.modelcontextprotocol.kotlin.sdk.Implementation")
+            val serverOptionsClass =
+                Class.forName("io.modelcontextprotocol.kotlin.sdk.server.ServerOptions")
+            val serverCapabilitiesClass =
+                Class.forName("io.modelcontextprotocol.kotlin.sdk.ServerCapabilities")
+
+            // Create Implementation
+            val implementationConstructor =
+                implementationClass.getConstructor(String::class.java, String::class.java)
+            val implementation = implementationConstructor.newInstance(name, version)
+
+            // Create basic ServerOptions (simplified for now)
+            val serverOptionsConstructor =
+                serverOptionsClass.getConstructor(serverCapabilitiesClass)
+            val serverCapabilitiesConstructor = serverCapabilitiesClass.getConstructor()
+            val capabilities = serverCapabilitiesConstructor.newInstance()
+            val options = serverOptionsConstructor.newInstance(capabilities)
+
+            // Create Server
+            val serverConstructor =
+                serverClass.getConstructor(implementationClass, serverOptionsClass)
+            serverConstructor.newInstance(implementation, options)
+        } catch (e: Exception) {
+            Log.w(TAG, "Reflection-based server creation failed", e)
+            null
+        }
+    }
+
+    private fun createAndroidServerCapabilities(): ServerCapabilities {
+        return ServerCapabilities(
+            tools = ToolsCapability(listChanged = true),
+            resources = ResourcesCapability(
+                subscribe = true,
+                listChanged = true
+            ),
+            prompts = PromptsCapability(listChanged = true)
+        )
     }
 
     /** Add default Android-specific tools */

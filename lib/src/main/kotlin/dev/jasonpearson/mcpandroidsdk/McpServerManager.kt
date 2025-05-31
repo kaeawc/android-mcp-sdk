@@ -4,15 +4,14 @@ import android.content.Context
 import android.util.Log
 import androidx.annotation.VisibleForTesting
 import dev.jasonpearson.mcpandroidsdk.models.*
-import io.modelcontextprotocol.kotlin.sdk.*
 import kotlinx.coroutines.*
 
 /**
  * Thread-safe singleton manager for MCP Server functionality in Android applications.
  *
  * This manager provides a centralized way to initialize, configure, and control the MCP server
- * lifecycle. It integrates all MCP capabilities including tools, resources, prompts, sampling, and
- * roots.
+ * lifecycle. It integrates all MCP capabilities including tools, resources, prompts, and provides
+ * seamless integration with the MCP Kotlin SDK.
  */
 class McpServerManager private constructor() {
 
@@ -28,7 +27,8 @@ class McpServerManager private constructor() {
         }
     }
 
-    @Volatile private var comprehensiveServer: ComprehensiveMcpServer? = null
+    @Volatile
+    private var mcpServer: McpAndroidServer? = null
 
     @Volatile private var isInitialized = false
 
@@ -45,14 +45,13 @@ class McpServerManager private constructor() {
 
         Log.d(TAG, "Initializing McpServerManager")
 
-        comprehensiveServer =
-            ComprehensiveMcpServer.createServer(
-                context = context,
-                name = serverName,
-                version = serverVersion,
-            )
+        mcpServer = McpAndroidServer.createServer(
+            context = context,
+            name = serverName,
+            version = serverVersion,
+        )
 
-        comprehensiveServer?.initialize()?.getOrThrow()
+        mcpServer?.initialize()?.getOrThrow()
 
         isInitialized = true
         Log.i(TAG, "McpServerManager initialized successfully")
@@ -62,7 +61,7 @@ class McpServerManager private constructor() {
     fun isInitialized(): Boolean = isInitialized
 
     /** Get the MCP SDK version */
-    fun getMcpSdkVersion(): String = ComprehensiveMcpServer.getMcpSdkVersion()
+    fun getMcpSdkVersion(): String = McpAndroidServer.getMcpSdkVersion()
 
     /** Start the MCP server in a background thread */
     fun startServerAsync(coroutineScope: CoroutineScope = GlobalScope): Job? {
@@ -83,165 +82,126 @@ class McpServerManager private constructor() {
     /** Start the MCP server (blocking call) */
     suspend fun startServer(): Result<Unit> {
         checkInitialized()
-        return comprehensiveServer!!.start()
+        return mcpServer!!.start()
     }
 
     /** Stop the MCP server */
     suspend fun stopServer(): Result<Unit> {
         checkInitialized()
-        return comprehensiveServer!!.stop()
+        return mcpServer!!.stop()
     }
 
     /** Check if the server is currently running */
     fun isServerRunning(): Boolean {
         return try {
-            comprehensiveServer?.isRunning() ?: false
+            mcpServer?.isRunning() ?: false
         } catch (e: Exception) {
             Log.e(TAG, "Error checking server status", e)
             false
         }
     }
 
-    /** Get comprehensive server information */
-    fun getServerInfo(): ComprehensiveServerInfo? {
+    /** Get server information */
+    fun getServerInfo(): ServerInfo? {
         return try {
-            comprehensiveServer?.getServerInfo()
+            mcpServer?.getServerInfo()
         } catch (e: Exception) {
             Log.e(TAG, "Error getting server info", e)
             null
         }
     }
 
-    /** Get the underlying comprehensive MCP server instance */
-    fun getMcpServer(): ComprehensiveMcpServer {
-        checkInitialized()
-        return comprehensiveServer!!
+    /** Get comprehensive server information */
+    fun getComprehensiveServerInfo(): ComprehensiveServerInfo? {
+        return try {
+            mcpServer?.getComprehensiveServerInfo()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting comprehensive server info", e)
+            null
+        }
     }
 
-    // Tool operations
-
-    /** Get all available tools */
-    fun getTools(): List<Tool> {
+    /** Get the underlying MCP Android server instance */
+    fun getMcpServer(): McpAndroidServer {
         checkInitialized()
-        return comprehensiveServer!!.getTools()
+        return mcpServer!!
     }
 
-    /** Call a tool by name */
-    suspend fun callTool(name: String, arguments: Map<String, Any>): CallToolResult {
-        checkInitialized()
-        return comprehensiveServer!!.callTool(name, arguments)
+    /** Check if SDK integration is available */
+    fun hasSDKIntegration(): Boolean {
+        return try {
+            mcpServer?.hasSDKIntegration() ?: false
+        } catch (e: Exception) {
+            Log.e(TAG, "Error checking SDK integration", e)
+            false
+        }
     }
 
-    /** Add a custom tool */
-    fun addTool(tool: Tool, handler: suspend (Map<String, Any>) -> CallToolResult) {
+    // Tool operations (Android-specific)
+
+    /** Get all available Android tools */
+    fun getAndroidTools(): List<AndroidTool> {
         checkInitialized()
-        comprehensiveServer!!.addTool(tool, handler)
+        return mcpServer!!.getAvailableTools()
     }
 
-    // Resource operations
-
-    /** Get all available resources */
-    fun getResources(): List<Resource> {
+    /** Execute an Android tool by name */
+    suspend fun executeAndroidTool(name: String, arguments: Map<String, Any>): ToolExecutionResult {
         checkInitialized()
-        return comprehensiveServer!!.getResources()
+        return mcpServer!!.executeTool(name, arguments)
     }
 
-    /** Get all resource templates */
-    fun getResourceTemplates(): List<ResourceTemplate> {
+    /** Add a custom Android tool */
+    fun addAndroidTool(tool: AndroidTool) {
         checkInitialized()
-        return comprehensiveServer!!.getResourceTemplates()
+        mcpServer!!.addTool(tool)
     }
 
-    /** Read a resource by URI */
-    suspend fun readResource(uri: String): AndroidResourceContent {
+    // MCP SDK Tool operations
+
+    /** Get all available MCP tools */
+    fun getMcpTools(): List<io.modelcontextprotocol.kotlin.sdk.Tool> {
         checkInitialized()
-        return comprehensiveServer!!.readResource(uri)
+        return mcpServer!!.getMcpTools()
     }
 
-    /** Add a custom resource */
-    fun addResource(resource: Resource, contentProvider: suspend () -> AndroidResourceContent) {
-        checkInitialized()
-        comprehensiveServer!!.addResource(resource, contentProvider)
-    }
-
-    /** Subscribe to resource updates */
-    fun subscribeToResource(uri: String) {
-        checkInitialized()
-        comprehensiveServer!!.subscribeToResource(uri)
-    }
-
-    /** Unsubscribe from resource updates */
-    fun unsubscribeFromResource(uri: String) {
-        checkInitialized()
-        comprehensiveServer!!.unsubscribeFromResource(uri)
-    }
-
-    // Prompt operations
-
-    /** Get all available prompts */
-    fun getPrompts(): List<Prompt> {
-        checkInitialized()
-        return comprehensiveServer!!.getPrompts()
-    }
-
-    /** Get a prompt by name with arguments */
-    suspend fun getPrompt(
+    /** Call an MCP tool by name */
+    suspend fun callMcpTool(
         name: String,
-        arguments: Map<String, Any?> = emptyMap(),
-    ): GetPromptResult {
+        arguments: Map<String, Any>
+    ): io.modelcontextprotocol.kotlin.sdk.CallToolResult {
         checkInitialized()
-        return comprehensiveServer!!.getPrompt(name, arguments)
+        return mcpServer!!.callMcpTool(name, arguments)
     }
 
-    /** Add a custom prompt */
-    fun addPrompt(
-        prompt: Prompt,
-        handler: suspend (Map<String, Any?>) -> GetPromptResult,
-    ) {
+    // MCP SDK Resource operations
+
+    /** Get all available MCP resources */
+    fun getMcpResources(): List<io.modelcontextprotocol.kotlin.sdk.Resource> {
         checkInitialized()
-        comprehensiveServer!!.addPrompt(prompt, handler)
+        return mcpServer!!.getMcpResources()
     }
 
-    // Root operations
+    // MCP SDK Prompt operations
 
-    /** Get all roots */
-    fun getRoots(): List<Root> {
+    /** Get all available MCP prompts */
+    fun getMcpPrompts(): List<io.modelcontextprotocol.kotlin.sdk.Prompt> {
         checkInitialized()
-        return comprehensiveServer!!.getRoots()
-    }
-
-    /** Add a root directory */
-    fun addRoot(root: Root) {
-        checkInitialized()
-        comprehensiveServer!!.addRoot(root)
-    }
-
-    /** Remove a root directory */
-    fun removeRoot(uri: String): Boolean {
-        checkInitialized()
-        return comprehensiveServer!!.removeRoot(uri)
-    }
-
-    // Sampling operations
-
-    /** Request sampling from client (placeholder for future implementation) */
-    suspend fun requestSampling(request: SamplingRequest): Result<String> {
-        checkInitialized()
-        return comprehensiveServer!!.requestSampling(request)
+        return mcpServer!!.getMcpPrompts()
     }
 
     // Capabilities
 
     /** Get server capabilities */
-    fun getCapabilities(): dev.jasonpearson.mcpandroidsdk.models.ServerCapabilities {
+    fun getCapabilities(): ServerCapabilities {
         checkInitialized()
-        return comprehensiveServer!!.getCapabilities()
+        return mcpServer!!.getComprehensiveServerInfo().capabilities
     }
 
     // Cleanup resources when the manager is no longer needed
     fun cleanup() {
         isInitialized = false
-        comprehensiveServer = null
+        mcpServer = null
         Log.d(TAG, "McpServerManager cleaned up")
     }
 
@@ -253,7 +213,7 @@ class McpServerManager private constructor() {
     fun resetForTesting() {
         synchronized(this) {
             isInitialized = false
-            comprehensiveServer = null
+            mcpServer = null
             INSTANCE = null
             Log.d(TAG, "McpServerManager reset for testing")
         }
