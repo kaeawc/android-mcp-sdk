@@ -37,7 +37,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install xmlstarlet
-          ci/validate_xml.sh
+          scripts/xml/validate_xml.sh
 
   ktfmt:
     name: "ktfmt"
@@ -49,7 +49,7 @@ jobs:
       - name: "Run ktfmt"
         shell: "bash"
         run: |
-          INSTALL_KTFMT_WHEN_MISSING=true ONLY_TOUCHED_FILES=false ci/validate_ktfmt.sh
+          INSTALL_KTFMT_WHEN_MISSING=true ONLY_TOUCHED_FILES=false scripts/ktfmt/validate_ktfmt.sh
 
   validate-shell-scripts:
     name: "Validate Shell Scripts"
@@ -61,7 +61,7 @@ jobs:
       - name: "Run ShellCheck"
         shell: "bash"
         run: |
-          ci/validate_shell_scripts.sh
+          scripts/shellcheckc/validate_shell_scripts.sh
 
   build-library:
     name: "Build Library"
