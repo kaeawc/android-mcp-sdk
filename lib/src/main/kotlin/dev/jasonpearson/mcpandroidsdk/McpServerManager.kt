@@ -190,6 +190,20 @@ class McpServerManager private constructor() {
         return mcpServer!!.getMcpPrompts()
     }
 
+    // Transport operations
+
+    /** Get transport connection information */
+    fun getTransportInfo(): Map<String, Any> {
+        checkInitialized()
+        return mcpServer!!.getTransportInfo()
+    }
+
+    /** Send a message to all connected clients via transports */
+    suspend fun broadcastMessage(message: String): Result<Unit> {
+        checkInitialized()
+        return mcpServer!!.broadcastMessage(message)
+    }
+
     // Capabilities
 
     /** Get server capabilities */

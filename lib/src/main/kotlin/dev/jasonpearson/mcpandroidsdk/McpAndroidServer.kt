@@ -6,18 +6,16 @@ import dev.jasonpearson.mcpandroidsdk.features.prompts.PromptProvider
 import dev.jasonpearson.mcpandroidsdk.features.resources.ResourceProvider
 import dev.jasonpearson.mcpandroidsdk.features.tools.ToolProvider
 import dev.jasonpearson.mcpandroidsdk.models.*
-import dev.jasonpearson.mcpandroidsdk.transport.AndroidStdioTransport
+import dev.jasonpearson.mcpandroidsdk.transport.TransportManager
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.*
-import kotlinx.serialization.json.*
 
 /**
  * Android-specific wrapper for MCP Server functionality. Provides easy integration of MCP servers
- * in Android applications with MCP Kotlin SDK integration.
+ * in Android applications with MCP Kotlin SDK integration and transport support.
  *
  * This library integrates the MCP Kotlin SDK (io.modelcontextprotocol:kotlin-sdk:0.5.0) to enable
- * Android apps to host MCP servers and expose them to MCP clients running on adb-connected
- * workstations.
+ * Android apps to host MCP servers and expose them to MCP clients via WebSocket and HTTP/SSE transports.
  */
 class McpAndroidServer
 private constructor(
@@ -47,7 +45,10 @@ private constructor(
 
     // MCP SDK server instance (using Any to avoid import conflicts)
     private var mcpServer: Any? = null
-    private var stdioTransport: AndroidStdioTransport? = null
+
+    // Transport layer
+    private val transportManager = TransportManager()
+    private var messageHandlerJob: Job? = null
 
     // Feature providers
     private lateinit var toolProvider: ToolProvider
@@ -71,6 +72,9 @@ private constructor(
         resourceProvider = ResourceProvider(context)
         promptProvider = PromptProvider(context)
 
+        // Setup default transports (WebSocket on 8080, HTTP/SSE on 8081)
+        transportManager.setupDefaultTransports()
+
         // Try to create MCP server with SDK
         try {
             mcpServer = createMcpServerWithSDK()
@@ -80,41 +84,34 @@ private constructor(
             mcpServer = null
         }
 
-        // Initialize STDIO transport
-        try {
-            stdioTransport = AndroidStdioTransport.createStandardTransport()
-            stdioTransport?.setMessageHandler { message ->
-                handleIncomingMessage(message)
-            }
-            Log.i(TAG, "STDIO transport initialized")
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to initialize STDIO transport", e)
-            stdioTransport = null
-        }
-
         // Add default Android tools
         addDefaultTools()
 
         isInitialized.set(true)
-        Log.i(TAG, "MCP server initialized successfully with ${availableTools.size} tools")
+        Log.i(
+            TAG,
+            "MCP server initialized successfully with ${availableTools.size} tools and transports"
+        )
     }
 
-    /** Start the MCP server. This will run until stop() is called. */
+    /** Start the MCP server with transport support. */
     suspend fun start(): Result<Unit> = runCatching {
         if (!isInitialized.get()) {
             throw IllegalStateException("Server must be initialized before starting")
         }
 
         if (isRunning.compareAndSet(false, true)) {
-            Log.i(TAG, "Starting MCP server...")
+            Log.i(TAG, "Starting MCP server with transports...")
 
-            // Start STDIO transport if available
-            stdioTransport?.let { transport ->
-                transport.start().fold(
-                    onSuccess = { Log.i(TAG, "STDIO transport started") },
-                    onFailure = { e -> Log.w(TAG, "Failed to start STDIO transport", e) }
-                )
+            // Start transport layer
+            transportManager.startAll().onFailure { exception ->
+                Log.e(TAG, "Failed to start transports", exception)
+                isRunning.set(false)
+                throw exception
             }
+
+            // Start message handling
+            startMessageHandling()
 
             serverJob =
                 serverScope.launch {
@@ -122,15 +119,14 @@ private constructor(
                         mcpServer?.let {
                             Log.i(
                                 TAG,
-                                "Starting MCP server with SDK integration and STDIO transport"
+                                "Starting MCP server with SDK integration and transport support"
                             )
-                            // Full transport integration would connect the SDK server to STDIO here
                             while (isActive && isRunning.get()) {
                                 delay(1000)
                             }
                         }
                             ?: run {
-                                Log.i(TAG, "Running in fallback mode with basic STDIO transport")
+                                Log.i(TAG, "Running in fallback mode with transport support")
                                 while (isActive && isRunning.get()) {
                                     delay(1000)
                                 }
@@ -144,33 +140,29 @@ private constructor(
                     }
                 }
 
-            Log.i(TAG, "MCP server started successfully")
+            Log.i(TAG, "MCP server started successfully with transport support")
         } else {
             Log.w(TAG, "MCP server is already running")
         }
     }
 
-    /** Stop the MCP server */
+    /** Stop the MCP server and all transports */
     suspend fun stop(): Result<Unit> = runCatching {
-        Log.i(TAG, "Stopping MCP server...")
+        Log.i(TAG, "Stopping MCP server and transports...")
 
-        // Stop STDIO transport
-        stdioTransport?.stop()?.fold(
-            onSuccess = { Log.i(TAG, "STDIO transport stopped") },
-            onFailure = { e -> Log.w(TAG, "Error stopping STDIO transport", e) }
-        )
+        // Stop message handling
+        messageHandlerJob?.cancel()
+        messageHandlerJob?.join()
 
+        // Stop transport layer
+        transportManager.stopAll()
+
+        // Stop server
         serverJob?.cancel()
         serverJob?.join()
         isRunning.set(false)
 
-        Log.i(TAG, "MCP server stopped successfully")
-    }
-
-    /** Send a message via STDIO transport */
-    suspend fun sendStdioMessage(message: String): Result<Unit> {
-        return stdioTransport?.sendMessage(message)
-            ?: Result.failure(IllegalStateException("STDIO transport not available"))
+        Log.i(TAG, "MCP server and transports stopped successfully")
     }
 
     /** Check if the server is currently running */
@@ -178,9 +170,6 @@ private constructor(
 
     /** Check if the server is initialized */
     fun isInitialized(): Boolean = isInitialized.get()
-
-    /** Check if STDIO transport is available */
-    fun hasStdioTransport(): Boolean = stdioTransport != null
 
     /** Check if SDK integration is available */
     fun hasSDKIntegration(): Boolean = mcpServer != null
@@ -196,7 +185,7 @@ private constructor(
         )
     }
 
-    /** Get comprehensive server information */
+    /** Get comprehensive server information including transport details */
     fun getComprehensiveServerInfo(): ComprehensiveServerInfo {
         return ComprehensiveServerInfo(
             name = name,
@@ -209,10 +198,18 @@ private constructor(
             resourceCount = if (isInitialized()) resourceProvider.getAllResources().size else 0,
             promptCount = if (isInitialized()) promptProvider.getAllPrompts().size else 0,
             rootCount = 0,
-            transportInfo = mapOf(
-                "stdio" to hasStdioTransport(),
-                "sdk_integration" to hasSDKIntegration()
-            )
+            transportInfo = getTransportInfo()
+        )
+    }
+
+    /** Get transport connection information */
+    fun getTransportInfo(): Map<String, Any> {
+        return mapOf(
+            "sdk_integration" to hasSDKIntegration(),
+            "transport_manager_running" to transportManager.isRunning,
+            "available_transports" to listOf("websocket", "http_sse"),
+            "transport_details" to transportManager.getConnectionInfo(),
+            "transport_statuses" to transportManager.getTransportStatuses()
         )
     }
 
@@ -248,6 +245,15 @@ private constructor(
                 result = null,
                 error = "Tool execution failed: ${e.message}",
             )
+        }
+    }
+
+    /** Send a message to all connected clients via transports */
+    suspend fun broadcastMessage(message: String): Result<Unit> {
+        return if (isRunning() && transportManager.isRunning) {
+            transportManager.broadcast(message)
+        } else {
+            Result.failure(IllegalStateException("Server or transports not running"))
         }
     }
 
@@ -288,6 +294,28 @@ private constructor(
 
     // Private helper methods
 
+    private fun startMessageHandling() {
+        messageHandlerJob = serverScope.launch {
+            transportManager.getIncomingMessages()?.collect { message ->
+                Log.d(TAG, "Received message from transport: $message")
+                handleIncomingMessage(message)
+            }
+        }
+    }
+
+    private suspend fun handleIncomingMessage(message: String) {
+        try {
+            // TODO: Parse JSON-RPC message and handle MCP protocol
+            Log.d(TAG, "Processing MCP message: $message")
+
+            // For now, echo the message back as a simple response
+            val response = """{"jsonrpc": "2.0", "result": "Message received", "id": 1}"""
+            broadcastMessage(response)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error handling incoming message", e)
+        }
+    }
+
     private fun createMcpServerWithSDK(): Any? {
         return try {
             // Create server using reflection to avoid import conflicts
@@ -327,199 +355,6 @@ private constructor(
             resources = ResourcesCapability(subscribe = true, listChanged = true),
             prompts = PromptsCapability(listChanged = true),
         )
-    }
-
-    /**
-     * Handle incoming messages from STDIO transport
-     */
-    private fun handleIncomingMessage(message: String) {
-        Log.d(TAG, "Handling incoming STDIO message: $message")
-
-        try {
-            // Parse JSON-RPC message
-            val json = Json.parseToJsonElement(message)
-            val jsonObject = json.jsonObject
-
-            val method = jsonObject["method"]?.jsonPrimitive?.content
-            val id = jsonObject["id"]?.jsonPrimitive?.content
-
-            when (method) {
-                "initialize" -> handleInitializeRequest(id, jsonObject)
-                "tools/list" -> handleToolsListRequest(id)
-                "tools/call" -> handleToolCallRequest(id, jsonObject)
-                "resources/list" -> handleResourcesListRequest(id)
-                "prompts/list" -> handlePromptsListRequest(id)
-                else -> {
-                    Log.w(TAG, "Unknown method: $method")
-                    sendErrorResponse(id, -32601, "Method not found")
-                }
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error handling message", e)
-            sendErrorResponse(null, -32700, "Parse error")
-        }
-    }
-
-    private fun handleInitializeRequest(id: String?, request: JsonObject) {
-        Log.d(TAG, "Handling initialize request")
-
-        val response = buildJsonObject {
-            put("jsonrpc", "2.0")
-            if (id != null) put("id", id)
-            put("result", buildJsonObject {
-                put("protocolVersion", "2024-11-05")
-                put("capabilities", buildJsonObject {
-                    put("tools", buildJsonObject {
-                        put("listChanged", true)
-                    })
-                    put("resources", buildJsonObject {
-                        put("subscribe", true)
-                        put("listChanged", true)
-                    })
-                    put("prompts", buildJsonObject {
-                        put("listChanged", true)
-                    })
-                })
-                put("serverInfo", buildJsonObject {
-                    put("name", name)
-                    put("version", version)
-                })
-            })
-        }
-
-        sendStdioResponse(response.toString())
-    }
-
-    private fun handleToolsListRequest(id: String?) {
-        Log.d(TAG, "Handling tools/list request")
-
-        val toolsArray = buildJsonArray {
-            for (tool in availableTools) {
-                add(buildJsonObject {
-                    put("name", tool.name)
-                    put("description", tool.description)
-                    put("inputSchema", buildJsonObject {
-                        put("type", "object")
-                        put("properties", buildJsonObject {
-                            for ((key, type) in tool.parameters) {
-                                put(key, buildJsonObject {
-                                    put("type", type)
-                                })
-                            }
-                        })
-                    })
-                })
-            }
-        }
-
-        val response = buildJsonObject {
-            put("jsonrpc", "2.0")
-            if (id != null) put("id", id)
-            put("result", buildJsonObject {
-                put("tools", toolsArray)
-            })
-        }
-
-        sendStdioResponse(response.toString())
-    }
-
-    private fun handleToolCallRequest(id: String?, request: JsonObject) {
-        Log.d(TAG, "Handling tools/call request")
-
-        serverScope.launch {
-            try {
-                val params = request["params"]?.jsonObject
-                val toolName = params?.get("name")?.jsonPrimitive?.content
-                val arguments = params?.get("arguments")?.jsonObject?.let { argsObj ->
-                    argsObj.mapValues { (_, value) ->
-                        when {
-                            value is JsonPrimitive && value.isString -> value.content
-                            value is JsonPrimitive -> value.content
-                            else -> value.toString()
-                        }
-                    }
-                } ?: emptyMap()
-
-                if (toolName != null) {
-                    val result = executeTool(toolName, arguments)
-
-                    val response = buildJsonObject {
-                        put("jsonrpc", "2.0")
-                        if (id != null) put("id", id)
-                        put("result", buildJsonObject {
-                            put("content", buildJsonArray {
-                                add(buildJsonObject {
-                                    put("type", "text")
-                                    put("text", result.result ?: result.error ?: "Unknown error")
-                                })
-                            })
-                            put("isError", !result.success)
-                        })
-                    }
-
-                    sendStdioResponse(response.toString())
-                } else {
-                    sendErrorResponse(id, -32602, "Invalid params")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error in tool call", e)
-                sendErrorResponse(id, -32603, "Internal error")
-            }
-        }
-    }
-
-    private fun handleResourcesListRequest(id: String?) {
-        Log.d(TAG, "Handling resources/list request")
-
-        val response = buildJsonObject {
-            put("jsonrpc", "2.0")
-            if (id != null) put("id", id)
-            put("result", buildJsonObject {
-                put("resources", buildJsonArray {
-                    // Add resources here when implemented
-                })
-            })
-        }
-
-        sendStdioResponse(response.toString())
-    }
-
-    private fun handlePromptsListRequest(id: String?) {
-        Log.d(TAG, "Handling prompts/list request")
-
-        val response = buildJsonObject {
-            put("jsonrpc", "2.0")
-            if (id != null) put("id", id)
-            put("result", buildJsonObject {
-                put("prompts", buildJsonArray {
-                    // Add prompts here when implemented
-                })
-            })
-        }
-
-        sendStdioResponse(response.toString())
-    }
-
-    private fun sendErrorResponse(id: String?, code: Int, message: String) {
-        val response = buildJsonObject {
-            put("jsonrpc", "2.0")
-            if (id != null) put("id", id)
-            put("error", buildJsonObject {
-                put("code", code)
-                put("message", message)
-            })
-        }
-
-        sendStdioResponse(response.toString())
-    }
-
-    private fun sendStdioResponse(response: String) {
-        serverScope.launch {
-            stdioTransport?.sendMessage(response)?.fold(
-                onSuccess = { Log.d(TAG, "Response sent: $response") },
-                onFailure = { e -> Log.e(TAG, "Failed to send response", e) }
-            )
-        }
     }
 
     /** Add default Android-specific tools */

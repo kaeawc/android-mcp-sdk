@@ -101,13 +101,61 @@ class MyApplication : Application() {
 // Using the convenient utility class
 val manager = McpStartup.getManager()
 
-// Async start (non-blocking)
+// Async start (non-blocking) - includes transport startup
 manager.startServerAsync()
 
 // Or with coroutines for better control
 lifecycleScope.launch {
     manager.startServer().getOrThrow()
 }
+```
+
+### Using Transport Layer
+
+The library now includes WebSocket and HTTP/SSE transport support for communication with MCP
+clients:
+
+#### WebSocket Transport (Default port: 8080)
+
+```kotlin
+// WebSocket endpoint: ws://localhost:8080/mcp
+val manager = McpStartup.getManager()
+
+// Get transport information
+val transportInfo = manager.getTransportInfo()
+Log.d("MCP", "Transport info: $transportInfo")
+
+// Send message to connected clients
+lifecycleScope.launch {
+    manager.broadcastMessage("""{"jsonrpc": "2.0", "method": "tools/list", "id": 1}""")
+}
+```
+
+#### HTTP/SSE Transport (Default port: 8081)
+
+```kotlin
+// HTTP endpoints:
+// POST http://localhost:8081/mcp/message - for client-to-server messages
+// GET  http://localhost:8081/mcp/events  - for server-to-client events (SSE)
+// GET  http://localhost:8081/mcp/status  - for transport status
+
+// The transport is automatically started with the server
+// No additional configuration needed
+```
+
+#### Connecting from adb
+
+```bash
+# Forward ports for access from workstation
+adb forward tcp:8080 tcp:8080  # WebSocket
+adb forward tcp:8081 tcp:8081  # HTTP/SSE
+
+# Connect with WebSocket client
+# ws://localhost:8080/mcp
+
+# Connect with HTTP client
+# POST http://localhost:8081/mcp/message
+# GET  http://localhost:8081/mcp/events
 ```
 
 ### Checking Server Status
@@ -189,14 +237,16 @@ To disable automatic initialization and use manual initialization instead:
 - ✅ MCP SDK feature integration (tools, resources, prompts)
 - ✅ Graceful fallback when SDK integration fails
 - ✅ Reflection-based SDK integration for import conflict resolution
-- ⏳ STDIO transport configuration for adb communication
+- ✅ WebSocket transport for network communication
+- ✅ HTTP/SSE transport for web-based communication
+- ❌ STDIO transport (not feasible on Android platform)
 - ⏳ Helper methods for adding tools, resources, and prompts
 - ⏳ Android-specific lifecycle management
 
 ## Next Steps
 
-1. Complete STDIO transport for adb communication
-2. WebSocket transport for network communication
+1. Implement WebSocket transport for adb communication
+2. HTTP/SSE transport for web-based communication
 3. File system resources with proper Android permissions
 4. Database resources for app data access
 5. Sample app with working MCP server examples
@@ -228,7 +278,6 @@ The library now includes a complete MCP Server wrapper implementation that provi
 - **SDK Integration Check**: `hasSDKIntegration()` to verify MCP SDK availability
 - **Reflection-Based Fallback**: Handles import conflicts gracefully
 - **MCP Protocol Support**: Full support for tools, resources, and prompts
-- **Transport Layer**: AndroidStdioTransport for adb communication
 - **Comprehensive Information**: Detailed server status and capabilities
 
 ### Usage Examples

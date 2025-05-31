@@ -34,6 +34,15 @@ android {
     }
     kotlinOptions { jvmTarget = libs.versions.javaVersion.get() }
     buildFeatures { compose = true }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/INDEX.LIST"
+            excludes += "/META-INF/DEPENDENCIES"
+            excludes += "/META-INF/io.netty.versions.properties"
+            excludes += "/META-INF/*.kotlin_module"
+        }
+    }
 }
 
 dependencies {
