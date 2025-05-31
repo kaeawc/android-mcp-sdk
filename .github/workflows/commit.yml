@@ -223,6 +223,8 @@ jobs:
           test: sample-debug-androidTest.apk
           outputs-dir: build/test-results
           record-video: true
+          devices: |
+            model=Pixel2,version=29
 
       - name: "Publish Test Report"
         uses: mikepenz/action-junit-report@v4
