@@ -61,7 +61,7 @@ jobs:
       - name: "Run ShellCheck"
         shell: "bash"
         run: |
-          scripts/shellcheckc/validate_shell_scripts.sh
+          scripts/shellcheck/validate_shell_scripts.sh
 
   build-library:
     name: "Build Library"
