@@ -72,7 +72,7 @@ jobs:
 
       - uses: ./.github/actions/gradle-task-run
         with:
-          gradle-tasks: ":lib:compileKotlinDebug"
+          gradle-tasks: ":lib:compileDebugKotlin"
           reuse-configuration-cache: true
           gradle-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
