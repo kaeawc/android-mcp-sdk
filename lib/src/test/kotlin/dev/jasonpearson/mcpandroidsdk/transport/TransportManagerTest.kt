@@ -120,7 +120,29 @@ class TransportManagerTest {
 
     @Test
     fun `manager should prevent modifications while running`() = runTest {
-        transportManager.setupDefaultTransports()
+        // Use lightweight mock transports instead of real network transports
+        val mockTransport1 = object : McpTransport {
+            override val isRunning: Boolean = false
+            override suspend fun start(): Result<Unit> = Result.success(Unit)
+            override suspend fun stop(): Result<Unit> = Result.success(Unit)
+            override suspend fun sendMessage(message: String): Result<Unit> = Result.success(Unit)
+            override val incomingMessages = kotlinx.coroutines.flow.emptyFlow<String>()
+            override fun getConnectionInfo() = mapOf("type" to "mock1")
+        }
+
+        val mockTransport2 = object : McpTransport {
+            override val isRunning: Boolean = false
+            override suspend fun start(): Result<Unit> = Result.success(Unit)
+            override suspend fun stop(): Result<Unit> = Result.success(Unit)
+            override suspend fun sendMessage(message: String): Result<Unit> = Result.success(Unit)
+            override val incomingMessages = kotlinx.coroutines.flow.emptyFlow<String>()
+            override fun getConnectionInfo() = mapOf("type" to "mock2")
+        }
+
+        // Add mock transports instead of using setupDefaultTransports()
+        transportManager.addTransport("mock1", mockTransport1)
+        transportManager.addTransport("mock2", mockTransport2)
+
         transportManager.startAll()
 
         try {
@@ -134,23 +156,18 @@ class TransportManagerTest {
                     "test",
                     object : McpTransport {
                         override val isRunning: Boolean = false
-
                         override suspend fun start(): Result<Unit> = Result.success(Unit)
-
                         override suspend fun stop(): Result<Unit> = Result.success(Unit)
-
                         override suspend fun sendMessage(message: String): Result<Unit> =
                             Result.success(Unit)
-
                         override val incomingMessages = kotlinx.coroutines.flow.emptyFlow<String>()
-
                         override fun getConnectionInfo() = emptyMap<String, Any>()
                     },
                 )
             }
 
             assertThrows(IllegalStateException::class.java) {
-                transportManager.removeTransport("websocket")
+                transportManager.removeTransport("mock1")
             }
         } finally {
             transportManager.stopAll()

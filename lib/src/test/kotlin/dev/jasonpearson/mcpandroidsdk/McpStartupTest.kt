@@ -31,6 +31,40 @@ class McpStartupTest {
         McpServerManager.getInstance().resetForTesting()
     }
 
+    /**
+     * Create a minimal initialized manager for testing without expensive operations.
+     * This bypasses transport setup, SDK reflection, and feature provider initialization.
+     */
+    private fun createTestInitializedManager(): McpServerManager {
+        val manager = McpServerManager.getInstance()
+
+        // Use reflection to mark as initialized without full initialization
+        val managerClass = manager.javaClass
+        val isInitializedField = managerClass.getDeclaredField("isInitialized")
+        isInitializedField.isAccessible = true
+        isInitializedField.setBoolean(manager, true)
+
+        // Create a minimal mock server
+        val mcpServerField = managerClass.getDeclaredField("mcpServer")
+        mcpServerField.isAccessible = true
+        mcpServerField.set(manager, MockMcpServer())
+
+        return manager
+    }
+
+    /**
+     * Minimal mock server for testing
+     */
+    private class MockMcpServer {
+        fun getServerInfo() = dev.jasonpearson.mcpandroidsdk.models.ServerInfo(
+            name = "Test Server",
+            version = "1.0.0",
+            sdkVersion = "0.5.0",
+            isRunning = false,
+            toolCount = 0
+        )
+    }
+
     @Test
     fun `test manual initialization with McpStartup`() {
         // Initially should not be initialized
@@ -94,13 +128,13 @@ class McpStartupTest {
 
     @Test
     fun `test getManager returns manager when initialized`() {
-        // Initialize first
-        McpStartup.initializeManually(context)
+        // Use fast test initialization
+        createTestInitializedManager()
 
         // Now getManager should work
-        val manager = McpStartup.getManager()
-        assertNotNull(manager)
-        assertTrue(manager.isInitialized())
+        val retrievedManager = McpStartup.getManager()
+        assertNotNull(retrievedManager)
+        assertTrue(retrievedManager.isInitialized())
     }
 
     @Test
