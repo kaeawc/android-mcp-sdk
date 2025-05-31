@@ -5,8 +5,14 @@ import android.util.Log
 import kotlinx.coroutines.*
 
 /**
- * Example Application class showing how to initialize the MCP Server Manager. This class can be
- * used as a reference for integrating MCP server functionality into your Android application.
+ * Example Application class showing different ways to initialize the MCP Server Manager.
+ *
+ * This class demonstrates multiple initialization patterns:
+ * 1. Automatic initialization via AndroidX Startup (recommended)
+ * 2. Manual initialization in Application.onCreate()
+ * 3. Custom configuration initialization
+ *
+ * Choose the pattern that best fits your application's needs.
  */
 class ExampleMcpApplication : Application() {
 
@@ -17,19 +23,80 @@ class ExampleMcpApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        Log.d(TAG, "Initializing MCP Server Manager...")
+        // Example 1: Using AndroidX Startup (automatic initialization)
+        // If you have the provider configured in AndroidManifest.xml,
+        // the MCP server will be automatically initialized.
+        demonstrateAutomaticInitialization()
 
-        // Initialize the MCP Server Manager singleton
+        // Example 2: Manual initialization (if you disabled automatic initialization)
+        // demonstrateManualInitialization()
+
+        // Example 3: Custom configuration initialization
+        // demonstrateCustomInitialization()
+    }
+
+    /**
+     * Example showing how to check if automatic initialization worked. This is the recommended
+     * approach when using AndroidX Startup.
+     */
+    private fun demonstrateAutomaticInitialization() {
+        Log.d(TAG, "Checking automatic initialization via AndroidX Startup...")
+
         try {
-            McpServerManager.getInstance().initialize(this)
-            Log.d(TAG, "MCP Server Manager initialized successfully")
+            if (McpStartup.isInitialized()) {
+                Log.i(TAG, "MCP Server Manager automatically initialized via AndroidX Startup")
+                val sdkVersion = McpStartup.getManager().getMcpSdkVersion()
+                Log.i(TAG, "MCP SDK Version: $sdkVersion")
+            } else {
+                Log.w(TAG, "Automatic initialization not completed yet or failed")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error checking automatic initialization", e)
+        }
+    }
 
-            // Log the MCP SDK version
-            val sdkVersion = McpServerManager.getInstance().getMcpSdkVersion()
+    /**
+     * Example showing manual initialization using AndroidX Startup infrastructure. Use this if you
+     * disabled automatic initialization in the manifest.
+     */
+    private fun demonstrateManualInitialization() {
+        Log.d(TAG, "Performing manual initialization...")
+
+        try {
+            val manager = McpStartup.initializeManually(this)
+            Log.i(TAG, "MCP Server Manager manually initialized successfully")
+
+            val sdkVersion = manager.getMcpSdkVersion()
             Log.i(TAG, "MCP SDK Version: $sdkVersion")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to initialize MCP Server Manager", e)
+            Log.e(TAG, "Failed to manually initialize MCP Server Manager", e)
         }
+    }
+
+    /**
+     * Example showing initialization with custom configuration. Use this when you need specific
+     * server name/version settings.
+     */
+    private fun demonstrateCustomInitialization() {
+        Log.d(TAG, "Performing custom initialization...")
+
+        val result =
+            McpStartup.initializeWithCustomConfig(
+                context = this,
+                serverName = "My Custom Android MCP Server",
+                serverVersion = "2.0.0",
+            )
+
+        result.fold(
+            onSuccess = { manager ->
+                Log.i(TAG, "Custom MCP Server Manager initialized successfully")
+                val sdkVersion = manager.getMcpSdkVersion()
+                Log.i(TAG, "MCP SDK Version: $sdkVersion")
+            },
+            onFailure = { exception ->
+                Log.e(TAG, "Failed to initialize with custom config", exception)
+            },
+        )
     }
 
     /** Example method showing how to start the MCP server using async method. */
@@ -37,7 +104,8 @@ class ExampleMcpApplication : Application() {
         // Use the async method for non-blocking startup
         try {
             Log.i(TAG, "Starting MCP server asynchronously...")
-            McpServerManager.getInstance().startServerAsync()
+            val manager = McpStartup.getManager()
+            manager.startServerAsync()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start MCP server", e)
         }
@@ -48,7 +116,8 @@ class ExampleMcpApplication : Application() {
         GlobalScope.launch {
             try {
                 Log.i(TAG, "Starting MCP server with coroutines...")
-                McpServerManager.getInstance().startServer().getOrThrow()
+                val manager = McpStartup.getManager()
+                manager.startServer().getOrThrow()
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to start MCP server", e)
             }
@@ -58,7 +127,7 @@ class ExampleMcpApplication : Application() {
     /** Check if the MCP server is ready. */
     fun isMcpServerReady(): Boolean {
         return try {
-            McpServerManager.getInstance().isInitialized()
+            McpStartup.isInitialized()
         } catch (e: Exception) {
             Log.e(TAG, "Error checking MCP server status", e)
             false

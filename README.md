@@ -11,7 +11,7 @@ applications to host MCP (Model Context Protocol) servers.
 ✅ **Project Structure**: Kotlin source files properly organized in `lib/src/main/kotlin/`  
 ✅ **Compilation Working**: Library compiles successfully with MCP SDK dependencies  
 ✅ **Singleton Manager**: Thread-safe singleton implementation for MCP server management  
-✅ **AndroidX Startup Ready**: Infrastructure ready for AndroidX Startup integration
+✅ **AndroidX Startup Complete**: Full AndroidX Startup integration with automatic initialization
 
 ## Dependencies Added
 
@@ -30,21 +30,67 @@ adb-connected workstations. This enables Android apps to provide:
 
 ## Usage
 
-### Basic Initialization
+### Option 1: Automatic Initialization (Recommended)
 
-Initialize the MCP server in your Application class:
+The library includes AndroidX Startup integration for automatic initialization. The MCP server will
+be initialized automatically when your app starts.
+
+Simply add the library dependency - no additional setup required! The automatic initialization is
+already configured in the library's `AndroidManifest.xml`.
+
+```kotlin
+class MyActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        
+        // MCP server is automatically initialized via AndroidX Startup
+        if (McpStartup.isInitialized()) {
+            val version = McpStartup.getManager().getMcpSdkVersion()
+            Log.i("MCP", "SDK Version: $version")
+        }
+    }
+}
+```
+
+### Option 2: Manual Initialization
+
+If you need more control over initialization timing:
 
 ```kotlin
 class MyApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         
-        // Initialize the MCP server manager
-        McpServerManager.getInstance().initialize(this)
+        // Manual initialization using AndroidX Startup infrastructure
+        val manager = McpStartup.initializeManually(this)
+        Log.i("MCP", "SDK Version: ${manager.getMcpSdkVersion()}")
+    }
+}
+```
+
+### Option 3: Custom Configuration
+
+For custom server name and version:
+
+```kotlin
+class MyApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
         
-        // Check SDK version
-        val version = McpServerManager.getInstance().getMcpSdkVersion()
-        Log.i("MCP", "SDK Version: $version")
+        val result = McpStartup.initializeWithCustomConfig(
+            context = this,
+            serverName = "My Custom Android MCP Server",
+            serverVersion = "2.0.0"
+        )
+        
+        result.fold(
+            onSuccess = { manager ->
+                Log.i("MCP", "Custom server initialized: ${manager.getMcpSdkVersion()}")
+            },
+            onFailure = { exception ->
+                Log.e("MCP", "Failed to initialize", exception)
+            }
+        )
     }
 }
 ```
@@ -52,16 +98,27 @@ class MyApplication : Application() {
 ### Starting the MCP Server
 
 ```kotlin
-// Start the server (this blocks, so run in background thread)
-Thread {
-    McpServerManager.getInstance().startServer()
-}.start()
+// Using the convenient utility class
+val manager = McpStartup.getManager()
+
+// Async start (non-blocking)
+manager.startServerAsync()
+
+// Or with coroutines for better control
+lifecycleScope.launch {
+    manager.startServer().getOrThrow()
+}
 ```
 
 ### Checking Server Status
 
 ```kotlin
-val isReady = McpServerManager.getInstance().isInitialized()
+// Check if initialized
+val isInitialized = McpStartup.isInitialized()
+
+// Check if running
+val manager = McpStartup.getManager()
+val isRunning = manager.isServerRunning()
 ```
 
 ## Architecture
@@ -70,7 +127,9 @@ The library provides a clean architecture:
 
 - **`McpAndroidServer`**: Core wrapper around MCP Kotlin SDK
 - **`McpServerManager`**: Thread-safe singleton for managing server lifecycle
-- **`ExampleMcpApplication`**: Reference implementation for proper initialization
+- **`McpServerManagerInitializer`**: AndroidX Startup initializer for automatic setup
+- **`McpStartup`**: Utility class for convenient initialization and access
+- **`ExampleMcpApplication`**: Reference implementation showing all initialization patterns
 
 ## Building
 
@@ -79,8 +138,14 @@ The library provides a clean architecture:
 
 ## AndroidX Startup Integration
 
-The library is ready for AndroidX Startup integration. To enable automatic initialization, you would
-add to your `AndroidManifest.xml`:
+### Automatic Configuration
+
+The library automatically configures AndroidX Startup. No additional manifest changes are needed.
+
+### Manual Configuration
+
+If you need to customize the AndroidX Startup configuration, you can override it in your app's
+`AndroidManifest.xml`:
 
 ```xml
 <provider
@@ -94,13 +159,31 @@ add to your `AndroidManifest.xml`:
 </provider>
 ```
 
+### Disabling Automatic Initialization
+
+To disable automatic initialization and use manual initialization instead:
+
+```xml
+<provider
+    android:name="androidx.startup.InitializationProvider"
+    android:authorities="${applicationId}.androidx-startup"
+    android:exported="false"
+    tools:node="merge">
+    <meta-data
+        android:name="dev.jasonpearson.mcpandroidsdk.McpServerManagerInitializer"
+        tools:node="remove" />
+</provider>
+```
+
 ## Current Implementation Status
 
 - ✅ MCP Kotlin SDK integration
 - ✅ Thread-safe singleton pattern
 - ✅ Basic server lifecycle management
 - ✅ Logging and error handling
-- ⏳ AndroidX Startup automatic initialization
+- ✅ AndroidX Startup automatic initialization
+- ✅ Manual initialization options
+- ✅ Utility classes for convenient access
 - ⏳ Complete MCP Server wrapper implementation
 - ⏳ STDIO transport configuration for adb communication
 - ⏳ Helper methods for adding tools, resources, and prompts
@@ -108,10 +191,10 @@ add to your `AndroidManifest.xml`:
 
 ## Next Steps
 
-1. Complete AndroidX Startup initializer implementation
-2. Full MCP Server wrapper with proper transport configuration
-3. Helper APIs for registering tools, resources, and prompts
-4. Sample app with working MCP server examples
+1. Full MCP Server wrapper with proper transport configuration
+2. Helper APIs for registering tools, resources, and prompts
+3. Sample app with working MCP server examples
+4. STDIO transport for adb communication
 5. Documentation and integration guides
 
 ## MCP Resources
