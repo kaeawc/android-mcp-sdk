@@ -4,7 +4,16 @@
     "The goal of the project is to expose an MCP server to an Android engineer running an MCP client on their adb connected workstation.",
     "Building the library should be done via `./gradlew :lib:compileDebug`",
     "Building the project should be done via `./gradlew :sample:assembleDebug`",
-    "ktfmt should be used for lint"
-
+    "ktfmt should be used for lint",
+    "To format Kotlin code: `./scripts/apply_ktfmt.sh` (use ONLY_TOUCHED_FILES=false to format all files)",
+    "To validate Kotlin formatting: `./scripts/validate_ktfmt.sh` (use ONLY_TOUCHED_FILES=false to check all files)",
+    "To validate shell scripts: `./scripts/validate_shell_scripts.sh`",
+    "To validate XML files: `./scripts/validate_xml.sh`",
+    "To check git clean state: `./scripts/git_assert_clean_state.sh`",
+    "To install ktfmt if missing: `./scripts/install_ktfmt.sh` or set INSTALL_KTFMT_WHEN_MISSING=true when running other scripts",
+    {
+      "filePathMatches": "**/*",
+      "rulesPaths": [ "README.md" ]
+    }
   ]
 }

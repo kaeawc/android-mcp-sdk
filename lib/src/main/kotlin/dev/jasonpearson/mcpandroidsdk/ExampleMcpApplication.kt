@@ -2,6 +2,7 @@ package dev.jasonpearson.mcpandroidsdk
 
 import android.app.Application
 import android.util.Log
+import kotlinx.coroutines.*
 
 /**
  * Example Application class showing how to initialize the MCP Server Manager. This class can be
@@ -31,20 +32,27 @@ class ExampleMcpApplication : Application() {
         }
     }
 
-    /**
-     * Example method showing how to start the MCP server. Note: This should typically be called
-     * from a background thread as it will block until the server stops.
-     */
+    /** Example method showing how to start the MCP server using async method. */
     fun startMcpServer() {
-        Thread {
-                try {
-                    Log.i(TAG, "Starting MCP server in background thread...")
-                    McpServerManager.getInstance().startServer()
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to start MCP server", e)
-                }
+        // Use the async method for non-blocking startup
+        try {
+            Log.i(TAG, "Starting MCP server asynchronously...")
+            McpServerManager.getInstance().startServerAsync()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to start MCP server", e)
+        }
+    }
+
+    /** Example method showing how to start the MCP server with proper coroutine handling. */
+    fun startMcpServerWithCoroutines() {
+        GlobalScope.launch {
+            try {
+                Log.i(TAG, "Starting MCP server with coroutines...")
+                McpServerManager.getInstance().startServer().getOrThrow()
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to start MCP server", e)
             }
-            .start()
+        }
     }
 
     /** Check if the MCP server is ready. */
