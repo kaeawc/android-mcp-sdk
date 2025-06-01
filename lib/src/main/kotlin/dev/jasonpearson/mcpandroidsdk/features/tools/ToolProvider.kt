@@ -7,6 +7,8 @@ import android.util.Log
 import io.modelcontextprotocol.kotlin.sdk.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.TextContent
 import io.modelcontextprotocol.kotlin.sdk.Tool
+import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -23,8 +25,6 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.serializer
-import java.util.Locale
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Provider for MCP tools that exposes Android-specific functionality to MCP clients.
@@ -101,16 +101,22 @@ class ToolProvider(private val context: Context) {
             map.forEach { (key, value) ->
                 when (value) {
                     is Map<*, *> -> put(key.toString(), convertMapToJsonElement(value))
-                    is List<*> -> put(key.toString(), JsonArray(value.map { item ->
-                        when (item) {
-                            is Map<*, *> -> convertMapToJsonElement(item)
-                            is String -> JsonPrimitive(item)
-                            is Number -> JsonPrimitive(item)
-                            is Boolean -> JsonPrimitive(item)
-                            null -> JsonNull
-                            else -> JsonPrimitive(item.toString())
-                        }
-                    }))
+                    is List<*> ->
+                        put(
+                            key.toString(),
+                            JsonArray(
+                                value.map { item ->
+                                    when (item) {
+                                        is Map<*, *> -> convertMapToJsonElement(item)
+                                        is String -> JsonPrimitive(item)
+                                        is Number -> JsonPrimitive(item)
+                                        is Boolean -> JsonPrimitive(item)
+                                        null -> JsonNull
+                                        else -> JsonPrimitive(item.toString())
+                                    }
+                                }
+                            ),
+                        )
 
                     is String -> put(key.toString(), JsonPrimitive(value))
                     is Number -> put(key.toString(), JsonPrimitive(value))
@@ -178,7 +184,7 @@ class ToolProvider(private val context: Context) {
      */
     public fun flattenDescriptorFields(
         descriptor: SerialDescriptor,
-        prefix: String = ""
+        prefix: String = "",
     ): List<String> {
         val fields = mutableListOf<String>()
         for (i in 0 until descriptor.elementsCount) {
@@ -186,9 +192,14 @@ class ToolProvider(private val context: Context) {
             val fieldPath = if (prefix.isEmpty()) elementName else "$prefix.$elementName"
             val elementDescriptor = descriptor.getElementDescriptor(i)
 
-            if (elementDescriptor.kind == StructureKind.CLASS || elementDescriptor.kind == SerialKind.CONTEXTUAL) {
+            if (
+                elementDescriptor.kind == StructureKind.CLASS ||
+                    elementDescriptor.kind == SerialKind.CONTEXTUAL
+            ) {
                 // Recursively process nested objects (assuming they are serializable classes)
-                if (elementDescriptor.elementsCount > 0) { // Avoid infinite recursion for primitive-like classes
+                if (
+                    elementDescriptor.elementsCount > 0
+                ) { // Avoid infinite recursion for primitive-like classes
                     fields.addAll(flattenDescriptorFields(elementDescriptor, fieldPath))
                 }
             } else {
@@ -199,9 +210,7 @@ class ToolProvider(private val context: Context) {
         return fields
     }
 
-    /**
-     * Generate JsonObject schema properties from a SerialDescriptor.
-     */
+    /** Generate JsonObject schema properties from a SerialDescriptor. */
     public fun descriptorToJsonSchemaProperties(descriptor: SerialDescriptor): JsonObject {
         return buildJsonObject {
             for (i in 0 until descriptor.elementsCount) {
@@ -210,37 +219,51 @@ class ToolProvider(private val context: Context) {
                 // This is a simplified schema generation, MCP SDK might need more details
                 // For now, just creating basic type info.
                 when (elementDescriptor.kind) {
-                    PrimitiveKind.STRING -> put(
-                        name,
-                        buildJsonObject { put("type", JsonPrimitive("string")) })
+                    PrimitiveKind.STRING ->
+                        put(name, buildJsonObject { put("type", JsonPrimitive("string")) })
 
-                    PrimitiveKind.INT, PrimitiveKind.LONG, PrimitiveKind.FLOAT, PrimitiveKind.DOUBLE ->
+                    PrimitiveKind.INT,
+                    PrimitiveKind.LONG,
+                    PrimitiveKind.FLOAT,
+                    PrimitiveKind.DOUBLE ->
                         put(name, buildJsonObject { put("type", JsonPrimitive("number")) })
 
-                    PrimitiveKind.BOOLEAN -> put(
-                        name,
-                        buildJsonObject { put("type", JsonPrimitive("boolean")) })
+                    PrimitiveKind.BOOLEAN ->
+                        put(name, buildJsonObject { put("type", JsonPrimitive("boolean")) })
 
-                    StructureKind.LIST -> put(name, buildJsonObject {
-                        put("type", JsonPrimitive("array"))
-                        // Optionally, add items schema if elementDescriptor.getElementDescriptor(0) is available
-                    })
+                    StructureKind.LIST ->
+                        put(
+                            name,
+                            buildJsonObject {
+                                put("type", JsonPrimitive("array"))
+                                // Optionally, add items schema if
+                                // elementDescriptor.getElementDescriptor(0) is available
+                            },
+                        )
 
-                    StructureKind.MAP -> put(
-                        name,
-                        buildJsonObject { put("type", JsonPrimitive("object")) }) // Simplified
-                    StructureKind.CLASS, SerialKind.CONTEXTUAL -> {
+                    StructureKind.MAP ->
+                        put(
+                            name,
+                            buildJsonObject { put("type", JsonPrimitive("object")) },
+                        ) // Simplified
+                    StructureKind.CLASS,
+                    SerialKind.CONTEXTUAL -> {
                         // For nested objects, recursively generate their schema
-                        put(name, buildJsonObject {
-                            put("type", JsonPrimitive("object"))
-                            put("properties", descriptorToJsonSchemaProperties(elementDescriptor))
-                            // Determine required fields for nested objects if needed
-                        })
+                        put(
+                            name,
+                            buildJsonObject {
+                                put("type", JsonPrimitive("object"))
+                                put(
+                                    "properties",
+                                    descriptorToJsonSchemaProperties(elementDescriptor),
+                                )
+                                // Determine required fields for nested objects if needed
+                            },
+                        )
                     }
 
-                    else -> put(
-                        name,
-                        buildJsonObject { put("type", JsonPrimitive("any")) }) // Fallback
+                    else ->
+                        put(name, buildJsonObject { put("type", JsonPrimitive("any")) }) // Fallback
                 }
             }
         }
@@ -432,14 +455,15 @@ class ToolProvider(private val context: Context) {
         val serializer = serializer<T>()
         val properties = descriptorToJsonSchemaProperties(serializer.descriptor)
 
-        val inputSchema = Tool.Input(
-            properties =
-                buildJsonObject {
-                    put("type", JsonPrimitive("object"))
-                    put("properties", properties)
-                },
-            required = validatedRequired,
-        )
+        val inputSchema =
+            Tool.Input(
+                properties =
+                    buildJsonObject {
+                        put("type", JsonPrimitive("object"))
+                        put("properties", properties)
+                    },
+                required = validatedRequired,
+            )
 
         val tool = Tool(name = name, description = description, inputSchema = inputSchema)
 
