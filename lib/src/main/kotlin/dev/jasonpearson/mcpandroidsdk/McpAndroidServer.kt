@@ -434,13 +434,12 @@ private constructor(
         parameters: Map<String, String> = emptyMap(),
         handler: suspend (Map<String, Any>) -> String,
     ) {
-        val tool = AndroidTool(
-            name = name,
-            description = description,
-            parameters = parameters,
-        ) { context, arguments ->
-            handler(arguments)
-        }
+        val tool =
+            AndroidTool(name = name, description = description, parameters = parameters) {
+                context,
+                arguments ->
+                handler(arguments)
+            }
         addTool(tool)
     }
 
@@ -452,32 +451,23 @@ private constructor(
         filePath: String,
         mimeType: String = "text/plain",
     ) {
-        val resource = io.modelcontextprotocol.kotlin.sdk.Resource(
-            uri = uri,
-            name = name,
-            description = description,
-            mimeType = mimeType,
-        )
+        val resource =
+            io.modelcontextprotocol.kotlin.sdk.Resource(
+                uri = uri,
+                name = name,
+                description = description,
+                mimeType = mimeType,
+            )
         addMcpResource(resource) {
             try {
                 val file = java.io.File(filePath)
                 if (file.exists() && file.isFile) {
-                    AndroidResourceContent(
-                        uri = uri,
-                        text = file.readText(),
-                        mimeType = mimeType,
-                    )
+                    AndroidResourceContent(uri = uri, text = file.readText(), mimeType = mimeType)
                 } else {
-                    AndroidResourceContent(
-                        uri = uri,
-                        text = "File not found: $filePath",
-                    )
+                    AndroidResourceContent(uri = uri, text = "File not found: $filePath")
                 }
             } catch (e: Exception) {
-                AndroidResourceContent(
-                    uri = uri,
-                    text = "Error reading file: ${e.message}",
-                )
+                AndroidResourceContent(uri = uri, text = "Error reading file: ${e.message}")
             }
         }
     }
@@ -489,21 +479,24 @@ private constructor(
         arguments: List<io.modelcontextprotocol.kotlin.sdk.PromptArgument> = emptyList(),
         promptGenerator: suspend (Map<String, Any?>) -> String,
     ) {
-        val prompt = io.modelcontextprotocol.kotlin.sdk.Prompt(
-            name = name,
-            description = description,
-            arguments = arguments,
-        )
+        val prompt =
+            io.modelcontextprotocol.kotlin.sdk.Prompt(
+                name = name,
+                description = description,
+                arguments = arguments,
+            )
         addMcpPrompt(prompt) { args ->
             val promptText = promptGenerator(args)
             io.modelcontextprotocol.kotlin.sdk.GetPromptResult(
                 description = description,
-                messages = listOf(
-                    io.modelcontextprotocol.kotlin.sdk.PromptMessage(
-                        role = io.modelcontextprotocol.kotlin.sdk.Role.user,
-                        content = io.modelcontextprotocol.kotlin.sdk.TextContent(text = promptText),
-                    )
-                ),
+                messages =
+                    listOf(
+                        io.modelcontextprotocol.kotlin.sdk.PromptMessage(
+                            role = io.modelcontextprotocol.kotlin.sdk.Role.user,
+                            content =
+                                io.modelcontextprotocol.kotlin.sdk.TextContent(text = promptText),
+                        )
+                    ),
             )
         }
     }

@@ -54,28 +54,34 @@ Still Missing/Incomplete:
 ### Documentation and Examples
 - [13-sample-app-enhancement.md](13-sample-app-enhancement.md) - Enhance sample app with comprehensive examples
 - [14-integration-guides-documentation.md](14-integration-guides-documentation.md) - Create detailed integration guides
+- [15-readme-claimed-features-verification.md](15-readme-claimed-features-verification.md) - Verify
+  README claims against actual implementation
 
 ## Priority Order
 
 **High Priority (Core Functionality):**
-1. 03-jsonrpc-message-parsing.md
-2. 04-websocket-transport-implementation.md
-3. 05-http-sse-transport-implementation.md
-4. 09-integration-testing-suite.md
+
+1. 15-readme-claimed-features-verification.md
+2. 03-jsonrpc-message-parsing.md
+3. 04-websocket-transport-implementation.md
+4. 05-http-sse-transport-implementation.md
+5. 09-integration-testing-suite.md
 
 **Medium Priority (Feature Completion):**
-5. 01-resource-subscription-logic.md
-6. 07-filesystem-resources-permissions.md
-7. 08-database-resources-implementation.md
-8. 06-transport-integration-testing.md
+
+6. 01-resource-subscription-logic.md
+7. 07-filesystem-resources-permissions.md
+8. 08-database-resources-implementation.md
+9. 06-transport-integration-testing.md
 
 **Low Priority (Polish & Documentation):**
-9. 02-sampling-requests-implementation.md
-10. 10-adb-port-forwarding-testing.md
-11. 11-mcp-client-communication-testing.md
-12. 12-builtin-tools-validation.md
-13. 13-sample-app-enhancement.md
-14. 14-integration-guides-documentation.md
+
+10. 02-sampling-requests-implementation.md
+11. 10-adb-port-forwarding-testing.md
+12. 11-mcp-client-communication-testing.md
+13. 12-builtin-tools-validation.md
+14. 13-sample-app-enhancement.md
+15. 14-integration-guides-documentation.md
 
 ## Task Execution Guidelines
 

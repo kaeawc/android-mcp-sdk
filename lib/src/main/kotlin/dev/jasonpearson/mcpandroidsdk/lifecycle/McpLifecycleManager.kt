@@ -15,22 +15,21 @@ import kotlinx.coroutines.launch
 
 /**
  * Manages MCP server lifecycle in relation to Android application lifecycle.
- * 
- * This class automatically starts and stops the MCP server based on application
- * lifecycle events, ensuring proper resource management and server availability.
+ *
+ * This class automatically starts and stops the MCP server based on application lifecycle events,
+ * ensuring proper resource management and server availability.
  */
-class McpLifecycleManager private constructor() : DefaultLifecycleObserver, Application.ActivityLifecycleCallbacks {
+class McpLifecycleManager private constructor() :
+    DefaultLifecycleObserver, Application.ActivityLifecycleCallbacks {
 
     companion object {
         private const val TAG = "McpLifecycleManager"
-        
-        @Volatile
-        private var INSTANCE: McpLifecycleManager? = null
-        
+
+        @Volatile private var INSTANCE: McpLifecycleManager? = null
+
         fun getInstance(): McpLifecycleManager {
-            return INSTANCE ?: synchronized(this) {
-                INSTANCE ?: McpLifecycleManager().also { INSTANCE = it }
-            }
+            return INSTANCE
+                ?: synchronized(this) { INSTANCE ?: McpLifecycleManager().also { INSTANCE = it } }
         }
     }
 
@@ -54,19 +53,19 @@ class McpLifecycleManager private constructor() : DefaultLifecycleObserver, Appl
     /** Initialize lifecycle management with configuration */
     fun initialize(application: Application, config: LifecycleConfig = LifecycleConfig()) {
         this.config = config
-        
+
         if (!isLifecycleObserverRegistered) {
             ProcessLifecycleOwner.get().lifecycle.addObserver(this)
             isLifecycleObserverRegistered = true
             Log.i(TAG, "Process lifecycle observer registered")
         }
-        
+
         if (!isActivityCallbacksRegistered) {
             application.registerActivityLifecycleCallbacks(this)
             isActivityCallbacksRegistered = true
             Log.i(TAG, "Activity lifecycle callbacks registered")
         }
-        
+
         Log.i(TAG, "MCP lifecycle manager initialized with config: $config")
     }
 
@@ -85,7 +84,7 @@ class McpLifecycleManager private constructor() : DefaultLifecycleObserver, Appl
     override fun onStart(owner: LifecycleOwner) {
         Log.d(TAG, "App started (foreground)")
         isAppInBackground = false
-        
+
         if (config.autoStartOnAppStart || (config.restartOnAppReturn && !isServerRunning())) {
             startServerIfNeeded()
         }
@@ -94,7 +93,7 @@ class McpLifecycleManager private constructor() : DefaultLifecycleObserver, Appl
     override fun onStop(owner: LifecycleOwner) {
         Log.d(TAG, "App stopped (background)")
         isAppInBackground = true
-        
+
         if (config.pauseOnBackground) {
             pauseServer()
         } else if (config.autoStopOnAppStop) {
@@ -110,8 +109,11 @@ class McpLifecycleManager private constructor() : DefaultLifecycleObserver, Appl
 
     override fun onActivityStarted(activity: Activity) {
         activeActivities++
-        Log.v(TAG, "Activity started: ${activity.javaClass.simpleName}, active count: $activeActivities")
-        
+        Log.v(
+            TAG,
+            "Activity started: ${activity.javaClass.simpleName}, active count: $activeActivities",
+        )
+
         if (activeActivities == 1 && config.restartOnAppReturn && !isServerRunning()) {
             startServerIfNeeded()
         }
@@ -127,8 +129,11 @@ class McpLifecycleManager private constructor() : DefaultLifecycleObserver, Appl
 
     override fun onActivityStopped(activity: Activity) {
         activeActivities--
-        Log.v(TAG, "Activity stopped: ${activity.javaClass.simpleName}, active count: $activeActivities")
-        
+        Log.v(
+            TAG,
+            "Activity stopped: ${activity.javaClass.simpleName}, active count: $activeActivities",
+        )
+
         if (activeActivities == 0 && config.stopOnLastActivityDestroyed) {
             stopServerIfNeeded()
         }

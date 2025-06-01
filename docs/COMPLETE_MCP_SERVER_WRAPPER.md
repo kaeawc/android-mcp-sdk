@@ -115,7 +115,7 @@ The server comes with several built-in Android-specific tools:
 
 ### 1. Device Info Tool
 
-```kotlin
+```json
 {
     "name": "device_info",
     "description": "Get information about the Android device",
@@ -128,7 +128,7 @@ etc.
 
 ### 2. App Info Tool
 
-```kotlin
+```json
 {
     "name": "app_info", 
     "description": "Get information about the current application",
@@ -145,7 +145,7 @@ Provides application details like version, package name, target SDK, etc.
 
 ### 3. System Time Tool
 
-```kotlin
+```json
 {
     "name": "system_time",
     "description": "Get current system time in various formats",
@@ -165,7 +165,7 @@ Provides application details like version, package name, target SDK, etc.
 
 ### 4. Memory Info Tool
 
-```kotlin
+```json
 {
     "name": "memory_info",
     "description": "Get current memory usage information",
@@ -177,7 +177,7 @@ Provides system and app memory usage statistics.
 
 ### 5. Battery Info Tool
 
-```kotlin
+```json
 {
     "name": "battery_info",
     "description": "Get current battery status and information", 
