@@ -1,0 +1,22 @@
+[project]
+name = "docs"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Jason Pearson", email = "jason.d.pearson@gmail.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "mkdocs>=1.6.1",
+    "mkdocs-git-revision-date-localized-plugin>=1.4.7",
+    "mkdocs-material>=9.6.14",
+    "mkdocs-minify-plugin>=0.8.0",
+]
+
+[project.scripts]
+docs = "docs:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
