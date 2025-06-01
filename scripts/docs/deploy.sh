@@ -56,22 +56,49 @@ install_mkdocs() {
         install_uv
     fi
     
-    # Check if requirements.txt exists in the script directory (scripts/docs/)
+    # Get the script directory and check if we have a uv project
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    REQUIREMENTS_FILE="$SCRIPT_DIR/requirements.txt"
-    
-    if [ -f "$REQUIREMENTS_FILE" ]; then
-        print_status "Installing from $REQUIREMENTS_FILE..."
-        uv pip install --user -r "$REQUIREMENTS_FILE"
+
+    if [ -f "$SCRIPT_DIR/pyproject.toml" ] && [ -f "$SCRIPT_DIR/uv.lock" ]; then
+        print_status "Installing from uv project..."
+        cd "$SCRIPT_DIR"
+        uv sync
     else
         print_status "Installing individual packages with uv..."
-        uv pip install --user mkdocs mkdocs-material mkdocs-minify-plugin mkdocs-git-revision-date-localized-plugin
+        uv tool install mkdocs
+        uv tool install mkdocs-material
+        uv tool install mkdocs-minify-plugin
+        uv tool install mkdocs-git-revision-date-localized-plugin
+    fi
+}
+
+# Function to check if we have a uv project
+has_uv_project() {
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    [ -f "$SCRIPT_DIR/pyproject.toml" ] && [ -f "$SCRIPT_DIR/uv.lock" ]
+}
+
+# Function to run mkdocs command
+run_mkdocs() {
+    if has_uv_project; then
+        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        (cd "$SCRIPT_DIR" && uv run mkdocs "$@")
+    else
+        mkdocs "$@"
     fi
 }
 
 # Function to check git status
 check_git_status() {
-    if [ -n "$(git status --porcelain)" ]; then
+    # Check git status from project root if we're in a uv project
+    if has_uv_project; then
+        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        GIT_STATUS=$(cd "$SCRIPT_DIR/../.." && git status --porcelain)
+    else
+        GIT_STATUS=$(git status --porcelain)
+    fi
+
+    if [ -n "$GIT_STATUS" ]; then
         print_warning "You have uncommitted changes. It's recommended to commit them before deploying docs."
         read -p "Do you want to continue anyway? (y/N): " -n 1 -r
         echo
@@ -85,15 +112,26 @@ check_git_status() {
 # Function to validate mkdocs configuration
 validate_mkdocs_config() {
     print_status "Validating MkDocs configuration..."
-    
-    if [ ! -f "mkdocs.yml" ]; then
-        print_error "mkdocs.yml not found in current directory"
-        exit 1
+
+    if has_uv_project; then
+        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        CONFIG_FILE="$SCRIPT_DIR/../../mkdocs.yml"
+        if [ ! -f "$CONFIG_FILE" ]; then
+            print_error "mkdocs.yml not found at $CONFIG_FILE"
+            exit 1
+        fi
+        CONFIG_FILE="../../mkdocs.yml"  # Relative path for mkdocs command
+    else
+        CONFIG_FILE="mkdocs.yml"
+        if [ ! -f "$CONFIG_FILE" ]; then
+            print_error "mkdocs.yml not found in current directory"
+            exit 1
+        fi
     fi
-    
+
     # Check if all navigation files exist
-    if command_exists mkdocs; then
-        if ! mkdocs build --strict --quiet; then
+    if command_exists mkdocs || has_uv_project; then
+        if ! run_mkdocs build --strict --quiet --config-file "$CONFIG_FILE"; then
             print_error "MkDocs build failed. Please fix configuration errors."
             exit 1
         fi
@@ -106,17 +144,23 @@ validate_mkdocs_config() {
 # Function to build and deploy
 deploy_docs() {
     print_status "Building and deploying documentation to GitHub Pages..."
-    
+
     # Set environment variables for analytics (optional)
     if [ -n "$GOOGLE_ANALYTICS_KEY" ]; then
         export GOOGLE_ANALYTICS_KEY="$GOOGLE_ANALYTICS_KEY"
     fi
-    
+
     # Deploy to gh-pages branch
-    if mkdocs gh-deploy --clean --message "Deploy documentation for commit {sha}"; then
+    if has_uv_project; then
+        CONFIG_FILE="../../mkdocs.yml"
+    else
+        CONFIG_FILE="mkdocs.yml"
+    fi
+
+    if run_mkdocs gh-deploy --clean --message "Deploy documentation for commit {sha}" --config-file "$CONFIG_FILE"; then
         print_status "Documentation deployed successfully!"
         print_status "Your documentation will be available at:"
-        
+
         # Try to get the GitHub Pages URL
         REPO_URL=$(git config --get remote.origin.url)
         if [[ $REPO_URL == *"github.com"* ]]; then
@@ -126,14 +170,14 @@ deploy_docs() {
             else
                 REPO_PATH=$REPO_URL
             fi
-            
+
             if [[ $REPO_PATH == *"github.com/"* ]]; then
                 USER_REPO=${REPO_PATH##*/github.com/}
                 USER_REPO=${USER_REPO/:/\/}  # Replace : with / for SSH URLs
                 echo "  https://${USER_REPO%/*}.github.io/${USER_REPO##*/}/"
             fi
         fi
-        
+
         print_status "Note: It may take a few minutes for changes to appear on GitHub Pages."
     else
         print_error "Deployment failed!"
@@ -146,30 +190,30 @@ serve_docs() {
     print_status "Starting local documentation server..."
     print_status "Documentation will be available at: http://127.0.0.1:8000"
     print_status "Press Ctrl+C to stop the server"
-    
-    mkdocs serve
+
+    if has_uv_project; then
+        CONFIG_FILE="../../mkdocs.yml"
+    else
+        CONFIG_FILE="mkdocs.yml"
+    fi
+
+    run_mkdocs serve --config-file "$CONFIG_FILE"
 }
 
 # Main script logic
 main() {
     print_status "Android MCP SDK Documentation Deployment"
     print_status "========================================"
-    
-    # Check if we're in the right directory
-    if [ ! -f "mkdocs.yml" ]; then
-        print_error "This script must be run from the project root directory (where mkdocs.yml is located)"
-        exit 1
-    fi
-    
+
     # Parse command line arguments
     COMMAND=${1:-deploy}
-    
+
     case $COMMAND in
         deploy)
             print_status "Deploying documentation to GitHub Pages..."
-            
-            # Check if MkDocs is installed
-            if ! command_exists mkdocs; then
+
+            # Check if MkDocs is installed or we have a uv project
+            if ! command_exists mkdocs && ! has_uv_project; then
                 print_warning "MkDocs not found."
                 read -p "Do you want to install MkDocs and dependencies? (y/N): " -n 1 -r
                 echo
@@ -180,38 +224,38 @@ main() {
                     exit 1
                 fi
             fi
-            
+
             # Check git status
             check_git_status
-            
+
             # Validate configuration
             validate_mkdocs_config
-            
+
             # Deploy
             deploy_docs
             ;;
-            
+
         serve|preview)
             print_status "Starting local documentation server for preview..."
-            
-            if ! command_exists mkdocs; then
+
+            if ! command_exists mkdocs && ! has_uv_project; then
                 print_warning "MkDocs not found."
                 install_mkdocs
             fi
-            
+
             serve_docs
             ;;
-            
+
         build)
             print_status "Building documentation..."
-            
-            if ! command_exists mkdocs; then
+
+            if ! command_exists mkdocs && ! has_uv_project; then
                 print_warning "MkDocs not found."
                 install_mkdocs
             fi
-            
+
             validate_mkdocs_config
-            mkdocs build
+            run_mkdocs build
             print_status "Documentation built in site/ directory"
             ;;
             
