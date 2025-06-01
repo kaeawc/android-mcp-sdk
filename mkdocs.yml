@@ -102,6 +102,7 @@ nav:
   - Home: index.md
   - Getting Started: getting-started.md
   - Usage Guide: usage.md
+  - ADB Port Forwarding: adb-port-forwarding.md
   - Transport Configuration: transport.md
   - API Reference: api-reference.md
   - Implementation:

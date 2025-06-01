@@ -616,6 +616,49 @@ lifecycleScope.launch {
 }
 ```
 
+## Testing Your Implementation
+
+### Testing Tools and Resources
+
+After implementing custom tools and resources, test them using MCP clients connected via ADB port
+forwarding:
+
+```bash
+# Setup ADB port forwarding
+./scripts/adb_testing/setup_port_forwarding.sh
+
+# Test your custom tool
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"your_tool_name","arguments":{"param":"value"}}}'
+
+# Test resource access
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"resources/read","params":{"uri":"your_resource_uri"}}'
+```
+
+**📡 [Complete Testing Guide →](adb-port-forwarding.md)**
+
+The ADB port forwarding documentation includes:
+
+- ✅ Automated testing scripts for reliability and performance
+- ✅ Manual testing examples for development
+- ✅ Troubleshooting common connectivity issues
+- ✅ Integration examples with MCP client libraries
+
+### Automated Testing
+
+The SDK includes comprehensive test suites:
+
+```bash
+# Run all ADB connectivity tests
+./gradlew :core:connectedAndroidTest --tests "*Adb*"
+
+# Test your implementation
+./gradlew :core:connectedAndroidTest --tests "*AdbConnectionTest"
+```
+
 ## Best Practices
 
 ### Tool Design
@@ -646,3 +689,4 @@ lifecycleScope.launch {
 2. **File access**: Restrict file operations to safe directories
 3. **Permissions**: Request only necessary Android permissions
 4. **Data exposure**: Be careful about what data you expose via resources
+

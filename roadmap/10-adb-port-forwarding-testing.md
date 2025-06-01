@@ -1,6 +1,6 @@
 # 10 - ADB Port Forwarding Testing
 
-## Status: `[ ]` Not Started
+## Status: `[C]` Complete
 
 ## Objective
 
@@ -1107,3 +1107,4 @@ done
 
 - [Android Network Testing](https://developer.android.com/training/testing/ui-testing/espresso-testing)
 - [WebSocket Testing Patterns](https://developer.android.com/guide/topics/connectivity/cronet/testing)
+

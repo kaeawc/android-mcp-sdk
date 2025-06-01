@@ -182,14 +182,15 @@ class SampleMcpApplication : Application() {
                     )
                     appendLine("MCP SDK: ${manager.getMcpSdkVersion()}")
                     appendLine("Server Running: ${manager.isServerRunning()}")
-                    appendLine("Transport: Available on ports 8080 (WebSocket) and 8081 (HTTP/SSE)")
+                    appendLine("Transport: Available on port 8080 (HTTP/SSE)")
                     appendLine("")
                     appendLine("To connect from your workstation:")
                     appendLine("1. adb forward tcp:8080 tcp:8080")
-                    appendLine("2. adb forward tcp:8081 tcp:8081")
-                    appendLine(
-                        "3. Connect to ws://localhost:8080/mcp or http://localhost:8081/mcp/"
-                    )
+                    appendLine("2. Connect to http://localhost:8080/mcp")
+                    appendLine("")
+                    appendLine("For automated testing:")
+                    appendLine("- Run: ./scripts/adb_testing/setup_port_forwarding.sh")
+                    appendLine("- Test: ./gradlew :core:connectedAndroidTest --tests \"*Adb*\"")
                 }
             }
 

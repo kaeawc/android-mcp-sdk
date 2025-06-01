@@ -143,14 +143,29 @@ lifecycleScope.launch {
 
 ### Using adb Port Forwarding
 
-```bash
-# Forward the default MCP ports
-adb forward tcp:8080 tcp:8080  # WebSocket
-adb forward tcp:8081 tcp:8081  # HTTP/SSE
+The Android MCP SDK includes comprehensive ADB port forwarding support for connecting MCP clients
+from your workstation:
 
-# Test the HTTP endpoint
-curl http://localhost:8081/mcp/status
+```bash
+# Quick setup with automated scripts
+./scripts/adb_testing/setup_port_forwarding.sh
+
+# Test the HTTP/SSE endpoint
+curl http://localhost:8080/mcp
+
+# Clean up when done
+./scripts/adb_testing/cleanup_port_forwarding.sh
 ```
+
+**📡 [Complete ADB Port Forwarding Guide →](adb-port-forwarding.md)**
+
+The ADB documentation covers:
+
+- ✅ Automated setup scripts and testing
+- ✅ Manual configuration options
+- ✅ Troubleshooting common issues
+- ✅ Integration with MCP clients
+- ✅ Performance and reliability testing
 
 ### Sample Apps for Testing
 
@@ -232,3 +247,4 @@ The library includes these dependencies automatically:
 - `io.modelcontextprotocol:kotlin-sdk:0.5.0` - Main MCP Kotlin SDK
 - `io.modelcontextprotocol:kotlin-sdk-jvm:0.5.0` - JVM-specific implementation
 - `androidx.startup:startup-runtime:1.2.0` - AndroidX Startup for initialization
+
