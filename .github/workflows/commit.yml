@@ -348,3 +348,7 @@ jobs:
       - name: "Install MkDocs and dependencies"
         working-directory: scripts/docs
         run: uv sync
+
+      - name: "Deploy documentation"
+        working-directory: scripts/docs
+        run: ./deploy.sh deploy
