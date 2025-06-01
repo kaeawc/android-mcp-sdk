@@ -36,8 +36,8 @@ This directory contains detailed task specifications for completing the Android 
 
 ### 🟡 High Priority (Core Features)
 
-- `[ ]` [01-resource-subscription-logic.md](01-resource-subscription-logic.md) - File observers for
-  resource subscriptions (TODO in ResourceProvider.kt)
+- `[C]` [01-resource-subscription-logic.md](01-resource-subscription-logic.md) - File observers for
+  resource subscriptions **[COMPLETED]**
 - `[ ]` [06-transport-integration-testing.md](06-transport-integration-testing.md) - Transport layer
   verification testing
 - `[ ]` [07-filesystem-resources-permissions.md](07-filesystem-resources-permissions.md) - Android
@@ -49,13 +49,22 @@ This directory contains detailed task specifications for completing the Android 
   requests (TODO in AndroidMcpServerImpl.kt)
 - `[ ]` [08-database-resources-implementation.md](08-database-resources-implementation.md) -
   Database resources for app data
+- `[ ]` [16-database-querying.md](16-database-querying.md) - Database query execution and results
+- `[ ]` [17-database-editing.md](17-database-editing.md) - Database modification operations
+-
+`[ ]` [18-shared-preferences-resources-implementation.md](18-shared-preferences-resources-implementation.md) -
+SharedPreferences as MCP resources
+- `[ ]` [19-shared-preferences-querying.md](19-shared-preferences-querying.md) -
+  SharedPreferences data querying
+- `[ ]` [20-shared-preferences-editing.md](20-shared-preferences-editing.md) -
+  SharedPreferences modification operations
 - `[P]` [13-sample-app-enhancement.md](13-sample-app-enhancement.md) - Enhance sample app with
   comprehensive examples
 
 ### Low Priority (Advanced Testing)
 
 - `[ ]` [09-integration-testing-suite.md](09-integration-testing-suite.md) - End-to-end integration
-  testing **[NEXT TASK]**
+  testing
 
 ### 🔵 Documentation & Polish
 
@@ -63,6 +72,14 @@ This directory contains detailed task specifications for completing the Android 
   WebSocket transport (already implemented)
 - `[C]` [05-http-sse-transport-implementation.md](05-http-sse-transport-implementation.md) -
   HTTP/SSE transport (already implemented)
+- `[ ]` [21-view-hierarchy-querying.md](21-view-hierarchy-querying.md) - UI view hierarchy
+  inspection
+- `[ ]` [22-accessibility-inspection.md](22-accessibility-inspection.md) - Accessibility service
+  integration
+- `[ ]` [23-network-request-inspection.md](23-network-request-inspection.md) - Network traffic
+  monitoring
+- `[ ]` [24-network-request-replay.md](24-network-request-replay.md) - Network request replay
+  functionality
 - `[ ]` [10-adb-port-forwarding-testing.md](10-adb-port-forwarding-testing.md) - ADB workflow
   validation
 - `[ ]` [11-mcp-client-communication-testing.md](11-mcp-client-communication-testing.md) - MCP
@@ -88,7 +105,7 @@ This directory contains detailed task specifications for completing the Android 
 
 **Goal**: Complete resource subscription and permission handling
 
-3. **[ ] 01-resource-subscription-logic.md** - Implement file observer subscriptions
+3. **[C] 01-resource-subscription-logic.md** - Implement file observer subscriptions
 4. **[ ] 07-filesystem-resources-permissions.md** - Validate Android permissions
 5. **[ ] 06-transport-integration-testing.md** - Comprehensive transport testing
 
@@ -100,7 +117,13 @@ This directory contains detailed task specifications for completing the Android 
 
 6. **[ ] 02-sampling-requests-implementation.md** - Complete sampling functionality
 7. **[ ] 08-database-resources-implementation.md** - Add database resource access
-8. **[P] 13-sample-app-enhancement.md** - Enhanced sample demonstrations
+8. **[ ] 16-database-querying.md** - Add database query execution and results
+9. **[ ] 17-database-editing.md** - Add database modification operations
+10. **[ ] 18-shared-preferences-resources-implementation.md** - Add SharedPreferences as MCP
+    resources
+11. **[ ] 19-shared-preferences-querying.md** - Add SharedPreferences data querying
+12. **[ ] 20-shared-preferences-editing.md** - Add SharedPreferences modification operations
+13. **[P] 13-sample-app-enhancement.md** - Enhanced sample demonstrations
 
 **Success Criteria**: Feature-complete SDK ready for release
 
@@ -108,10 +131,10 @@ This directory contains detailed task specifications for completing the Android 
 
 **Goal**: Comprehensive testing and documentation
 
-9. **[ ] 10-adb-port-forwarding-testing.md** - ADB workflow validation
-10. **[ ] 11-mcp-client-communication-testing.md** - Multi-client compatibility
-11. **[ ] 12-builtin-tools-validation.md** - Tool validation testing
-12. **[ ] 14-integration-guides-documentation.md** - Developer documentation
+14. **[ ] 10-adb-port-forwarding-testing.md** - ADB workflow validation
+15. **[ ] 11-mcp-client-communication-testing.md** - Multi-client compatibility
+16. **[ ] 12-builtin-tools-validation.md** - Tool validation testing
+17. **[ ] 14-integration-guides-documentation.md** - Developer documentation
 
 **Success Criteria**: Production-ready SDK with complete documentation
 
@@ -169,4 +192,3 @@ grep -r "TODO" lib/src/main/kotlin/ --include="*.kt"
 ```
 
 Update this README.md with status as tasks are completed.
-
