@@ -53,6 +53,8 @@ dependencies {
     implementation(libs.mcp.kotlin.sdk)
     implementation(libs.kotlin.sdk.jvm)
     implementation(libs.androidx.startup.runtime)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation("androidx.lifecycle:lifecycle-process:2.9.0")
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.json)
 

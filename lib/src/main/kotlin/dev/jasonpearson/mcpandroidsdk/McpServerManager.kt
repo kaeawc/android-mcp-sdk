@@ -1,8 +1,10 @@
 package dev.jasonpearson.mcpandroidsdk
 
+import android.app.Application
 import android.content.Context
 import android.util.Log
 import androidx.annotation.VisibleForTesting
+import dev.jasonpearson.mcpandroidsdk.lifecycle.McpLifecycleManager
 import dev.jasonpearson.mcpandroidsdk.models.*
 import kotlinx.coroutines.*
 
@@ -190,6 +192,116 @@ class McpServerManager private constructor() {
         return mcpServer!!.getMcpPrompts()
     }
 
+    /** Get a specific MCP prompt with arguments */
+    suspend fun getMcpPrompt(
+        name: String,
+        arguments: Map<String, Any?> = emptyMap(),
+    ): io.modelcontextprotocol.kotlin.sdk.GetPromptResult {
+        checkInitialized()
+        return mcpServer!!.getMcpPrompt(name, arguments)
+    }
+
+    // Helper methods for adding tools, resources, and prompts
+
+    /** Add a custom MCP tool with its handler */
+    fun addMcpTool(
+        tool: io.modelcontextprotocol.kotlin.sdk.Tool,
+        handler: suspend (Map<String, Any>) -> io.modelcontextprotocol.kotlin.sdk.CallToolResult,
+    ) {
+        checkInitialized()
+        mcpServer!!.addMcpTool(tool, handler)
+    }
+
+    /** Remove a custom MCP tool */
+    fun removeMcpTool(name: String): Boolean {
+        checkInitialized()
+        return mcpServer!!.removeMcpTool(name)
+    }
+
+    /** Add a custom MCP resource with its content provider */
+    fun addMcpResource(
+        resource: io.modelcontextprotocol.kotlin.sdk.Resource,
+        contentProvider: suspend () -> AndroidResourceContent,
+    ) {
+        checkInitialized()
+        mcpServer!!.addMcpResource(resource, contentProvider)
+    }
+
+    /** Add a custom MCP resource template */
+    fun addMcpResourceTemplate(template: io.modelcontextprotocol.kotlin.sdk.ResourceTemplate) {
+        checkInitialized()
+        mcpServer!!.addMcpResourceTemplate(template)
+    }
+
+    /** Read content from an MCP resource */
+    suspend fun readMcpResource(uri: String): AndroidResourceContent {
+        checkInitialized()
+        return mcpServer!!.readMcpResource(uri)
+    }
+
+    /** Subscribe to an MCP resource for updates */
+    fun subscribeMcpResource(uri: String) {
+        checkInitialized()
+        mcpServer!!.subscribeMcpResource(uri)
+    }
+
+    /** Unsubscribe from an MCP resource */
+    fun unsubscribeMcpResource(uri: String) {
+        checkInitialized()
+        mcpServer!!.unsubscribeMcpResource(uri)
+    }
+
+    /** Add a custom MCP prompt with its handler */
+    fun addMcpPrompt(
+        prompt: io.modelcontextprotocol.kotlin.sdk.Prompt,
+        handler: suspend (Map<String, Any?>) -> io.modelcontextprotocol.kotlin.sdk.GetPromptResult,
+    ) {
+        checkInitialized()
+        mcpServer!!.addMcpPrompt(prompt, handler)
+    }
+
+    /** Remove a custom MCP prompt */
+    fun removeMcpPrompt(name: String): Boolean {
+        checkInitialized()
+        return mcpServer!!.removeMcpPrompt(name)
+    }
+
+    // Convenience methods for creating common tool types
+
+    /** Create and add a simple text-based tool */
+    fun addSimpleTool(
+        name: String,
+        description: String,
+        parameters: Map<String, String> = emptyMap(),
+        handler: suspend (Map<String, Any>) -> String,
+    ) {
+        checkInitialized()
+        mcpServer!!.addSimpleTool(name, description, parameters, handler)
+    }
+
+    /** Create and add a simple file-based resource */
+    fun addFileResource(
+        uri: String,
+        name: String,
+        description: String,
+        filePath: String,
+        mimeType: String = "text/plain",
+    ) {
+        checkInitialized()
+        mcpServer!!.addFileResource(uri, name, description, filePath, mimeType)
+    }
+
+    /** Create and add a simple text-based prompt */
+    fun addSimplePrompt(
+        name: String,
+        description: String,
+        arguments: List<io.modelcontextprotocol.kotlin.sdk.PromptArgument> = emptyList(),
+        promptGenerator: suspend (Map<String, Any?>) -> String,
+    ) {
+        checkInitialized()
+        mcpServer!!.addSimplePrompt(name, description, arguments, promptGenerator)
+    }
+
     // Transport operations
 
     /** Get transport connection information */
@@ -212,8 +324,30 @@ class McpServerManager private constructor() {
         return mcpServer!!.getComprehensiveServerInfo().capabilities
     }
 
+    // Lifecycle management integration
+
+    /** Initialize lifecycle management with an Android Application */
+    fun initializeLifecycleManagement(
+        application: Application,
+        config: McpLifecycleManager.LifecycleConfig = McpLifecycleManager.LifecycleConfig(),
+    ) {
+        McpLifecycleManager.getInstance().initialize(application, config)
+        Log.i(TAG, "Lifecycle management initialized")
+    }
+
+    /** Update lifecycle configuration */
+    fun updateLifecycleConfig(config: McpLifecycleManager.LifecycleConfig) {
+        McpLifecycleManager.getInstance().updateConfig(config)
+    }
+
+    /** Get current lifecycle state */
+    fun getLifecycleState(): McpLifecycleManager.LifecycleState {
+        return McpLifecycleManager.getInstance().getLifecycleState()
+    }
+
     // Cleanup resources when the manager is no longer needed
     fun cleanup() {
+        McpLifecycleManager.getInstance().cleanup()
         isInitialized = false
         mcpServer = null
         Log.d(TAG, "McpServerManager cleaned up")

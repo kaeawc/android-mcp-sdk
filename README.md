@@ -158,6 +158,204 @@ adb forward tcp:8081 tcp:8081  # HTTP/SSE
 # GET  http://localhost:8081/mcp/events
 ```
 
+### Using Helper Methods for Tools, Resources, and Prompts
+
+#### Adding Custom Tools
+
+```kotlin
+val manager = McpStartup.getManager()
+
+// Add a simple tool with a handler
+manager.addSimpleTool(
+    name = "calculate_sum",
+    description = "Calculate the sum of two numbers",
+    parameters = mapOf("a" to "number", "b" to "number")
+) { arguments ->
+    val a = arguments["a"] as? Number ?: 0
+    val b = arguments["b"] as? Number ?: 0
+    "Sum: ${a.toDouble() + b.toDouble()}"
+}
+
+// Add a more complex MCP tool
+val complexTool = Tool(
+    name = "complex_operation",
+    description = "Perform a complex operation",
+    inputSchema = Tool.Input(
+        properties = buildJsonObject {
+            put("operation", buildJsonObject {
+                put("type", JsonPrimitive("string"))
+                put("enum", buildJsonArray {
+                    add(JsonPrimitive("encode"))
+                    add(JsonPrimitive("decode"))
+                })
+            })
+            put("data", buildJsonObject {
+                put("type", JsonPrimitive("string"))
+            })
+        },
+        required = listOf("operation", "data")
+    )
+)
+
+manager.addMcpTool(complexTool) { arguments ->
+    val operation = arguments["operation"] as? String ?: "encode"
+    val data = arguments["data"] as? String ?: ""
+    
+    val result = when (operation) {
+        "encode" -> java.util.Base64.getEncoder().encodeToString(data.toByteArray())
+        "decode" -> String(java.util.Base64.getDecoder().decode(data))
+        else -> "Unknown operation: $operation"
+    }
+    
+    CallToolResult(
+        content = listOf(TextContent(text = result)),
+        isError = false
+    )
+}
+```
+
+#### Adding Custom Resources
+
+```kotlin
+// Add a simple file resource
+manager.addFileResource(
+    uri = "app://config/settings.json",
+    name = "App Settings",
+    description = "Application configuration settings",
+    filePath = "/path/to/settings.json",
+    mimeType = "application/json"
+)
+
+// Add a dynamic resource with custom content provider
+val dynamicResource = Resource(
+    uri = "app://status/current",
+    name = "Current Status",
+    description = "Real-time application status",
+    mimeType = "application/json"
+)
+
+manager.addMcpResource(dynamicResource) {
+    val status = buildJsonObject {
+        put("timestamp", JsonPrimitive(System.currentTimeMillis()))
+        put("memory_usage", JsonPrimitive(Runtime.getRuntime().totalMemory()))
+        put("active_threads", JsonPrimitive(Thread.activeCount()))
+    }
+    
+    AndroidResourceContent(
+        uri = "app://status/current",
+        text = status.toString(),
+        mimeType = "application/json"
+    )
+}
+
+// Subscribe to resource updates
+manager.subscribeMcpResource("app://status/current")
+```
+
+#### Adding Custom Prompts
+
+```kotlin
+// Add a simple prompt
+manager.addSimplePrompt(
+    name = "analyze_logs",
+    description = "Analyze application logs for issues",
+    arguments = listOf(
+        PromptArgument(
+            name = "log_level",
+            description = "Minimum log level to analyze",
+            required = false
+        ),
+        PromptArgument(
+            name = "time_range",
+            description = "Time range for log analysis",
+            required = false
+        )
+    )
+) { arguments ->
+    val logLevel = arguments["log_level"] as? String ?: "ERROR"
+    val timeRange = arguments["time_range"] as? String ?: "last 24 hours"
+    
+    """
+    Please analyze the application logs with the following criteria:
+    - Minimum log level: $logLevel
+    - Time range: $timeRange
+    
+    Focus on:
+    1. Error patterns and frequency
+    2. Performance bottlenecks
+    3. Security-related events
+    4. Unusual activity patterns
+    
+    Provide actionable insights and recommendations.
+    """.trimIndent()
+}
+
+// Get a prompt with arguments
+lifecycleScope.launch {
+    val promptResult = manager.getMcpPrompt(
+        "analyze_logs",
+        mapOf(
+            "log_level" to "WARN",
+            "time_range" to "last 6 hours"
+        )
+    )
+    
+    Log.d("MCP", "Prompt result: ${promptResult.description}")
+    promptResult.messages.forEach { message ->
+        Log.d("MCP", "Message: ${message.content}")
+    }
+}
+```
+
+### Android Lifecycle Management
+
+```kotlin
+class MyApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        
+        // Initialize MCP server
+        val manager = McpStartup.initializeManually(this)
+        
+        // Initialize lifecycle management with custom configuration
+        manager.initializeLifecycleManagement(
+            application = this,
+            config = McpLifecycleManager.LifecycleConfig(
+                autoStartOnAppStart = true,
+                autoStopOnAppStop = false,  // Keep server running in background
+                restartOnAppReturn = true,
+                pauseOnBackground = false,
+                stopOnLastActivityDestroyed = false
+            )
+        )
+        
+        Log.i("MCP", "Application initialized with lifecycle management")
+    }
+}
+
+// In your activity
+class MainActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        
+        // Check lifecycle state
+        val manager = McpStartup.getManager()
+        val lifecycleState = manager.getLifecycleState()
+        
+        Log.d("MCP", "App in background: ${lifecycleState.isAppInBackground}")
+        Log.d("MCP", "Active activities: ${lifecycleState.activeActivities}")
+        Log.d("MCP", "Server running: ${lifecycleState.isServerRunning}")
+        
+        // Update lifecycle configuration if needed
+        if (lifecycleState.config.autoStopOnAppStop) {
+            manager.updateLifecycleConfig(
+                lifecycleState.config.copy(autoStopOnAppStop = false)
+            )
+        }
+    }
+}
+```
+
 ### Checking Server Status
 
 ```kotlin
@@ -240,8 +438,8 @@ To disable automatic initialization and use manual initialization instead:
 - ✅ WebSocket transport for network communication
 - ✅ HTTP/SSE transport for web-based communication
 - ❌ STDIO transport (not feasible on Android platform)
-- ⏳ Helper methods for adding tools, resources, and prompts
-- ⏳ Android-specific lifecycle management
+- ✅ Helper methods for adding tools, resources, and prompts
+- ✅ Android-specific lifecycle management
 
 ## Next Steps
 
@@ -345,3 +543,4 @@ see [docs/COMPLETE_MCP_SERVER_WRAPPER.md](docs/COMPLETE_MCP_SERVER_WRAPPER.md).
 - [Model Context Protocol Documentation](https://modelcontextprotocol.io)
 - [MCP Specification](https://modelcontextprotocol.io/specification)
 - [AndroidX Startup Documentation](https://developer.android.com/topic/libraries/app-startup)
+

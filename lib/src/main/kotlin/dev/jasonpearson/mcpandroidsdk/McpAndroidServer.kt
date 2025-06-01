@@ -293,6 +293,221 @@ private constructor(
         return if (isInitialized()) promptProvider.getAllPrompts() else emptyList()
     }
 
+    /** Get a specific MCP prompt with arguments */
+    suspend fun getMcpPrompt(
+        name: String,
+        arguments: Map<String, Any?> = emptyMap(),
+    ): io.modelcontextprotocol.kotlin.sdk.GetPromptResult {
+        return if (isInitialized()) {
+            promptProvider.getPrompt(name, arguments)
+        } else {
+            io.modelcontextprotocol.kotlin.sdk.GetPromptResult(
+                description = "Server not initialized",
+                messages =
+                    listOf(
+                        io.modelcontextprotocol.kotlin.sdk.PromptMessage(
+                            role = io.modelcontextprotocol.kotlin.sdk.Role.user,
+                            content =
+                                io.modelcontextprotocol.kotlin.sdk.TextContent(
+                                    text = "Server not initialized"
+                                ),
+                        )
+                    ),
+            )
+        }
+    }
+
+    // Helper methods for adding tools, resources, and prompts
+
+    /** Add a custom MCP tool with its handler */
+    fun addMcpTool(
+        tool: io.modelcontextprotocol.kotlin.sdk.Tool,
+        handler: suspend (Map<String, Any>) -> io.modelcontextprotocol.kotlin.sdk.CallToolResult,
+    ) {
+        if (isInitialized()) {
+            toolProvider.addTool(tool, handler)
+            Log.i(TAG, "Added custom MCP tool: ${tool.name}")
+        } else {
+            Log.w(TAG, "Cannot add tool, server not initialized")
+        }
+    }
+
+    /** Remove a custom MCP tool */
+    fun removeMcpTool(name: String): Boolean {
+        return if (isInitialized()) {
+            val result = toolProvider.removeTool(name)
+            if (result) {
+                Log.i(TAG, "Removed custom MCP tool: $name")
+            }
+            result
+        } else {
+            Log.w(TAG, "Cannot remove tool, server not initialized")
+            false
+        }
+    }
+
+    /** Add a custom MCP resource with its content provider */
+    fun addMcpResource(
+        resource: io.modelcontextprotocol.kotlin.sdk.Resource,
+        contentProvider: suspend () -> AndroidResourceContent,
+    ) {
+        if (isInitialized()) {
+            resourceProvider.addResource(resource, contentProvider)
+            Log.i(TAG, "Added custom MCP resource: ${resource.uri}")
+        } else {
+            Log.w(TAG, "Cannot add resource, server not initialized")
+        }
+    }
+
+    /** Add a custom MCP resource template */
+    fun addMcpResourceTemplate(template: io.modelcontextprotocol.kotlin.sdk.ResourceTemplate) {
+        if (isInitialized()) {
+            resourceProvider.addResourceTemplate(template)
+            Log.i(TAG, "Added custom MCP resource template: ${template.uriTemplate}")
+        } else {
+            Log.w(TAG, "Cannot add resource template, server not initialized")
+        }
+    }
+
+    /** Read content from an MCP resource */
+    suspend fun readMcpResource(uri: String): AndroidResourceContent {
+        return if (isInitialized()) {
+            resourceProvider.readResource(uri)
+        } else {
+            AndroidResourceContent(uri = uri, text = "Server not initialized")
+        }
+    }
+
+    /** Subscribe to an MCP resource for updates */
+    fun subscribeMcpResource(uri: String) {
+        if (isInitialized()) {
+            resourceProvider.subscribe(uri)
+            Log.i(TAG, "Subscribed to MCP resource: $uri")
+        } else {
+            Log.w(TAG, "Cannot subscribe to resource, server not initialized")
+        }
+    }
+
+    /** Unsubscribe from an MCP resource */
+    fun unsubscribeMcpResource(uri: String) {
+        if (isInitialized()) {
+            resourceProvider.unsubscribe(uri)
+            Log.i(TAG, "Unsubscribed from MCP resource: $uri")
+        } else {
+            Log.w(TAG, "Cannot unsubscribe from resource, server not initialized")
+        }
+    }
+
+    /** Add a custom MCP prompt with its handler */
+    fun addMcpPrompt(
+        prompt: io.modelcontextprotocol.kotlin.sdk.Prompt,
+        handler: suspend (Map<String, Any?>) -> io.modelcontextprotocol.kotlin.sdk.GetPromptResult,
+    ) {
+        if (isInitialized()) {
+            promptProvider.addPrompt(prompt, handler)
+            Log.i(TAG, "Added custom MCP prompt: ${prompt.name}")
+        } else {
+            Log.w(TAG, "Cannot add prompt, server not initialized")
+        }
+    }
+
+    /** Remove a custom MCP prompt */
+    fun removeMcpPrompt(name: String): Boolean {
+        return if (isInitialized()) {
+            val result = promptProvider.removePrompt(name)
+            if (result) {
+                Log.i(TAG, "Removed custom MCP prompt: $name")
+            }
+            result
+        } else {
+            Log.w(TAG, "Cannot remove prompt, server not initialized")
+            false
+        }
+    }
+
+    // Convenience methods for creating common tool types
+
+    /** Create and add a simple text-based tool */
+    fun addSimpleTool(
+        name: String,
+        description: String,
+        parameters: Map<String, String> = emptyMap(),
+        handler: suspend (Map<String, Any>) -> String,
+    ) {
+        val tool = AndroidTool(
+            name = name,
+            description = description,
+            parameters = parameters,
+        ) { context, arguments ->
+            handler(arguments)
+        }
+        addTool(tool)
+    }
+
+    /** Create and add a simple file-based resource */
+    fun addFileResource(
+        uri: String,
+        name: String,
+        description: String,
+        filePath: String,
+        mimeType: String = "text/plain",
+    ) {
+        val resource = io.modelcontextprotocol.kotlin.sdk.Resource(
+            uri = uri,
+            name = name,
+            description = description,
+            mimeType = mimeType,
+        )
+        addMcpResource(resource) {
+            try {
+                val file = java.io.File(filePath)
+                if (file.exists() && file.isFile) {
+                    AndroidResourceContent(
+                        uri = uri,
+                        text = file.readText(),
+                        mimeType = mimeType,
+                    )
+                } else {
+                    AndroidResourceContent(
+                        uri = uri,
+                        text = "File not found: $filePath",
+                    )
+                }
+            } catch (e: Exception) {
+                AndroidResourceContent(
+                    uri = uri,
+                    text = "Error reading file: ${e.message}",
+                )
+            }
+        }
+    }
+
+    /** Create and add a simple text-based prompt */
+    fun addSimplePrompt(
+        name: String,
+        description: String,
+        arguments: List<io.modelcontextprotocol.kotlin.sdk.PromptArgument> = emptyList(),
+        promptGenerator: suspend (Map<String, Any?>) -> String,
+    ) {
+        val prompt = io.modelcontextprotocol.kotlin.sdk.Prompt(
+            name = name,
+            description = description,
+            arguments = arguments,
+        )
+        addMcpPrompt(prompt) { args ->
+            val promptText = promptGenerator(args)
+            io.modelcontextprotocol.kotlin.sdk.GetPromptResult(
+                description = description,
+                messages = listOf(
+                    io.modelcontextprotocol.kotlin.sdk.PromptMessage(
+                        role = io.modelcontextprotocol.kotlin.sdk.Role.user,
+                        content = io.modelcontextprotocol.kotlin.sdk.TextContent(text = promptText),
+                    )
+                ),
+            )
+        }
+    }
+
     // Private helper methods
 
     private fun startMessageHandling() {
