@@ -1,6 +1,7 @@
 [versions]
 agp = "8.10.1"
 core = "1.6.1"
+documentfile = "1.1.0"
 hilt = "2.56.2"
 jdk = "23"
 javaSource = "23"
@@ -32,6 +33,7 @@ okhttp = "4.12.0"
 [libraries]
 androidx-core = { module = "androidx.test:core", version.ref = "core" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-documentfile = { module = "androidx.documentfile:documentfile", version.ref = "documentfile" }
 androidx-junit-ktx = { module = "androidx.test.ext:junit-ktx", version.ref = "junitVersion" }
 core-ktx = { module = "androidx.test:core-ktx", version.ref = "core" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
