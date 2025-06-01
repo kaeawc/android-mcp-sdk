@@ -119,7 +119,7 @@ android {
 }
 
 dependencies {
-    implementation(project(":lib"))
+    implementation(project(":core"))
     
     // Core AndroidX
     implementation("androidx.core:core-ktx:1.12.0")

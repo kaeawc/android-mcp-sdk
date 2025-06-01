@@ -300,15 +300,15 @@ git clone https://github.com/your-org/android-mcp-sdk.git
 2. Include the library module in your `settings.gradle.kts`:
 
 ```kotlin
-include(":lib")
-project(":lib").projectDir = File("path/to/android-mcp-sdk/lib")
+include(":core")
+project(":core").projectDir = File("path/to/android-mcp-sdk/core")
 ```
 
 3. Add the dependency:
 
 ```kotlin
 dependencies {
-    implementation(project(":lib"))
+    implementation(project(":core"))
 }
 ```
 

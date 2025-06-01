@@ -33,7 +33,7 @@ Room databases, SQLite, and Content Providers.
 
 ### Step 1: Create Database Editor Framework
 
-Create `lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/DatabaseEditor.kt`:
+Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/DatabaseEditor.kt`:
 
 ```kotlin
 class DatabaseEditor(
@@ -86,7 +86,7 @@ class DatabaseEditor(
 
 ### Step 2: Room Database Editing Support
 
-Create `lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/RoomDatabaseEditor.kt`:
+Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/RoomDatabaseEditor.kt`:
 
 ```kotlin
 class RoomDatabaseEditor(
@@ -159,7 +159,7 @@ class RoomDatabaseEditor(
 
 ### Step 3: SQLite Direct Editing Support
 
-Create `lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/SqliteDatabaseEditor.kt`:
+Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/SqliteDatabaseEditor.kt`:
 
 ```kotlin
 class SqliteDatabaseEditor(
@@ -249,7 +249,7 @@ class SqliteDatabaseEditor(
 
 ### Step 4: Content Provider Editing Support
 
-Create `lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/ContentProviderEditor.kt`:
+Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/ContentProviderEditor.kt`:
 
 ```kotlin
 class ContentProviderEditor(
@@ -330,7 +330,7 @@ class ContentProviderEditor(
 
 ### Step 5: Transaction Management
 
-Create `lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/TransactionManager.kt`:
+Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/TransactionManager.kt`:
 
 ```kotlin
 class TransactionManager(
@@ -411,7 +411,7 @@ class TransactionManager(
 
 ### Step 6: Data Validation Framework
 
-Create `lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/DataValidator.kt`:
+Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/DataValidator.kt`:
 
 ```kotlin
 class DataValidator {
@@ -618,7 +618,7 @@ private fun createDatabaseEditingTools(): List<Tool> {
 
 ### Step 8: Audit Logging
 
-Create `lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/DatabaseAuditLogger.kt`:
+Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/DatabaseAuditLogger.kt`:
 
 ```kotlin
 class DatabaseAuditLogger(

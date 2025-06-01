@@ -122,7 +122,7 @@ MCP notifications
 ### ✅ Unit Tests
 
 ```bash
-./gradlew :lib:testDebugUnitTest  # ✅ ALL TESTS PASS
+./gradlew :core:testDebugUnitTest  # ✅ ALL TESTS PASS
 ```
 
 ### ✅ Functional Verification

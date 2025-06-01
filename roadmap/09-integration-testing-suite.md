@@ -61,7 +61,7 @@ unit/integration tests and manual testing procedures.
 #### Step 1.1: Configure Test Dependencies
 
 ```kotlin
-// lib/build.gradle.kts
+// core/build.gradle.kts
 dependencies {
     // AndroidX Test
     testImplementation("androidx.test:core:1.5.0")
@@ -956,30 +956,30 @@ class LoadTest : TestBase() {
 #### Step V1: Run Unit Tests
 
 ```bash
-./gradlew :lib:testDebugUnitTest --tests "*McpServerManagerTest"
-./gradlew :lib:testDebugUnitTest --tests "*McpAndroidServerTest"
+./gradlew :core:testDebugUnitTest --tests "*McpServerManagerTest"
+./gradlew :core:testDebugUnitTest --tests "*McpAndroidServerTest"
 ```
 
 #### Step V2: Run Integration Tests
 
 ```bash
-./gradlew :lib:connectedAndroidTest --tests "*TransportIntegrationTest"
-./gradlew :lib:connectedAndroidTest --tests "*McpProtocolComplianceTest"
+./gradlew :core:connectedAndroidTest --tests "*TransportIntegrationTest"
+./gradlew :core:connectedAndroidTest --tests "*McpProtocolComplianceTest"
 ```
 
 #### Step V3: Run Performance Tests
 
 ```bash
-./gradlew :lib:testDebugUnitTest --tests "*LoadTest"
+./gradlew :core:testDebugUnitTest --tests "*LoadTest"
 ```
 
 #### Step V4: Generate Test Reports
 
 ```bash
-./gradlew :lib:testDebugUnitTest
+./gradlew :core:testDebugUnitTest
 # Reports available at: lib/build/reports/tests/testDebugUnitTest/index.html
 
-./gradlew :lib:connectedAndroidTest  
+./gradlew :core:connectedAndroidTest  
 # Reports available at: lib/build/reports/androidTests/connected/index.html
 ```
 

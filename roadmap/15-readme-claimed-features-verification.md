@@ -43,7 +43,7 @@ layers, integration methods, MCP capabilities, and safety mechanisms.
 
 - ✅ **AndroidX Startup integration**: `McpServerManagerInitializer.kt`
 - ✅ **Manifest configuration**: Proper `InitializationProvider` setup in
-  `lib/src/main/AndroidManifest.xml`
+  `core/src/main/AndroidManifest.xml`
 - ✅ **Manual initialization**: `McpStartup.initializeManually()` and `initializeWithCustomConfig()`
 - ✅ **Automatic detection**: `McpStartup.isInitialized()` working correctly
 
@@ -135,7 +135,7 @@ layers, integration methods, MCP capabilities, and safety mechanisms.
 **Tests Performed**:
 
 ```bash
-./gradlew :lib:compileDebugKotlin     # ✅ SUCCESS
+./gradlew :core:compileDebugKotlin     # ✅ SUCCESS
 ./gradlew :samples:simple:assembleDebug  # ✅ SUCCESS  
 ./gradlew buildDebug                   # ✅ SUCCESS
 ```

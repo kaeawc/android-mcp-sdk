@@ -992,19 +992,19 @@ chmod +x scripts/adb_testing/*.sh
 #### Step V2: Run Connection Tests
 
 ```bash
-./gradlew :lib:connectedAndroidTest --tests "*AdbConnectionTest"
+./gradlew :core:connectedAndroidTest --tests "*AdbConnectionTest"
 ```
 
 #### Step V3: Run Performance Tests
 
 ```bash
-./gradlew :lib:connectedAndroidTest --tests "*AdbPerformanceTest"
+./gradlew :core:connectedAndroidTest --tests "*AdbPerformanceTest"
 ```
 
 #### Step V4: Run Reliability Tests
 
 ```bash
-./gradlew :lib:connectedAndroidTest --tests "*AdbReliabilityTest"
+./gradlew :core:connectedAndroidTest --tests "*AdbReliabilityTest"
 ```
 
 #### Step V5: Cleanup Port Forwarding
@@ -1051,7 +1051,7 @@ adb forward --list
 DEVICE_SERIAL=emulator-5554 ./scripts/adb_testing/setup_port_forwarding.sh
 
 # Run tests on specific device
-./gradlew :lib:connectedAndroidTest -PtestDeviceSerial=emulator-5554
+./gradlew :core:connectedAndroidTest -PtestDeviceSerial=emulator-5554
 ```
 
 #### Step M4: Performance Benchmarking

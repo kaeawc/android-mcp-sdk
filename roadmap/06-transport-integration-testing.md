@@ -828,14 +828,14 @@ class NetworkConditionTest {
 ### 1. Run Integration Test Suite
 
 ```bash
-./gradlew :lib:connectedAndroidTest -Pandroid.testInstrumentationRunner=androidx.test.runner.AndroidJUnitRunner
+./gradlew :core:connectedAndroidTest -Pandroid.testInstrumentationRunner=androidx.test.runner.AndroidJUnitRunner
 ```
 
 ### 2. Performance Benchmarking
 
 ```bash
 # Run benchmark tests specifically
-./gradlew :lib:connectedAndroidTest -Pandroid.testInstrumentationRunner=androidx.test.runner.AndroidJUnitRunner \
+./gradlew :core:connectedAndroidTest -Pandroid.testInstrumentationRunner=androidx.test.runner.AndroidJUnitRunner \
   --tests="*TransportBenchmarkTest*"
 ```
 

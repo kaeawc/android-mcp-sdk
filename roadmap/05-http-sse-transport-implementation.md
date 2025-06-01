@@ -8,7 +8,7 @@ The HTTP/SSE transport layer has been successfully implemented in `HttpSseTransp
 
 The HTTP/SSE transport is located at:
 
-- `lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/transport/HttpSseTransport.kt`
+- `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/transport/HttpSseTransport.kt`
 
 This transport provides:
 
@@ -23,7 +23,7 @@ The transport implementation can be verified by:
 1. **Build verification**:
 
 ```bash
-./gradlew :lib:compileDebugKotlin
+./gradlew :core:compileDebugKotlin
 ```
 
 2. **Sample app build**:

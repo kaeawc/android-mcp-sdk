@@ -40,7 +40,7 @@ Study the MCP specification for sampling:
 
 ### 2. Create Sampling Infrastructure
 
-Create `lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/features/sampling/`:
+Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/features/sampling/`:
 
 **SamplingManager.kt:**
 ```kotlin

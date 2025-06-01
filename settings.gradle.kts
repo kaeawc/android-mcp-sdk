@@ -23,7 +23,7 @@ pluginManagement {
 
 rootProject.name = "Sample-Android-MCP"
 
-include(":lib")
+include(":core")
 
 // Sample applications
 include(":samples:simple")

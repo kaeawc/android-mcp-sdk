@@ -28,7 +28,7 @@ integration, SQLite support, and secure data exposure through the MCP protocol.
 
 ### Step 1: Create Database Resource Framework
 
-Create `lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/resources/DatabaseResourceProvider.kt`:
+Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/resources/DatabaseResourceProvider.kt`:
 
 ```kotlin
 class DatabaseResourceProvider(
@@ -70,7 +70,7 @@ class DatabaseResourceProvider(
 
 ### Step 2: Room Database Integration
 
-Create `lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/resources/RoomDatabaseProvider.kt`:
+Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/resources/RoomDatabaseProvider.kt`:
 
 ```kotlin
 class RoomDatabaseProvider(
@@ -106,7 +106,7 @@ class RoomDatabaseProvider(
 
 ### Step 3: SQLite Direct Access
 
-Create `lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/resources/SqliteResourceProvider.kt`:
+Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/resources/SqliteResourceProvider.kt`:
 
 ```kotlin
 class SqliteResourceProvider(
@@ -140,7 +140,7 @@ class SqliteResourceProvider(
 ### Step 4: Content Provider Integration
 
 Create
-`lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/resources/ContentProviderResourceProvider.kt`:
+`core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/resources/ContentProviderResourceProvider.kt`:
 
 ```kotlin
 class ContentProviderResourceProvider(
@@ -177,7 +177,7 @@ class ContentProviderResourceProvider(
 
 ### Step 5: Query Builder and Safety
 
-Create `lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/resources/SafeQueryBuilder.kt`:
+Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/resources/SafeQueryBuilder.kt`:
 
 ```kotlin
 class SafeQueryBuilder {
@@ -211,7 +211,7 @@ class SafeQueryBuilder {
 
 ### Step 6: Database Schema Discovery
 
-Create `lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/resources/DatabaseSchemaProvider.kt`:
+Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/resources/DatabaseSchemaProvider.kt`:
 
 ```kotlin
 class DatabaseSchemaProvider {
@@ -294,7 +294,7 @@ private suspend fun registerBuiltInDatabaseResources() {
 
 ### Step 8: Real-time Database Updates
 
-Create `lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/resources/DatabaseObserver.kt`:
+Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/resources/DatabaseObserver.kt`:
 
 ```kotlin
 class DatabaseObserver(
@@ -330,7 +330,7 @@ class DatabaseObserver(
 
 ### Step 9: Add Dependencies
 
-Update `lib/build.gradle.kts`:
+Update `core/build.gradle.kts`:
 
 ```kotlin
 dependencies {

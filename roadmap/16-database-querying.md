@@ -31,7 +31,7 @@ and Content Providers.
 
 ### Step 1: Create Query Engine Framework
 
-Create `lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/DatabaseQueryEngine.kt`:
+Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/DatabaseQueryEngine.kt`:
 
 ```kotlin
 class DatabaseQueryEngine(
@@ -79,7 +79,7 @@ class DatabaseQueryEngine(
 
 ### Step 2: Room Database Query Support
 
-Create `lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/RoomQueryExecutor.kt`:
+Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/RoomQueryExecutor.kt`:
 
 ```kotlin
 class RoomQueryExecutor(
@@ -131,7 +131,7 @@ class RoomQueryExecutor(
 
 ### Step 3: SQLite Direct Query Support
 
-Create `lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/SqliteQueryExecutor.kt`:
+Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/SqliteQueryExecutor.kt`:
 
 ```kotlin
 class SqliteQueryExecutor(
@@ -188,7 +188,7 @@ class SqliteQueryExecutor(
 ### Step 4: Content Provider Query Support
 
 Create
-`lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/ContentProviderQueryExecutor.kt`:
+`core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/ContentProviderQueryExecutor.kt`:
 
 ```kotlin
 class ContentProviderQueryExecutor(
@@ -262,7 +262,7 @@ class ContentProviderQueryExecutor(
 
 ### Step 5: Query Builder and Safety Framework
 
-Create `lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/SafeQueryBuilder.kt`:
+Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/SafeQueryBuilder.kt`:
 
 ```kotlin
 class SafeQueryBuilder(
@@ -311,7 +311,7 @@ class SafeQueryBuilder(
 
 ### Step 6: Query Result Formatting
 
-Create `lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/QueryResultFormatter.kt`:
+Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/QueryResultFormatter.kt`:
 
 ```kotlin
 class QueryResultFormatter {

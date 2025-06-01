@@ -25,6 +25,14 @@ This directory contains detailed task specifications for completing the Android 
 - Permission handling for Android resources needs validation
 - Database resources not yet implemented
 
+## Status Legend
+
+- `[ ]` Not Started
+- `[P]` In Progress
+- `[T]` Testing/Verification
+- `[C]` Complete
+- `[B]` Blocked (waiting for dependency)
+
 ## Task Categories & Status
 
 ### 🔴 Critical Path (Blocks Production)
@@ -168,27 +176,20 @@ This task will:
 - **Priority ordering**: Reorganized to focus on blocking TODOs first
 - **Status tracking**: Added current assessment and realistic phase planning
 
-## Status Legend
-
-- `[ ]` Not Started
-- `[P]` In Progress  
-- `[T]` Testing/Verification
-- `[C]` Complete
-- `[B]` Blocked (waiting for dependency)
-
 ## Quick Status Check
 
 Run these commands to verify current state:
 
 ```bash
 # Build verification
-./gradlew :lib:compileDebugKotlin
+./gradlew :core:compileDebugKotlin
 
 # Sample app verification  
 ./gradlew :samples:simple:assembleDebug
 
 # Find remaining TODOs
-grep -r "TODO" lib/src/main/kotlin/ --include="*.kt"
+grep -r "TODO" core/src/main/kotlin/ --include="*.kt"
 ```
 
 Update this README.md with status as tasks are completed.
+

@@ -59,7 +59,7 @@ private fun createMcpServerWithSDK(): Server {
 ✅ **Build Verification:**
 
 ```bash
-./gradlew :lib:compileDebugKotlin  # SUCCESS
+./gradlew :core:compileDebugKotlin  # SUCCESS
 ./gradlew buildDebug               # SUCCESS
 ```
 

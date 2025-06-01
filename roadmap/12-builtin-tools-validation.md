@@ -1407,23 +1407,23 @@ class AllToolsValidationTest : ToolValidationFramework() {
 #### Step V1: Run Individual Tool Tests
 
 ```bash
-./gradlew :lib:connectedAndroidTest --tests "*DeviceInfoToolTest"
-./gradlew :lib:connectedAndroidTest --tests "*AppInfoToolTest"
-./gradlew :lib:connectedAndroidTest --tests "*SystemTimeToolTest"
-./gradlew :lib:connectedAndroidTest --tests "*MemoryInfoToolTest"
-./gradlew :lib:connectedAndroidTest --tests "*BatteryInfoToolTest"
+./gradlew :core:connectedAndroidTest --tests "*DeviceInfoToolTest"
+./gradlew :core:connectedAndroidTest --tests "*AppInfoToolTest"
+./gradlew :core:connectedAndroidTest --tests "*SystemTimeToolTest"
+./gradlew :core:connectedAndroidTest --tests "*MemoryInfoToolTest"
+./gradlew :core:connectedAndroidTest --tests "*BatteryInfoToolTest"
 ```
 
 #### Step V2: Run Comprehensive Tool Validation
 
 ```bash
-./gradlew :lib:connectedAndroidTest --tests "*AllToolsValidationTest"
+./gradlew :core:connectedAndroidTest --tests "*AllToolsValidationTest"
 ```
 
 #### Step V3: Run All Tool Tests
 
 ```bash
-./gradlew :lib:connectedAndroidTest --tests "*.tools.*"
+./gradlew :core:connectedAndroidTest --tests "*.tools.*"
 ```
 
 ### Manual Verification

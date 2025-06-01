@@ -27,7 +27,7 @@ compliance, and security boundaries for the MCP SDK.
 
 ### Step 1: Create File Permission Manager
 
-Create `lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/resources/FilePermissionManager.kt`:
+Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/resources/FilePermissionManager.kt`:
 
 ```kotlin
 class FilePermissionManager(private val context: Context) {
@@ -82,7 +82,7 @@ class FileSystemResourceProvider(
 
 ### Step 3: Implement Storage Access Framework Support
 
-Create `lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/resources/SafResourceProvider.kt`:
+Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/resources/SafResourceProvider.kt`:
 
 ```kotlin
 class SafResourceProvider(private val context: Context) {
@@ -104,7 +104,7 @@ class SafResourceProvider(private val context: Context) {
 
 ### Step 4: Create Permission Request Activity
 
-Create `lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/ui/PermissionRequestActivity.kt`:
+Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/ui/PermissionRequestActivity.kt`:
 
 ```kotlin
 class PermissionRequestActivity : ComponentActivity() {
@@ -132,7 +132,7 @@ class PermissionRequestActivity : ComponentActivity() {
 
 ### Step 5: Update Manifest with Permissions
 
-Update `lib/src/main/AndroidManifest.xml`:
+Update `core/src/main/AndroidManifest.xml`:
 
 ```xml
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -170,7 +170,7 @@ Update `lib/src/main/AndroidManifest.xml`:
 
 ### Step 6: Add File Provider Paths
 
-Create `lib/src/main/res/xml/file_provider_paths.xml`:
+Create `core/src/main/res/xml/file_provider_paths.xml`:
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -219,7 +219,7 @@ private fun registerBuiltInFileResources() {
 
 ### Step 8: Add Dependencies
 
-Update `lib/build.gradle.kts`:
+Update `core/build.gradle.kts`:
 
 ```kotlin
 dependencies {

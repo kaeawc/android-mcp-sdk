@@ -28,7 +28,7 @@ search, and interact with Android application UI components for testing and debu
 
 ### Step 1: View Hierarchy Provider
 
-Create `lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/ui/ViewHierarchyProvider.kt`:
+Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/ui/ViewHierarchyProvider.kt`:
 
 ```kotlin
 class ViewHierarchyProvider(private val context: Context) {

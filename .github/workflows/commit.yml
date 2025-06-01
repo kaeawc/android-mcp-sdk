@@ -1,3 +1,10 @@
+# Android MCP SDK Continuous Integration
+#
+# This workflow only runs DEBUG builds by design:
+# - The Android MCP SDK is intended for debug/development use only
+# - Release builds will fail intentionally for security reasons
+# - All sample apps use debugImplementation to ensure no accidental production usage
+#
 name: "Commit"
 
 on:
@@ -72,15 +79,17 @@ jobs:
 
       - uses: ./.github/actions/gradle-task-run
         with:
-          gradle-tasks: ":lib:compileDebugKotlin"
+          gradle-tasks: ":core:compileDebugKotlin"
           reuse-configuration-cache: true
           gradle-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
+      # Note: Only debug builds are tested as the MCP SDK is designed for debug-only use
+      # Release builds will fail by design for security reasons
       - name: "Store AAR"
         uses: actions/upload-artifact@v4.4.0
         with:
           name: aar
-          path: lib/build/outputs/aar/lib-debug.aar
+          path: core/build/outputs/aar/core-debug.aar
 
   build-samples:
     name: "Build Sample Apps"

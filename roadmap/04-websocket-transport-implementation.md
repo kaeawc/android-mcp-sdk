@@ -27,7 +27,7 @@ The README.md claims WebSocket transport is implemented on port 8080, but verifi
 
 ### 1. Add WebSocket Dependencies
 
-Update `lib/build.gradle.kts`:
+Update `core/build.gradle.kts`:
 ```kotlin
 dependencies {
     implementation("org.java-websocket:Java-WebSocket:1.5.4")
@@ -39,7 +39,7 @@ dependencies {
 
 ### 2. Create WebSocket Server Infrastructure
 
-Create `lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/transport/websocket/`:
+Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/transport/websocket/`:
 
 **WebSocketServer.kt:**
 ```kotlin
@@ -461,7 +461,7 @@ class WebSocketService : LifecycleService() {
 
 ### 6. Add Permissions and Service Declaration
 
-Update `lib/src/main/AndroidManifest.xml`:
+Update `core/src/main/AndroidManifest.xml`:
 ```xml
 <uses-permission android:name="android.permission.INTERNET" />
 <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />

@@ -1380,19 +1380,19 @@ chmod +x testing/mcp_clients/setup_mcp_clients.sh
 #### Step V2: Run Protocol Compliance Tests
 
 ```bash
-./gradlew :lib:connectedAndroidTest --tests "*McpProtocolComplianceTestSuite"
+./gradlew :core:connectedAndroidTest --tests "*McpProtocolComplianceTestSuite"
 ```
 
 #### Step V3: Run Client Integration Tests
 
 ```bash
-./gradlew :lib:connectedAndroidTest --tests "*RealClientIntegrationTest"
+./gradlew :core:connectedAndroidTest --tests "*RealClientIntegrationTest"
 ```
 
 #### Step V4: Run Performance Tests
 
 ```bash
-./gradlew :lib:connectedAndroidTest --tests "*ClientPerformanceTest"
+./gradlew :core:connectedAndroidTest --tests "*ClientPerformanceTest"
 ```
 
 ### Manual Verification

@@ -12,9 +12,15 @@ their adb connected workstation.
 
 Never run clean unless the Gradle build cache/outputs seem corrupted. Usually that's from annotation processing.
 
-- **Build the library**: `./gradlew :lib:compileDebugKotlin`
-- **Build the project**: `./gradlew buildDebug`
-- **Android Lint the project**: `./gradlew lint`
+- **Build the core library**: `./gradlew :core:compileDebugKotlin`
+- **Build and test the entire project**: `./gradlew buildDebug`
+- **Android Lint the project**: `./gradlew lintDebug`
+- **Test the core library**: `./gradlew :core:testDebugUnitTest --continue`
+- **Build the core library**: `./gradlew compileDebugKotlin`
+- **Test the core library**: `./gradlew testDebugUnitTest --continue`
+
+**⚠️ IMPORTANT: DEBUG-ONLY SDK**
+This SDK is designed for debug builds only and will intentionally fail on release variants for security reasons.
 
 ## Android Studio IDE Actions
 

@@ -33,7 +33,7 @@ notifications.
 ### Step 1: SharedPreferences Resource Provider
 
 Create
-`lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/preferences/SharedPreferencesResourceProvider.kt`:
+`core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/preferences/SharedPreferencesResourceProvider.kt`:
 
 ```kotlin
 class SharedPreferencesResourceProvider(
@@ -83,7 +83,7 @@ class SharedPreferencesResourceProvider(
 ### Step 2: Encrypted SharedPreferences Support
 
 Create
-`lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/preferences/EncryptedPreferencesProvider.kt`:
+`core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/preferences/EncryptedPreferencesProvider.kt`:
 
 ```kotlin
 class EncryptedPreferencesProvider(
@@ -151,7 +151,7 @@ private suspend fun createSharedPreferencesResources(): List<Resource> {
 
 ### Step 4: Real-time Change Notifications
 
-Create `lib/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/preferences/PreferencesObserver.kt`:
+Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/preferences/PreferencesObserver.kt`:
 
 ```kotlin
 class PreferencesObserver(

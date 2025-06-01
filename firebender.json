@@ -15,6 +15,7 @@
     "This is an Android library project to enable running MCP Servers hosted by Android apps.",
     "The goal of the project is to expose an MCP server to an Android engineer running an MCP client on",
     "their adb connected workstation.",
+    "IMPORTANT: This SDK is DEBUG-ONLY by design. Release builds will fail intentionally for security.",
     {
       "filePathMatches": "*",
       "rulesPaths": [
