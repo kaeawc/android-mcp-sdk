@@ -64,8 +64,8 @@ reality.
 
 1. **Build and run sample app**:
    ```bash
-   ./gradlew :sample:assembleDebug
-   ./gradlew :sample:installDebug
+   ./gradlew :samples:simple:assembleDebug
+   ./gradlew :samples:simple:installDebug
    ```
 
 2. **Test transport endpoints**:
@@ -154,8 +154,9 @@ reality.
 
 ```bash
 # Build verification
-./gradlew :lib:compileDebug
-./gradlew :sample:assembleDebug
+./gradlew :lib:compileDebugKotlin
+./gradlew :lib:assembleDebug
+./gradlew :samples:simple:assembleDebug
 
 # Run sample app and check logs
 adb logcat | grep -i mcp

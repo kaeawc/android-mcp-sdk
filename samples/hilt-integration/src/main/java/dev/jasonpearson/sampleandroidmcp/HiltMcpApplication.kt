@@ -7,8 +7,8 @@ import dagger.hilt.android.HiltAndroidApp
 /**
  * Sample Application demonstrating Hilt DI integration with Android MCP SDK.
  *
- * This example shows how to properly integrate MCP with Hilt dependency injection
- * for debug Android applications.
+ * This example shows how to properly integrate MCP with Hilt dependency injection for debug Android
+ * applications.
  *
  * Key features:
  * - Automatic initialization disabled in manifest

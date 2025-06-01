@@ -56,7 +56,7 @@ and a testing tool for developers integrating the MCP SDK.
 
 #### Step 1.1: Update Sample App Dependencies
 
-Update `sample/build.gradle.kts`:
+Update `samples/simple/build.gradle.kts`:
 
 ```kotlin
 plugins {
@@ -171,7 +171,7 @@ dependencies {
 
 #### Step 1.2: Create App Architecture Foundation
 
-Create `sample/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/sample/`:
+Create `samples/simple/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/sample/`:
 
 **SampleApplication.kt:**
 
@@ -236,7 +236,7 @@ class MainActivity : ComponentActivity() {
 
 #### Step 1.3: Create Navigation and Theme System
 
-Create `sample/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/sample/ui/`:
+Create `samples/simple/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/sample/ui/`:
 
 **McpSampleApp.kt:**
 
@@ -360,7 +360,8 @@ data class BottomNavItem(
 
 #### Step 2.1: Server Management ViewModel
 
-Create `sample/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/sample/viewmodel/ServerViewModel.kt`:
+Create
+`samples/simple/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/sample/viewmodel/ServerViewModel.kt`:
 
 ```kotlin
 package dev.jasonpearson.mcpandroidsdk.sample.viewmodel
@@ -571,7 +572,7 @@ data class PerformanceMetrics(
 #### Step 2.2: Server Management Screen
 
 Create
-`sample/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/sample/ui/screens/ServerManagementScreen.kt`:
+`samples/simple/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/sample/ui/screens/ServerManagementScreen.kt`:
 
 ```kotlin
 package dev.jasonpearson.mcpandroidsdk.sample.ui.screens
@@ -920,7 +921,8 @@ private fun formatUptime(uptimeMs: Long): String {
 
 #### Step 3.1: Tools ViewModel
 
-Create `sample/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/sample/viewmodel/ToolsViewModel.kt`:
+Create
+`samples/simple/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/sample/viewmodel/ToolsViewModel.kt`:
 
 ```kotlin
 package dev.jasonpearson.mcpandroidsdk.sample.viewmodel
@@ -1054,20 +1056,20 @@ data class ToolExecutionResult(
 #### Step V1: Build Sample App
 
 ```bash
-./gradlew :sample:assembleDebug
+./gradlew :samples:simple:assembleDebug
 ```
 
 #### Step V2: Run Sample App Tests
 
 ```bash
-./gradlew :sample:testDebugUnitTest
-./gradlew :sample:connectedAndroidTest
+./gradlew :samples:simple:testDebugUnitTest
+./gradlew :samples:simple:connectedAndroidTest
 ```
 
 #### Step V3: Install and Test
 
 ```bash
-./gradlew :sample:installDebug
+./gradlew :samples:simple:installDebug
 ```
 
 ### Manual Verification

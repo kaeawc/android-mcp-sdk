@@ -296,7 +296,7 @@ McpServerManager.getInstance().addPrompt(prompt) { args ->
 
 ```bash
 ./gradlew :lib:compileDebugKotlin    # Compile library
-./gradlew :sample:assembleDebug      # Build sample app
+./gradlew :samples:simple:assembleDebug      # Build simple sample app
 ```
 
 ### Testing

@@ -58,7 +58,6 @@ class MainActivity : ComponentActivity() {
                     // Get server info
                     val serverInfo = manager.getServerInfo()
                     Log.i(TAG, "Server info: $serverInfo")
-
                 } else {
                     Log.w(TAG, "MCP Server not initialized")
                 }
@@ -116,9 +115,7 @@ fun McpServerDemo(modifier: Modifier = Modifier) {
     }
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp),
+        modifier = modifier.fillMaxSize().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(text = "Android MCP Server Demo", style = MaterialTheme.typography.headlineMedium)
@@ -154,9 +151,7 @@ fun McpServerDemo(modifier: Modifier = Modifier) {
                     LazyColumn(modifier = Modifier.height(120.dp)) {
                         items(serverInfoMap.toList()) { (key, value) ->
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 2.dp),
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                             ) {
                                 Text(
@@ -192,9 +187,7 @@ fun McpServerDemo(modifier: Modifier = Modifier) {
                     LazyColumn(modifier = Modifier.height(150.dp)) {
                         items(transportInfoMap.toList()) { (key, value) ->
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 2.dp),
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                             ) {
                                 Text(

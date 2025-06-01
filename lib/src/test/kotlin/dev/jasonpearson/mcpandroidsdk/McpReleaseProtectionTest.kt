@@ -1,13 +1,13 @@
 package dev.jasonpearson.mcpandroidsdk
 
-import org.junit.Test
 import org.junit.Assert.*
+import org.junit.Test
 
 /**
  * Tests documenting the release build protection mechanism.
  *
- * These tests document that the MCP SDK should detect release builds
- * and crash appropriately to prevent accidental production deployment.
+ * These tests document that the MCP SDK should detect release builds and crash appropriately to
+ * prevent accidental production deployment.
  *
  * Note: Actual release build testing requires integration tests with real Android contexts.
  */
@@ -16,19 +16,21 @@ class McpReleaseProtectionTest {
     @Test
     fun `should document release build protection behavior`() {
         // This test documents the expected behavior:
-        // 
+        //
         // 1. McpStartup.initializeManually() should throw IllegalStateException on release builds
-        // 2. McpStartup.initializeWithCustomConfig() should return failure on release builds  
-        // 3. McpServerManagerInitializer.create() should throw IllegalStateException on release builds
+        // 2. McpStartup.initializeWithCustomConfig() should return failure on release builds
+        // 3. McpServerManagerInitializer.create() should throw IllegalStateException on release
+        // builds
         // 4. All error messages should contain "DEBUG BUILDS ONLY"
         // 5. All error messages should mention "debugImplementation"
 
-        val expectedErrorSubstrings = listOf(
-            "DEBUG BUILDS ONLY",
-            "debugImplementation",
-            "release/production builds",
-            "development and debugging purposes"
-        )
+        val expectedErrorSubstrings =
+            listOf(
+                "DEBUG BUILDS ONLY",
+                "debugImplementation",
+                "release/production builds",
+                "development and debugging purposes",
+            )
 
         // Verify our expected error message components exist
         expectedErrorSubstrings.forEach { substring ->
@@ -37,7 +39,8 @@ class McpReleaseProtectionTest {
         }
 
         // Document that this is tested in integration tests
-        val documentedBehavior = """
+        val documentedBehavior =
+            """
             Release Build Protection:
             
             1. Library checks ApplicationInfo.FLAG_DEBUGGABLE flag
@@ -48,7 +51,8 @@ class McpReleaseProtectionTest {
             This behavior is tested in:
             - Integration tests with real Android contexts
             - Manual testing with debug/release build variants
-        """.trimIndent()
+        """
+                .trimIndent()
 
         assertTrue("Documentation should exist", documentedBehavior.isNotEmpty())
     }
@@ -61,17 +65,17 @@ class McpReleaseProtectionTest {
         // Document correct usage
         assertTrue(
             "Should use debugImplementation",
-            correctDependency.contains("debugImplementation")
+            correctDependency.contains("debugImplementation"),
         )
         assertFalse(
             "Should not use regular implementation for release safety",
-            correctDependency.contains("implementation(")
+            correctDependency.contains("implementation("),
         )
 
         // Document incorrect usage that would cause problems
         assertTrue(
             "Incorrect usage would use implementation",
-            incorrectDependency.startsWith("implementation(")
+            incorrectDependency.startsWith("implementation("),
         )
     }
 }

@@ -14,8 +14,8 @@ import javax.inject.Singleton
 /**
  * Hilt module for Android MCP SDK integration.
  *
- * This module demonstrates the recommended pattern for integrating MCP
- * with Hilt dependency injection in debug Android applications.
+ * This module demonstrates the recommended pattern for integrating MCP with Hilt dependency
+ * injection in debug Android applications.
  *
  * Key benefits:
  * - Lazy initialization (only when first injected)
@@ -29,42 +29,39 @@ import javax.inject.Singleton
 object McpModule {
 
     /**
-     * Provides the MCP server name for configuration.
-     * In a real debug app, this might come from BuildConfig, SharedPreferences, or remote config.
+     * Provides the MCP server name for configuration. In a real debug app, this might come from
+     * BuildConfig, SharedPreferences, or remote config.
      */
-    @Provides
-    @Named("mcp_server_name")
-    fun provideServerName(): String = "Hilt MCP Sample"
+    @Provides @Named("mcp_server_name") fun provideServerName(): String = "Hilt MCP Sample"
 
     /**
-     * Provides the MCP server version for configuration.
-     * In a real debug app, this would typically come from BuildConfig.VERSION_NAME.
+     * Provides the MCP server version for configuration. In a real debug app, this would typically
+     * come from BuildConfig.VERSION_NAME.
      */
-    @Provides
-    @Named("mcp_server_version")
-    fun provideServerVersion(): String = "1.0.0"
+    @Provides @Named("mcp_server_version") fun provideServerVersion(): String = "1.0.0"
 
     /**
      * Provides the MCP Server Manager with custom configuration.
      *
-     * This uses initializeWithCustomConfig which automatically starts the server.
-     * For more control, you could use initializeManually and handle startup separately.
+     * This uses initializeWithCustomConfig which automatically starts the server. For more control,
+     * you could use initializeManually and handle startup separately.
      *
-     * Note: The MCP SDK will automatically check that this is a debug build and crash
-     * if accidentally included in a release build.
+     * Note: The MCP SDK will automatically check that this is a debug build and crash if
+     * accidentally included in a release build.
      */
     @Provides
     @Singleton
     fun provideMcpServerManager(
         @ApplicationContext context: Context,
         @Named("mcp_server_name") serverName: String,
-        @Named("mcp_server_version") serverVersion: String
+        @Named("mcp_server_version") serverVersion: String,
     ): McpServerManager {
-        val result = McpStartup.initializeWithCustomConfig(
-            context = context,
-            serverName = serverName,
-            serverVersion = serverVersion
-        )
+        val result =
+            McpStartup.initializeWithCustomConfig(
+                context = context,
+                serverName = serverName,
+                serverVersion = serverVersion,
+            )
 
         return result.getOrThrow()
     }

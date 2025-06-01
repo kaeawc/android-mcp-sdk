@@ -18,8 +18,8 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import dev.jasonpearson.mcpandroidsdk.McpServerManager
 import dev.jasonpearson.sampleandroidmcp.ui.theme.SampleAndroidMCPTheme
-import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -29,11 +29,9 @@ class MainActivity : ComponentActivity() {
     }
 
     // Inject MCP dependencies
-    @Inject
-    lateinit var mcpServerManager: McpServerManager
+    @Inject lateinit var mcpServerManager: McpServerManager
 
-    @Inject
-    lateinit var mcpConfiguration: McpConfiguration
+    @Inject lateinit var mcpConfiguration: McpConfiguration
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,7 +64,6 @@ class MainActivity : ComponentActivity() {
                 // Get transport info
                 val transportInfo = mcpServerManager.getTransportInfo()
                 Log.i(TAG, "ℹ️  Transport info: $transportInfo")
-
             } catch (e: Exception) {
                 Log.e(TAG, "❌ Error configuring Hilt MCP", e)
             }
@@ -80,7 +77,8 @@ fun HiltMcpDemo(modifier: Modifier = Modifier) {
     var demoText by remember { mutableStateOf("Initializing Hilt MCP Demo...") }
 
     LaunchedEffect(Unit) {
-        demoText = """
+        demoText =
+            """
             🎯 Hilt MCP Integration Demo
             
             This sample demonstrates:
@@ -94,56 +92,49 @@ fun HiltMcpDemo(modifier: Modifier = Modifier) {
             ✅ Transport layer active
             
             Check the logs for detailed information!
-        """.trimIndent()
+        """
+                .trimIndent()
     }
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp),
+        modifier = modifier.fillMaxSize().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Card {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "Hilt MCP Integration",
-                    style = MaterialTheme.typography.headlineMedium
-                )
+                Text(text = "Hilt MCP Integration", style = MaterialTheme.typography.headlineMedium)
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text(
-                    text = demoText,
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Text(text = demoText, style = MaterialTheme.typography.bodyMedium)
             }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
         Card(
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            )
+            colors =
+                CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
                     text = "Key Features",
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                val features = listOf(
-                    "🔧 Hilt dependency injection",
-                    "🚀 Manual MCP initialization",
-                    "⚙️ Configuration via DI",
-                    "🏗️ Production-ready patterns",
-                    "🧪 Easy testing and mocking",
-                    "📦 Clean separation of concerns"
-                )
+                val features =
+                    listOf(
+                        "🔧 Hilt dependency injection",
+                        "🚀 Manual MCP initialization",
+                        "⚙️ Configuration via DI",
+                        "🏗️ Production-ready patterns",
+                        "🧪 Easy testing and mocking",
+                        "📦 Clean separation of concerns",
+                    )
 
                 LazyColumn(modifier = Modifier.height(150.dp)) {
                     items(features) { feature ->
@@ -151,7 +142,7 @@ fun HiltMcpDemo(modifier: Modifier = Modifier) {
                             text = feature,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.padding(vertical = 2.dp)
+                            modifier = Modifier.padding(vertical = 2.dp),
                         )
                     }
                 }
@@ -161,21 +152,23 @@ fun HiltMcpDemo(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(24.dp))
 
         Card(
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer
-            )
+            colors =
+                CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                )
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
                     text = "Source Code",
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = """
+                    text =
+                        """
                         📁 samples/hilt-integration/
                         ├── HiltMcpApplication.kt
                         ├── di/McpModule.kt
@@ -183,9 +176,10 @@ fun HiltMcpDemo(modifier: Modifier = Modifier) {
                         └── MainActivity.kt
                         
                         See these files for complete implementation details.
-                    """.trimIndent(),
+                    """
+                            .trimIndent(),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
                 )
             }
         }

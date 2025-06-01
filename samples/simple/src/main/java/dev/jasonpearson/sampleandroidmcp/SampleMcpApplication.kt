@@ -168,7 +168,7 @@ class SampleMcpApplication : Application() {
                         "Version: ${
                             packageManager.getPackageInfo(
                                 packageName,
-                                0
+                                0,
                             ).versionName
                         }"
                     )
@@ -176,7 +176,7 @@ class SampleMcpApplication : Application() {
                         "Build: ${
                             packageManager.getPackageInfo(
                                 packageName,
-                                0
+                                0,
                             ).longVersionCode
                         }"
                     )
@@ -187,7 +187,9 @@ class SampleMcpApplication : Application() {
                     appendLine("To connect from your workstation:")
                     appendLine("1. adb forward tcp:8080 tcp:8080")
                     appendLine("2. adb forward tcp:8081 tcp:8081")
-                    appendLine("3. Connect to ws://localhost:8080/mcp or http://localhost:8081/mcp/")
+                    appendLine(
+                        "3. Connect to ws://localhost:8080/mcp or http://localhost:8081/mcp/"
+                    )
                 }
             }
 
@@ -206,7 +208,7 @@ class SampleMcpApplication : Application() {
                 name = "Sample App Information",
                 description = "Information about this sample application",
                 filePath = "", // We'll provide content dynamically
-                mimeType = "application/json"
+                mimeType = "application/json",
             )
 
             Log.i(TAG, "✅ Sample app MCP tools and resources configured")
