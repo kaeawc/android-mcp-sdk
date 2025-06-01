@@ -2,7 +2,7 @@ package dev.jasonpearson.sampleandroidmcp
 
 import android.app.Application
 import android.util.Log
-import dev.jasonpearson.mcpandroidsdk.McpStartup
+import dev.jasonpearson.androidmcpsdk.core.McpStartup
 
 /**
  * Sample Application class demonstrating different ways to initialize the MCP Server Manager.

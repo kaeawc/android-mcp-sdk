@@ -1,7 +1,7 @@
 package dev.jasonpearson.sampleandroidmcp
 
 import android.util.Log
-import dev.jasonpearson.mcpandroidsdk.McpServerManager
+import dev.jasonpearson.androidmcpsdk.core.McpServerManager
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton

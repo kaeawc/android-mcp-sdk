@@ -6,7 +6,10 @@ This directory contains detailed task specifications for completing the Android 
 
 **Working Components:**
 
-- ✅ Transport layer: Both WebSocket and HTTP/SSE transports are implemented
+- ✅ Transport layer: **Official MCP Kotlin SDK provides transport implementations**
+  - ✅ `StdioServerTransport` for STDIO communication
+  - ✅ SSE transport via Ktor `mcp { }` extension
+  - ✅ JSON-RPC message parsing handled automatically by SDK
 - ✅ Sample app builds and compiles successfully
 - ✅ Basic MCP server structure in place
 - ✅ AndroidX Startup integration
@@ -21,7 +24,6 @@ This directory contains detailed task specifications for completing the Android 
 **Integration Gaps:**
 
 - No end-to-end testing with actual MCP clients
-- Transport layer completeness needs verification
 - Permission handling for Android resources needs validation
 - Database resources not yet implemented
 
@@ -32,6 +34,7 @@ This directory contains detailed task specifications for completing the Android 
 - `[T]` Testing/Verification
 - `[C]` Complete
 - `[B]` Blocked (waiting for dependency)
+- `[N/A]` Not Applicable (handled by MCP SDK)
 
 ## Task Categories & Status
 
@@ -75,10 +78,6 @@ SharedPreferences as MCP resources
 
 ### 🔵 Documentation & Polish
 
-- `[C]` [04-websocket-transport-implementation.md](04-websocket-transport-implementation.md) -
-  WebSocket transport (already implemented)
-- `[C]` [05-http-sse-transport-implementation.md](05-http-sse-transport-implementation.md) -
-  HTTP/SSE transport (already implemented)
 - `[ ]` [21-view-hierarchy-querying.md](21-view-hierarchy-querying.md) - UI view hierarchy
   inspection
 - `[ ]` [22-accessibility-inspection.md](22-accessibility-inspection.md) - Accessibility service
@@ -95,6 +94,13 @@ SharedPreferences as MCP resources
   functionality testing
 - `[ ]` [14-integration-guides-documentation.md](14-integration-guides-documentation.md) -
   Integration documentation
+
+### ❌ Obsolete Tasks (Handled by MCP Kotlin SDK)
+
+- `[N/A]` [04-websocket-transport-implementation.md](04-websocket-transport-implementation.md) -
+  **OBSOLETE**: Official MCP Kotlin SDK provides transport implementations
+- `[N/A]` [05-http-sse-transport-implementation.md](05-http-sse-transport-implementation.md) -
+  **OBSOLETE**: Official MCP Kotlin SDK provides SSE transport via Ktor `mcp { }` extension
 
 ## Execution Strategy
 
@@ -154,12 +160,18 @@ SharedPreferences as MCP resources
 This task will:
 
 - Create a comprehensive end-to-end testing suite
-- Validate communication with actual MCP clients
-- Ensure transport layer works as expected
+- Validate communication with actual MCP clients using official SDK transports
+- Ensure integration with MCP Kotlin SDK works as expected
 - Provide confidence in core SDK functionality
 
 ## Recent Updates (Latest Session)
 
+- ✅ **Transport Layer Cleanup**: Removed custom transport implementations in favor of official MCP
+  Kotlin SDK
+  - ✅ Deleted `McpTransport.kt`, `WebSocketTransport.kt`, `HttpSseTransport.kt`,
+    `TransportManager.kt`
+  - ✅ Confirmed official SDK provides: `StdioServerTransport`, SSE via Ktor `mcp { }`, JSON-RPC
+    handling
 - ✅ **Build Status Verified**: Both library and sample app compile successfully
 - ✅ **TODO Count Reduced**: Only 2 remaining TODOs in codebase (down from previous count)
 - ✅ **Gradle Stability**: No build issues, configuration cache working
@@ -169,11 +181,49 @@ This task will:
 
 - **03-jsonrpc-message-parsing.md**: Task completed via integration with official MCP Kotlin SDK -
   all JSON-RPC parsing is now handled automatically by the SDK
-- **05-http-sse-transport-implementation.md**: Task was incomplete - HTTP/SSE transport is already
-  implemented
-- **04-websocket-transport-implementation.md**: WebSocket transport is already implemented
+- **04-websocket-transport-implementation.md**: **OBSOLETE** - Official MCP SDK provides transport
+  implementations
+- **05-http-sse-transport-implementation.md**: **OBSOLETE** - Official MCP SDK provides SSE
+  transport via Ktor
+- **Transport Layer Architecture**: Simplified by leveraging official MCP Kotlin SDK instead of
+  custom implementations
 - **Priority ordering**: Reorganized to focus on blocking TODOs first
 - **Status tracking**: Added current assessment and realistic phase planning
+
+## Transport Implementation Notes
+
+The **official MCP Kotlin SDK (v0.5.0)** provides all necessary transport implementations:
+
+### Available Transports
+
+- **STDIO**: `StdioServerTransport()` for command-line MCP clients
+- **HTTP/SSE**: `mcp { Server(...) }` Ktor extension for web-based clients
+- **WebSocket**: Built into the SDK's server implementation
+
+### Usage Examples
+
+```kotlin
+// STDIO Transport
+val transport = StdioServerTransport()
+server.connect(transport)
+
+// SSE Transport (Ktor)
+fun Application.module() {
+    mcp {
+        Server(serverInfo = Implementation(...), options = ServerOptions(...))
+    }
+}
+```
+
+### What We Removed
+
+- Custom `McpTransport` interface
+- Custom `WebSocketTransport` implementation
+- Custom `HttpSseTransport` implementation
+- Custom `TransportManager` coordinator
+
+These were **redundant** since the official SDK already provides these capabilities with better
+integration and protocol compliance.
 
 ## Quick Status Check
 
@@ -191,4 +241,3 @@ grep -r "TODO" core/src/main/kotlin/ --include="*.kt"
 ```
 
 Update this README.md with status as tasks are completed.
-

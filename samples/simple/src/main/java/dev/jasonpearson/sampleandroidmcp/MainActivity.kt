@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
-import dev.jasonpearson.mcpandroidsdk.McpStartup
+import dev.jasonpearson.androidmcpsdk.core.McpStartup
 import dev.jasonpearson.sampleandroidmcp.ui.theme.SampleAndroidMCPTheme
 import kotlinx.coroutines.launch
 

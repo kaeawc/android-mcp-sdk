@@ -16,7 +16,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
-import dev.jasonpearson.mcpandroidsdk.McpServerManager
+import dev.jasonpearson.androidmcpsdk.core.McpServerManager
 import dev.jasonpearson.sampleandroidmcp.ui.theme.SampleAndroidMCPTheme
 import javax.inject.Inject
 import kotlinx.coroutines.launch

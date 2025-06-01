@@ -25,6 +25,8 @@ rootProject.name = "Sample-Android-MCP"
 
 include(":core")
 
+include(":debug-bridge")
+
 // Sample applications
 include(":samples:simple")
 

@@ -47,14 +47,23 @@ android {
 }
 
 dependencies {
+    // Remove debug-bridge dependency to fix circular dependency - core should not depend on
+    // debug-bridge
+    // implementation(project(":debug-bridge"))
+
+    // MCP Kotlin SDK
+    implementation(libs.mcp.kotlin.sdk)
+    implementation(libs.kotlin.sdk.jvm)
+
+    // Core Android dependencies
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-    implementation(libs.mcp.kotlin.sdk)
-    implementation(libs.kotlin.sdk.jvm)
     implementation(libs.androidx.startup.runtime)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.process)
+
+    // Kotlin coroutines and serialization
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.json)
 
