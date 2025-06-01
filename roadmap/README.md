@@ -59,8 +59,7 @@ This directory contains detailed task specifications for completing the Android 
   Database resources for app data
 - `[ ]` [16-database-querying.md](16-database-querying.md) - Database query execution and results
 - `[ ]` [17-database-editing.md](17-database-editing.md) - Database modification operations
--
-`[ ]` [18-shared-preferences-resources-implementation.md](18-shared-preferences-resources-implementation.md) -
+- `[ ]` [18-shared-preferences-resources-implementation.md](18-shared-preferences-resources-implementation.md) -
 SharedPreferences as MCP resources
 - `[ ]` [19-shared-preferences-querying.md](19-shared-preferences-querying.md) -
   SharedPreferences data querying
