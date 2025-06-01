@@ -24,6 +24,9 @@ dependencyResolutionManagement {
 
 rootProject.name = "Sample-Android-MCP"
 
-include(":sample")
-
 include(":lib")
+
+// Sample applications
+include(":samples:simple")
+
+include(":samples:hilt-integration")

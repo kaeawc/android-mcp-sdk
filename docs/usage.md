@@ -5,15 +5,17 @@ Android MCP SDK.
 
 ## Basic Server Operations
 
-### Starting and Stopping the Server
+### Server Status and Control
 
 ```kotlin
 val manager = McpStartup.getManager()
 
-// Start server asynchronously (recommended)
-manager.startServerAsync()
+// Check server status (server starts automatically)
+val isRunning = manager.isServerRunning()
+Log.d("MCP", "Server running: $isRunning")
 
-// Start server with coroutines for error handling
+// Manual control if needed
+// Start server manually (only needed if you stopped it)
 lifecycleScope.launch {
     try {
         manager.startServer().getOrThrow()
@@ -28,10 +30,6 @@ lifecycleScope.launch {
     manager.stopServer().getOrThrow()
     Log.d("MCP", "Server stopped")
 }
-
-// Check server status
-val isRunning = manager.isServerRunning()
-Log.d("MCP", "Server running: $isRunning")
 ```
 
 ### Server Information

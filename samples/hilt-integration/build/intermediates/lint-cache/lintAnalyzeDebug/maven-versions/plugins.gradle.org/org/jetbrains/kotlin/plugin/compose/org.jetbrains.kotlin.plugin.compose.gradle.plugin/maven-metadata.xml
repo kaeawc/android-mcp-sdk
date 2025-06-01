@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='US-ASCII'?>
+<metadata>
+      <groupId>org.jetbrains.kotlin.plugin.compose</groupId>
+      <artifactId>org.jetbrains.kotlin.plugin.compose.gradle.plugin</artifactId>
+      <version>2.2.0-RC</version>
+      <versioning>
+        <latest>2.2.0-RC</latest>
+        <release>2.2.0-RC</release>
+        <versions>
+          <version>2.0.0</version><version>2.0.0-RC1</version><version>2.0.0-RC2</version><version>2.0.0-RC3</version><version>2.0.10</version><version>2.0.10-RC</version><version>2.0.10-RC2</version><version>2.0.20</version><version>2.0.20-Beta1</version><version>2.0.20-Beta2</version><version>2.0.20-RC</version><version>2.0.20-RC2</version><version>2.0.21</version><version>2.0.21-RC</version><version>2.1.0</version><version>2.1.0-Beta1</version><version>2.1.0-Beta2</version><version>2.1.0-RC</version><version>2.1.0-RC2</version><version>2.1.10</version><version>2.1.10-RC</version><version>2.1.10-RC2</version><version>2.1.20</version><version>2.1.20-Beta1</version><version>2.1.20-Beta2</version><version>2.1.20-RC</version><version>2.1.20-RC2</version><version>2.1.20-RC3</version><version>2.1.21</version><version>2.1.21-RC</version><version>2.1.21-RC2</version><version>2.2.0-Beta1</version><version>2.2.0-Beta2</version><version>2.2.0-RC</version>
+        </versions>
+        <lastUpdated>20250516082547</lastUpdated>
+      </versioning>
+    </metadata>

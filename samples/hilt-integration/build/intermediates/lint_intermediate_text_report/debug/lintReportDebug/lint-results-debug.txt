@@ -1,0 +1,92 @@
+/Users/jason/AndroidStudioProjects/SampleAndroidMCP/sample/src/main/AndroidManifest.xml:18: Warning: Redundant label can be removed [RedundantLabel]
+            android:label="@string/app_name"
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   Explanation for issues of type "RedundantLabel":
+   When an activity does not have a label attribute, it will use the one from
+   the application tag. Since the application has already specified the same
+   label, the label on this activity can be omitted.
+
+/Users/jason/AndroidStudioProjects/SampleAndroidMCP/gradle/libs.versions.toml:23: Warning: A newer version of io.mockk:mockk than 1.13.12 is available: 1.14.2 [NewerVersionAvailable]
+mockk = "1.13.12"
+        ~~~~~~~~~
+/Users/jason/AndroidStudioProjects/SampleAndroidMCP/gradle/libs.versions.toml:26: Warning: A newer version of io.ktor:ktor-serialization-kotlinx-json than 3.0.3 is available: 3.1.3 [NewerVersionAvailable]
+ktor = "3.0.3"
+       ~~~~~~~
+/Users/jason/AndroidStudioProjects/SampleAndroidMCP/gradle/libs.versions.toml:26: Warning: A newer version of io.ktor:ktor-server-content-negotiation than 3.0.3 is available: 3.1.3 [NewerVersionAvailable]
+ktor = "3.0.3"
+       ~~~~~~~
+/Users/jason/AndroidStudioProjects/SampleAndroidMCP/gradle/libs.versions.toml:26: Warning: A newer version of io.ktor:ktor-server-core than 3.0.3 is available: 3.1.3 [NewerVersionAvailable]
+ktor = "3.0.3"
+       ~~~~~~~
+/Users/jason/AndroidStudioProjects/SampleAndroidMCP/gradle/libs.versions.toml:26: Warning: A newer version of io.ktor:ktor-server-netty than 3.0.3 is available: 3.1.3 [NewerVersionAvailable]
+ktor = "3.0.3"
+       ~~~~~~~
+/Users/jason/AndroidStudioProjects/SampleAndroidMCP/gradle/libs.versions.toml:26: Warning: A newer version of io.ktor:ktor-server-websockets than 3.0.3 is available: 3.1.3 [NewerVersionAvailable]
+ktor = "3.0.3"
+       ~~~~~~~
+
+   Explanation for issues of type "NewerVersionAvailable":
+   This detector checks with a central repository to see if there are newer
+   versions available for the dependencies used by this project. This is
+   similar to the GradleDependency check, which checks for newer versions
+   available in the Android SDK tools and libraries, but this works with any
+   MavenCentral dependency, and connects to the library every time, which
+   makes it more flexible but also much slower.
+
+/Users/jason/AndroidStudioProjects/SampleAndroidMCP/sample/src/main/res/values/colors.xml:3: Warning: The resource R.color.purple_200 appears to be unused [UnusedResources]
+    <color name="purple_200">#FFBB86FC</color>
+           ~~~~~~~~~~~~~~~~~
+/Users/jason/AndroidStudioProjects/SampleAndroidMCP/sample/src/main/res/values/colors.xml:4: Warning: The resource R.color.purple_500 appears to be unused [UnusedResources]
+    <color name="purple_500">#FF6200EE</color>
+           ~~~~~~~~~~~~~~~~~
+/Users/jason/AndroidStudioProjects/SampleAndroidMCP/sample/src/main/res/values/colors.xml:5: Warning: The resource R.color.purple_700 appears to be unused [UnusedResources]
+    <color name="purple_700">#FF3700B3</color>
+           ~~~~~~~~~~~~~~~~~
+/Users/jason/AndroidStudioProjects/SampleAndroidMCP/sample/src/main/res/values/colors.xml:6: Warning: The resource R.color.teal_200 appears to be unused [UnusedResources]
+    <color name="teal_200">#FF03DAC5</color>
+           ~~~~~~~~~~~~~~~
+/Users/jason/AndroidStudioProjects/SampleAndroidMCP/sample/src/main/res/values/colors.xml:7: Warning: The resource R.color.teal_700 appears to be unused [UnusedResources]
+    <color name="teal_700">#FF018786</color>
+           ~~~~~~~~~~~~~~~
+/Users/jason/AndroidStudioProjects/SampleAndroidMCP/sample/src/main/res/values/colors.xml:8: Warning: The resource R.color.black appears to be unused [UnusedResources]
+    <color name="black">#FF000000</color>
+           ~~~~~~~~~~~~
+/Users/jason/AndroidStudioProjects/SampleAndroidMCP/sample/src/main/res/values/colors.xml:9: Warning: The resource R.color.white appears to be unused [UnusedResources]
+    <color name="white">#FFFFFFFF</color>
+           ~~~~~~~~~~~~
+
+   Explanation for issues of type "UnusedResources":
+   Unused resources make applications larger and slow down builds.
+
+
+   The unused resource check can ignore tests. If you want to include
+   resources that are only referenced from tests, consider packaging them in a
+   test source set instead.
+
+   You can include test sources in the unused resource check by setting the
+   system property lint.unused-resources.include-tests =true, and to exclude
+   them (usually for performance reasons), use
+   lint.unused-resources.exclude-tests =true.
+   ,
+
+   Available options:
+
+   **skip-libraries** (default is true):
+   Whether the unused resource check should skip reporting unused resources in libraries.
+
+   Many libraries will declare resources that are part of the library surface; other modules depending on the library will also reference the resources. To avoid reporting all these resources as unused (in the context of a library), the unused resource check normally skips reporting unused resources in libraries. Instead, run the unused resource check on the consuming app module (along with `checkDependencies=true`).
+
+   However, there are cases where you want to check that all the resources declared in a library are used; in that case, you can disable the skip option.
+
+   To configure this option, use a `lint.xml` file with an <option> like this:
+
+   ```xml
+   <lint>
+       <issue id="UnusedResources">
+           <option name="skip-libraries" value="true" />
+       </issue>
+   </lint>
+   ```
+
+0 errors, 14 warnings
