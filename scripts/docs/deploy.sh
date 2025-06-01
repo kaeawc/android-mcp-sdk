@@ -255,7 +255,14 @@ main() {
             fi
 
             validate_mkdocs_config
-            run_mkdocs build
+            
+            if has_uv_project; then
+                CONFIG_FILE="../../mkdocs.yml"
+            else
+                CONFIG_FILE="mkdocs.yml"
+            fi
+            
+            run_mkdocs build --config-file "$CONFIG_FILE"
             print_status "Documentation built in site/ directory"
             ;;
             
