@@ -41,23 +41,20 @@ class FilePermissionToolProviderTest {
     fun `registerTools should register all file permission tools`() {
         toolProvider.registerTools(mockRegistry)
 
-        verify {
-            mockRegistry.addTool(any(), any())
-        }
+        verify { mockRegistry.addTool(any(), any()) }
 
         // Verify that all expected tools are registered
-        val expectedToolNames = listOf(
-            "check_file_access",
-            "request_file_permissions",
-            "get_scoped_directories",
-            "create_document_picker_intent",
-            "validate_document_uri"
-        )
+        val expectedToolNames =
+            listOf(
+                "check_file_access",
+                "request_file_permissions",
+                "get_scoped_directories",
+                "create_document_picker_intent",
+                "validate_document_uri",
+            )
 
         expectedToolNames.forEach { toolName ->
-            verify {
-                mockRegistry.addTool(match { it.name == toolName }, any())
-            }
+            verify { mockRegistry.addTool(match { it.name == toolName }, any()) }
         }
     }
 
@@ -75,7 +72,7 @@ class FilePermissionToolProviderTest {
         assertTrue("Should indicate APP_INTERNAL scope", responseText.contains("APP_INTERNAL"))
         assertTrue(
             "Should not require permission",
-            responseText.contains("Requires Permission: false")
+            responseText.contains("Requires Permission: false"),
         )
     }
 
@@ -89,7 +86,7 @@ class FilePermissionToolProviderTest {
         val responseText = (result.content.first() as TextContent).text ?: ""
         assertTrue(
             "Should indicate missing parameter",
-            responseText.contains("Missing required parameter: uri")
+            responseText.contains("Missing required parameter: uri"),
         )
     }
 
@@ -118,7 +115,7 @@ class FilePermissionToolProviderTest {
         val responseText = (result.content.first() as TextContent).text ?: ""
         assertTrue(
             "Should indicate permissions granted",
-            responseText.contains("All Permissions Granted: true")
+            responseText.contains("All Permissions Granted: true"),
         )
         assertTrue("Should indicate APP_INTERNAL scope", responseText.contains("APP_INTERNAL"))
     }
@@ -126,12 +123,8 @@ class FilePermissionToolProviderTest {
     @Test
     fun `handleRequestPermissions should check permissions for MEDIA_IMAGES scope`() = runTest {
         mockkStatic(ContextCompat::class)
-        every {
-            ContextCompat.checkSelfPermission(
-                context,
-                any()
-            )
-        } returns PackageManager.PERMISSION_DENIED
+        every { ContextCompat.checkSelfPermission(context, any()) } returns
+            PackageManager.PERMISSION_DENIED
 
         val arguments = mapOf("scope" to "MEDIA_IMAGES")
 
@@ -141,12 +134,12 @@ class FilePermissionToolProviderTest {
         val responseText = (result.content.first() as TextContent).text ?: ""
         assertTrue(
             "Should indicate permissions not granted",
-            responseText.contains("All Permissions Granted: false")
+            responseText.contains("All Permissions Granted: false"),
         )
         assertTrue("Should indicate MEDIA_IMAGES scope", responseText.contains("MEDIA_IMAGES"))
         assertTrue(
             "Should show individual permissions",
-            responseText.contains("Individual Permissions:")
+            responseText.contains("Individual Permissions:"),
         )
         assertTrue("Should show DENIED status", responseText.contains("✗ DENIED"))
     }
@@ -161,7 +154,7 @@ class FilePermissionToolProviderTest {
         val responseText = (result.content.first() as TextContent).text ?: ""
         assertTrue(
             "Should indicate invalid scope",
-            responseText.contains("Invalid storage scope: INVALID_SCOPE")
+            responseText.contains("Invalid storage scope: INVALID_SCOPE"),
         )
     }
 
@@ -175,7 +168,7 @@ class FilePermissionToolProviderTest {
         val responseText = (result.content.first() as TextContent).text ?: ""
         assertTrue(
             "Should indicate missing parameter",
-            responseText.contains("Missing required parameter: scope")
+            responseText.contains("Missing required parameter: scope"),
         )
     }
 
@@ -189,11 +182,11 @@ class FilePermissionToolProviderTest {
         val responseText = (result.content.first() as TextContent).text ?: ""
         assertTrue(
             "Should contain directory info",
-            responseText.contains("Scoped Directory Access Information")
+            responseText.contains("Scoped Directory Access Information"),
         )
         assertTrue(
             "Should contain APP_INTERNAL directories",
-            responseText.contains("APP_INTERNAL:")
+            responseText.contains("APP_INTERNAL:"),
         )
         assertTrue("Should show accessible status", responseText.contains("✓ ACCESSIBLE"))
     }
@@ -208,16 +201,16 @@ class FilePermissionToolProviderTest {
         val responseText = (result.content.first() as TextContent).text ?: ""
         assertTrue(
             "Should contain intent info",
-            responseText.contains("Storage Access Framework Document Picker Intent")
+            responseText.contains("Storage Access Framework Document Picker Intent"),
         )
         assertTrue(
             "Should show action",
-            responseText.contains("Action: android.intent.action.OPEN_DOCUMENT")
+            responseText.contains("Action: android.intent.action.OPEN_DOCUMENT"),
         )
         assertTrue("Should show usage instructions", responseText.contains("Usage Instructions:"))
         assertTrue(
             "Should mention startActivityForResult",
-            responseText.contains("startActivityForResult")
+            responseText.contains("startActivityForResult"),
         )
     }
 
@@ -231,7 +224,7 @@ class FilePermissionToolProviderTest {
         val responseText = (result.content.first() as TextContent).text ?: ""
         assertTrue(
             "Should contain intent info",
-            responseText.contains("Storage Access Framework Document Picker Intent")
+            responseText.contains("Storage Access Framework Document Picker Intent"),
         )
         assertTrue("Should show MIME types in extras", responseText.contains("Extras:"))
     }
@@ -246,7 +239,7 @@ class FilePermissionToolProviderTest {
         val responseText = (result.content.first() as TextContent).text ?: ""
         assertTrue(
             "Should indicate missing parameter",
-            responseText.contains("Missing required parameter: uri")
+            responseText.contains("Missing required parameter: uri"),
         )
     }
 
@@ -260,7 +253,7 @@ class FilePermissionToolProviderTest {
         val responseText = (result.content.first() as TextContent).text ?: ""
         assertTrue(
             "Should indicate invalid URI format",
-            responseText.contains("Invalid URI format")
+            responseText.contains("Invalid URI format"),
         )
     }
 
@@ -269,12 +262,8 @@ class FilePermissionToolProviderTest {
         // Mock DocumentFile for a valid content URI
         mockkStatic("androidx.documentfile.provider.DocumentFile")
         val mockDocumentFile = mockk<androidx.documentfile.provider.DocumentFile>()
-        every {
-            androidx.documentfile.provider.DocumentFile.fromSingleUri(
-                context,
-                any()
-            )
-        } returns mockDocumentFile
+        every { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, any()) } returns
+            mockDocumentFile
         every { mockDocumentFile.exists() } returns true
 
         val arguments =
@@ -286,11 +275,11 @@ class FilePermissionToolProviderTest {
         val responseText = (result.content.first() as TextContent).text ?: ""
         assertTrue(
             "Should contain validation results",
-            responseText.contains("Document URI Validation Results")
+            responseText.contains("Document URI Validation Results"),
         )
         assertTrue(
             "Should indicate valid and accessible",
-            responseText.contains("Valid and Accessible: true")
+            responseText.contains("Valid and Accessible: true"),
         )
         assertTrue("Should indicate USER_SELECTED scope", responseText.contains("USER_SELECTED"))
         assertTrue("Should show success message", responseText.contains("✓ This URI can be used"))
@@ -300,12 +289,8 @@ class FilePermissionToolProviderTest {
     fun `handleValidateDocumentUri should handle inaccessible document URI`() = runTest {
         // Mock DocumentFile for an inaccessible content URI
         mockkStatic("androidx.documentfile.provider.DocumentFile")
-        every {
-            androidx.documentfile.provider.DocumentFile.fromSingleUri(
-                context,
-                any()
-            )
-        } returns null
+        every { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, any()) } returns
+            null
 
         val arguments = mapOf("uri" to "content://invalid/document/123")
 
@@ -315,11 +300,11 @@ class FilePermissionToolProviderTest {
         val responseText = (result.content.first() as TextContent).text ?: ""
         assertTrue(
             "Should contain validation results",
-            responseText.contains("Document URI Validation Results")
+            responseText.contains("Document URI Validation Results"),
         )
         assertTrue(
             "Should indicate not accessible",
-            responseText.contains("Valid and Accessible: false")
+            responseText.contains("Valid and Accessible: false"),
         )
         assertTrue("Should show error message", responseText.contains("✗ This URI cannot be used"))
     }
@@ -331,7 +316,7 @@ class FilePermissionToolProviderTest {
         assertTrue("Check file access should handle errors", checkResult.isError ?: false)
 
         val permissionsResult =
-            toolProvider.handleRequestPermissions(mapOf("scope" to 123)) // Wrong type  
+            toolProvider.handleRequestPermissions(mapOf("scope" to 123)) // Wrong type
         assertTrue("Request permissions should handle errors", permissionsResult.isError ?: false)
     }
 

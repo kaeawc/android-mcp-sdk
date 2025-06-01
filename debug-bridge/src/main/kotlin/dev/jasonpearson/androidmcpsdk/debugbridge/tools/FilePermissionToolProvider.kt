@@ -13,9 +13,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 
-/**
- * Tool provider for file permission management and storage access debugging.
- */
+/** Tool provider for file permission management and storage access debugging. */
 class FilePermissionToolProvider(private val context: Context) {
 
     companion object {
@@ -24,20 +22,11 @@ class FilePermissionToolProvider(private val context: Context) {
 
     private val filePermissionManager = FilePermissionManager(context)
 
-    @Serializable
-    data class CheckFileAccessRequest(
-        val uri: String
-    )
+    @Serializable data class CheckFileAccessRequest(val uri: String)
 
-    @Serializable
-    data class RequestPermissionsRequest(
-        val scope: String
-    )
+    @Serializable data class RequestPermissionsRequest(val scope: String)
 
-    @Serializable
-    data class ValidateDocumentUriRequest(
-        val uri: String
-    )
+    @Serializable data class ValidateDocumentUriRequest(val uri: String)
 
     fun registerTools(registry: ToolRegistry) {
         Log.d(TAG, "Registering file permission tools")
@@ -68,122 +57,174 @@ class FilePermissionToolProvider(private val context: Context) {
     private fun createCheckFileAccessTool(): Tool {
         return Tool(
             name = "check_file_access",
-            description = "Check if the app can access a file at the given URI or path. Returns access status, scope, and required permissions.",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {
-                    put("type", JsonPrimitive("object"))
-                    put("properties", buildJsonObject {
-                        put("uri", buildJsonObject {
-                            put("type", JsonPrimitive("string"))
+            description =
+                "Check if the app can access a file at the given URI or path. Returns access status, scope, and required permissions.",
+            inputSchema =
+                Tool.Input(
+                    properties =
+                        buildJsonObject {
+                            put("type", JsonPrimitive("object"))
                             put(
-                                "description",
-                                JsonPrimitive("File URI or path to check access for (e.g., 'file:///path/to/file', 'content://...', or '/path/to/file')")
+                                "properties",
+                                buildJsonObject {
+                                    put(
+                                        "uri",
+                                        buildJsonObject {
+                                            put("type", JsonPrimitive("string"))
+                                            put(
+                                                "description",
+                                                JsonPrimitive(
+                                                    "File URI or path to check access for (e.g., 'file:///path/to/file', 'content://...', or '/path/to/file')"
+                                                ),
+                                            )
+                                        },
+                                    )
+                                },
                             )
-                        })
-                    })
-                },
-                required = listOf("uri")
-            )
+                        },
+                    required = listOf("uri"),
+                ),
         )
     }
 
     private fun createRequestPermissionsTool(): Tool {
         return Tool(
             name = "request_file_permissions",
-            description = "Check permission status for a specific storage scope. Returns current permission state and required permissions.",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {
-                    put("type", JsonPrimitive("object"))
-                    put("properties", buildJsonObject {
-                        put("scope", buildJsonObject {
-                            put("type", JsonPrimitive("string"))
+            description =
+                "Check permission status for a specific storage scope. Returns current permission state and required permissions.",
+            inputSchema =
+                Tool.Input(
+                    properties =
+                        buildJsonObject {
+                            put("type", JsonPrimitive("object"))
                             put(
-                                "description",
-                                JsonPrimitive("Storage scope to check permissions for")
+                                "properties",
+                                buildJsonObject {
+                                    put(
+                                        "scope",
+                                        buildJsonObject {
+                                            put("type", JsonPrimitive("string"))
+                                            put(
+                                                "description",
+                                                JsonPrimitive(
+                                                    "Storage scope to check permissions for"
+                                                ),
+                                            )
+                                            put(
+                                                "enum",
+                                                buildJsonArray {
+                                                    add(JsonPrimitive("APP_INTERNAL"))
+                                                    add(JsonPrimitive("APP_EXTERNAL"))
+                                                    add(JsonPrimitive("MEDIA_IMAGES"))
+                                                    add(JsonPrimitive("MEDIA_VIDEO"))
+                                                    add(JsonPrimitive("MEDIA_AUDIO"))
+                                                    add(JsonPrimitive("EXTERNAL_STORAGE"))
+                                                    add(JsonPrimitive("USER_SELECTED"))
+                                                },
+                                            )
+                                        },
+                                    )
+                                },
                             )
-                            put("enum", buildJsonArray {
-                                add(JsonPrimitive("APP_INTERNAL"))
-                                add(JsonPrimitive("APP_EXTERNAL"))
-                                add(JsonPrimitive("MEDIA_IMAGES"))
-                                add(JsonPrimitive("MEDIA_VIDEO"))
-                                add(JsonPrimitive("MEDIA_AUDIO"))
-                                add(JsonPrimitive("EXTERNAL_STORAGE"))
-                                add(JsonPrimitive("USER_SELECTED"))
-                            })
-                        })
-                    })
-                },
-                required = listOf("scope")
-            )
+                        },
+                    required = listOf("scope"),
+                ),
         )
     }
 
     private fun createGetScopedDirectoriesTool(): Tool {
         return Tool(
             name = "get_scoped_directories",
-            description = "Get all accessible directories categorized by storage scope with access status.",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {
-                    put("type", JsonPrimitive("object"))
-                },
-                required = emptyList()
-            )
+            description =
+                "Get all accessible directories categorized by storage scope with access status.",
+            inputSchema =
+                Tool.Input(
+                    properties = buildJsonObject { put("type", JsonPrimitive("object")) },
+                    required = emptyList(),
+                ),
         )
     }
 
     private fun createCreateDocumentPickerIntentTool(): Tool {
         return Tool(
             name = "create_document_picker_intent",
-            description = "Create an intent for Storage Access Framework document picker. Returns intent action and extras.",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {
-                    put("type", JsonPrimitive("object"))
-                    put("properties", buildJsonObject {
-                        put("mimeTypes", buildJsonObject {
-                            put("type", JsonPrimitive("array"))
+            description =
+                "Create an intent for Storage Access Framework document picker. Returns intent action and extras.",
+            inputSchema =
+                Tool.Input(
+                    properties =
+                        buildJsonObject {
+                            put("type", JsonPrimitive("object"))
                             put(
-                                "description",
-                                JsonPrimitive("MIME types to filter for (e.g., ['image/*', 'video/*']). Defaults to ['*/*']")
+                                "properties",
+                                buildJsonObject {
+                                    put(
+                                        "mimeTypes",
+                                        buildJsonObject {
+                                            put("type", JsonPrimitive("array"))
+                                            put(
+                                                "description",
+                                                JsonPrimitive(
+                                                    "MIME types to filter for (e.g., ['image/*', 'video/*']). Defaults to ['*/*']"
+                                                ),
+                                            )
+                                            put(
+                                                "items",
+                                                buildJsonObject {
+                                                    put("type", JsonPrimitive("string"))
+                                                },
+                                            )
+                                        },
+                                    )
+                                },
                             )
-                            put("items", buildJsonObject {
-                                put("type", JsonPrimitive("string"))
-                            })
-                        })
-                    })
-                },
-                required = emptyList()
-            )
+                        },
+                    required = emptyList(),
+                ),
         )
     }
 
     private fun createValidateDocumentUriTool(): Tool {
         return Tool(
             name = "validate_document_uri",
-            description = "Validate a document URI from Storage Access Framework and check if it's accessible.",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {
-                    put("type", JsonPrimitive("object"))
-                    put("properties", buildJsonObject {
-                        put("uri", buildJsonObject {
-                            put("type", JsonPrimitive("string"))
+            description =
+                "Validate a document URI from Storage Access Framework and check if it's accessible.",
+            inputSchema =
+                Tool.Input(
+                    properties =
+                        buildJsonObject {
+                            put("type", JsonPrimitive("object"))
                             put(
-                                "description",
-                                JsonPrimitive("Document URI to validate (content:// URI from Storage Access Framework)")
+                                "properties",
+                                buildJsonObject {
+                                    put(
+                                        "uri",
+                                        buildJsonObject {
+                                            put("type", JsonPrimitive("string"))
+                                            put(
+                                                "description",
+                                                JsonPrimitive(
+                                                    "Document URI to validate (content:// URI from Storage Access Framework)"
+                                                ),
+                                            )
+                                        },
+                                    )
+                                },
                             )
-                        })
-                    })
-                },
-                required = listOf("uri")
-            )
+                        },
+                    required = listOf("uri"),
+                ),
         )
     }
 
     internal suspend fun handleCheckFileAccess(arguments: Map<String, Any>): CallToolResult {
         return try {
-            val uri = arguments["uri"] as? String ?: return CallToolResult(
-                content = listOf(TextContent(text = "Missing required parameter: uri")),
-                isError = true
-            )
+            val uri =
+                arguments["uri"] as? String
+                    ?: return CallToolResult(
+                        content = listOf(TextContent(text = "Missing required parameter: uri")),
+                        isError = true,
+                    )
 
             val result = filePermissionManager.checkFileAccess(uri)
 
@@ -201,44 +242,44 @@ class FilePermissionToolProvider(private val context: Context) {
                     }
                 }
 
-                result.errorMessage?.let { error ->
-                    appendLine("- Error: $error")
-                }
+                result.errorMessage?.let { error -> appendLine("- Error: $error") }
             }
 
-            CallToolResult(
-                content = listOf(TextContent(text = responseData)),
-                isError = false
-            )
+            CallToolResult(content = listOf(TextContent(text = responseData)), isError = false)
         } catch (e: Exception) {
             CallToolResult(
                 content = listOf(TextContent(text = "Error checking file access: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }
 
     internal suspend fun handleRequestPermissions(arguments: Map<String, Any>): CallToolResult {
         return try {
-            val scopeString = arguments["scope"] as? String ?: return CallToolResult(
-                content = listOf(TextContent(text = "Missing required parameter: scope")),
-                isError = true
-            )
+            val scopeString =
+                arguments["scope"] as? String
+                    ?: return CallToolResult(
+                        content = listOf(TextContent(text = "Missing required parameter: scope")),
+                        isError = true,
+                    )
 
-            val scope = try {
-                FilePermissionManager.StorageScope.valueOf(scopeString)
-            } catch (e: IllegalArgumentException) {
-                return CallToolResult(
-                    content = listOf(
-                        TextContent(
-                            text = "Invalid storage scope: $scopeString. Valid scopes: ${
+            val scope =
+                try {
+                    FilePermissionManager.StorageScope.valueOf(scopeString)
+                } catch (e: IllegalArgumentException) {
+                    return CallToolResult(
+                        content =
+                            listOf(
+                                TextContent(
+                                    text =
+                                        "Invalid storage scope: $scopeString. Valid scopes: ${
                                 FilePermissionManager.StorageScope.values().joinToString()
                             }"
-                        )
-                    ),
-                    isError = true
-                )
-            }
+                                )
+                            ),
+                        isError = true,
+                    )
+                }
 
             val result = filePermissionManager.requestFilePermissions(scope)
 
@@ -255,18 +296,17 @@ class FilePermissionToolProvider(private val context: Context) {
                 }
 
                 if (!result.granted) {
-                    appendLine("\nNote: This tool only checks permission status. Actual permission requests require user interaction through the Android UI.")
+                    appendLine(
+                        "\nNote: This tool only checks permission status. Actual permission requests require user interaction through the Android UI."
+                    )
                 }
             }
 
-            CallToolResult(
-                content = listOf(TextContent(text = responseData)),
-                isError = false
-            )
+            CallToolResult(content = listOf(TextContent(text = responseData)), isError = false)
         } catch (e: Exception) {
             CallToolResult(
                 content = listOf(TextContent(text = "Error checking permissions: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }
@@ -292,24 +332,23 @@ class FilePermissionToolProvider(private val context: Context) {
                 }
             }
 
-            CallToolResult(
-                content = listOf(TextContent(text = responseData)),
-                isError = false
-            )
+            CallToolResult(content = listOf(TextContent(text = responseData)), isError = false)
         } catch (e: Exception) {
             CallToolResult(
-                content = listOf(TextContent(text = "Error getting scoped directories: ${e.message}")),
-                isError = true
+                content =
+                    listOf(TextContent(text = "Error getting scoped directories: ${e.message}")),
+                isError = true,
             )
         }
     }
 
-    internal suspend fun handleCreateDocumentPickerIntent(arguments: Map<String, Any>): CallToolResult {
+    internal suspend fun handleCreateDocumentPickerIntent(
+        arguments: Map<String, Any>
+    ): CallToolResult {
         return try {
-            val mimeTypes = (arguments["mimeTypes"] as? List<*>)
-                ?.mapNotNull { it as? String }
-                ?.toTypedArray()
-                ?: arrayOf("*/*")
+            val mimeTypes =
+                (arguments["mimeTypes"] as? List<*>)?.mapNotNull { it as? String }?.toTypedArray()
+                    ?: arrayOf("*/*")
 
             val intent = filePermissionManager.createDocumentPickerIntent(mimeTypes)
 
@@ -325,10 +364,11 @@ class FilePermissionToolProvider(private val context: Context) {
                 intent.extras?.let { extras ->
                     appendLine("- Extras:")
                     extras.keySet().forEach { key ->
-                        val value = when (val extra = extras.get(key)) {
-                            is Array<*> -> extra.joinToString(", ", "[", "]")
-                            else -> extra?.toString()
-                        }
+                        val value =
+                            when (val extra = extras.get(key)) {
+                                is Array<*> -> extra.joinToString(", ", "[", "]")
+                                else -> extra?.toString()
+                            }
                         appendLine("  * $key: $value")
                     }
                 }
@@ -341,33 +381,36 @@ class FilePermissionToolProvider(private val context: Context) {
                 appendLine("4. Use validate_document_uri tool to check the returned URI")
             }
 
-            CallToolResult(
-                content = listOf(TextContent(text = responseData)),
-                isError = false
-            )
+            CallToolResult(content = listOf(TextContent(text = responseData)), isError = false)
         } catch (e: Exception) {
             CallToolResult(
-                content = listOf(TextContent(text = "Error creating document picker intent: ${e.message}")),
-                isError = true
+                content =
+                    listOf(
+                        TextContent(text = "Error creating document picker intent: ${e.message}")
+                    ),
+                isError = true,
             )
         }
     }
 
     internal suspend fun handleValidateDocumentUri(arguments: Map<String, Any>): CallToolResult {
         return try {
-            val uriString = arguments["uri"] as? String ?: return CallToolResult(
-                content = listOf(TextContent(text = "Missing required parameter: uri")),
-                isError = true
-            )
+            val uriString =
+                arguments["uri"] as? String
+                    ?: return CallToolResult(
+                        content = listOf(TextContent(text = "Missing required parameter: uri")),
+                        isError = true,
+                    )
 
-            val uri = try {
-                Uri.parse(uriString)
-            } catch (e: Exception) {
-                return CallToolResult(
-                    content = listOf(TextContent(text = "Invalid URI format: $uriString")),
-                    isError = true
-                )
-            }
+            val uri =
+                try {
+                    Uri.parse(uriString)
+                } catch (e: Exception) {
+                    return CallToolResult(
+                        content = listOf(TextContent(text = "Invalid URI format: $uriString")),
+                        isError = true,
+                    )
+                }
 
             val result = filePermissionManager.validateDocumentUri(uri)
 
@@ -378,9 +421,7 @@ class FilePermissionToolProvider(private val context: Context) {
                 appendLine("- Storage Scope: ${result.scope.name}")
                 appendLine("- Requires Permission: ${result.requiresPermission}")
 
-                result.errorMessage?.let { error ->
-                    appendLine("- Error: $error")
-                }
+                result.errorMessage?.let { error -> appendLine("- Error: $error") }
 
                 if (result.canAccess) {
                     appendLine()
@@ -391,14 +432,11 @@ class FilePermissionToolProvider(private val context: Context) {
                 }
             }
 
-            CallToolResult(
-                content = listOf(TextContent(text = responseData)),
-                isError = false
-            )
+            CallToolResult(content = listOf(TextContent(text = responseData)), isError = false)
         } catch (e: Exception) {
             CallToolResult(
                 content = listOf(TextContent(text = "Error validating document URI: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }

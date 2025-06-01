@@ -53,7 +53,7 @@ class FilePermissionManagerTest {
         assertEquals(
             "Should be APP_INTERNAL scope",
             FilePermissionManager.StorageScope.APP_INTERNAL,
-            result.scope
+            result.scope,
         )
         assertFalse("Should not require permission", result.requiresPermission)
         assertTrue("Should have no missing permissions", result.missingPermissions.isEmpty())
@@ -69,7 +69,7 @@ class FilePermissionManagerTest {
         assertEquals(
             "Should be APP_INTERNAL scope",
             FilePermissionManager.StorageScope.APP_INTERNAL,
-            result.scope
+            result.scope,
         )
         assertFalse("Should not require permission", result.requiresPermission)
     }
@@ -87,7 +87,7 @@ class FilePermissionManagerTest {
         assertEquals(
             "Should be APP_EXTERNAL scope",
             FilePermissionManager.StorageScope.APP_EXTERNAL,
-            result.scope
+            result.scope,
         )
         assertFalse("Should not require permission", result.requiresPermission)
     }
@@ -98,12 +98,8 @@ class FilePermissionManagerTest {
             "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)}/test.jpg"
 
         mockkStatic(ContextCompat::class)
-        every {
-            ContextCompat.checkSelfPermission(
-                context,
-                any()
-            )
-        } returns PackageManager.PERMISSION_DENIED
+        every { ContextCompat.checkSelfPermission(context, any()) } returns
+            PackageManager.PERMISSION_DENIED
 
         val result = filePermissionManager.checkFileAccess(mediaFilePath)
 
@@ -111,7 +107,7 @@ class FilePermissionManagerTest {
         assertEquals(
             "Should be MEDIA_IMAGES scope",
             FilePermissionManager.StorageScope.MEDIA_IMAGES,
-            result.scope
+            result.scope,
         )
         assertTrue("Should require permission", result.requiresPermission)
         assertFalse("Should have missing permissions", result.missingPermissions.isEmpty())
@@ -122,12 +118,8 @@ class FilePermissionManagerTest {
         val contentUri = "content://media/external/images/media/123"
 
         mockkStatic(ContextCompat::class)
-        every {
-            ContextCompat.checkSelfPermission(
-                context,
-                any()
-            )
-        } returns PackageManager.PERMISSION_GRANTED
+        every { ContextCompat.checkSelfPermission(context, any()) } returns
+            PackageManager.PERMISSION_GRANTED
 
         val result = filePermissionManager.checkFileAccess(contentUri)
 
@@ -135,11 +127,11 @@ class FilePermissionManagerTest {
         assertEquals(
             "Should be MEDIA_IMAGES scope",
             FilePermissionManager.StorageScope.MEDIA_IMAGES,
-            result.scope
+            result.scope,
         )
         assertFalse(
             "Should not require additional permission when already granted",
-            result.requiresPermission
+            result.requiresPermission,
         )
     }
 
@@ -153,7 +145,7 @@ class FilePermissionManagerTest {
         assertEquals(
             "Should be APP_INTERNAL scope",
             FilePermissionManager.StorageScope.APP_INTERNAL,
-            result.scope
+            result.scope,
         )
         assertFalse("Should not require permission", result.requiresPermission)
     }
@@ -161,7 +153,9 @@ class FilePermissionManagerTest {
     @Test
     fun `requestFilePermissions should return granted for no-permission scopes`() = runTest {
         val result =
-            filePermissionManager.requestFilePermissions(FilePermissionManager.StorageScope.APP_INTERNAL)
+            filePermissionManager.requestFilePermissions(
+                FilePermissionManager.StorageScope.APP_INTERNAL
+            )
 
         assertTrue("Should be granted for APP_INTERNAL", result.granted)
         assertTrue("Should have no permissions to check", result.permissions.isEmpty())
@@ -171,15 +165,13 @@ class FilePermissionManagerTest {
     @Test
     fun `requestFilePermissions should check permissions for media scopes`() = runTest {
         mockkStatic(ContextCompat::class)
-        every {
-            ContextCompat.checkSelfPermission(
-                context,
-                any()
-            )
-        } returns PackageManager.PERMISSION_DENIED
+        every { ContextCompat.checkSelfPermission(context, any()) } returns
+            PackageManager.PERMISSION_DENIED
 
         val result =
-            filePermissionManager.requestFilePermissions(FilePermissionManager.StorageScope.MEDIA_IMAGES)
+            filePermissionManager.requestFilePermissions(
+                FilePermissionManager.StorageScope.MEDIA_IMAGES
+            )
 
         assertFalse("Should not be granted when permission denied", result.granted)
         assertFalse("Should have permissions to check", result.permissions.isEmpty())
@@ -188,12 +180,12 @@ class FilePermissionManagerTest {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             assertTrue(
                 "Should check READ_MEDIA_IMAGES on API 33+",
-                result.permissions.containsKey(android.Manifest.permission.READ_MEDIA_IMAGES)
+                result.permissions.containsKey(android.Manifest.permission.READ_MEDIA_IMAGES),
             )
         } else {
             assertTrue(
                 "Should check READ_EXTERNAL_STORAGE on API < 33",
-                result.permissions.containsKey(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+                result.permissions.containsKey(android.Manifest.permission.READ_EXTERNAL_STORAGE),
             )
         }
     }
@@ -210,7 +202,8 @@ class FilePermissionManagerTest {
         assertFalse("Should have internal directories", internalDirs.isEmpty())
         assertTrue(
             "Internal directories should be accessible",
-            internalDirs.all { it.isAccessible })
+            internalDirs.all { it.isAccessible },
+        )
 
         // Check that app external directories are present if available
         val externalDirs =
@@ -219,7 +212,8 @@ class FilePermissionManagerTest {
             assertFalse("Should have external directories when available", externalDirs.isEmpty())
             assertTrue(
                 "App external directories should be accessible",
-                externalDirs.all { it.isAccessible })
+                externalDirs.all { it.isAccessible },
+            )
         }
     }
 
@@ -230,11 +224,11 @@ class FilePermissionManagerTest {
         assertEquals(
             "Should have correct action",
             android.content.Intent.ACTION_OPEN_DOCUMENT,
-            intent.action
+            intent.action,
         )
         assertTrue(
             "Should have OPENABLE category",
-            intent.categories?.contains(android.content.Intent.CATEGORY_OPENABLE) == true
+            intent.categories?.contains(android.content.Intent.CATEGORY_OPENABLE) == true,
         )
         assertEquals("Should default to all MIME types", "*/*", intent.type)
     }
@@ -247,7 +241,7 @@ class FilePermissionManagerTest {
         assertEquals(
             "Should have correct action",
             android.content.Intent.ACTION_OPEN_DOCUMENT,
-            intent.action
+            intent.action,
         )
         assertEquals("Should set type to wildcard for multiple types", "*/*", intent.type)
 
@@ -263,7 +257,7 @@ class FilePermissionManagerTest {
         assertEquals(
             "Should have correct action",
             android.content.Intent.ACTION_OPEN_DOCUMENT_TREE,
-            intent.action
+            intent.action,
         )
     }
 
@@ -275,10 +269,7 @@ class FilePermissionManagerTest {
         mockkStatic("androidx.documentfile.provider.DocumentFile")
         val mockDocumentFile = mockk<androidx.documentfile.provider.DocumentFile>()
         every {
-            androidx.documentfile.provider.DocumentFile.fromSingleUri(
-                context,
-                validUri
-            )
+            androidx.documentfile.provider.DocumentFile.fromSingleUri(context, validUri)
         } returns mockDocumentFile
         every { mockDocumentFile.exists() } returns true
 
@@ -288,7 +279,7 @@ class FilePermissionManagerTest {
         assertEquals(
             "Should be USER_SELECTED scope",
             FilePermissionManager.StorageScope.USER_SELECTED,
-            result.scope
+            result.scope,
         )
         assertFalse("Should not require permission", result.requiresPermission)
         assertNull("Should have no error message", result.errorMessage)
@@ -301,10 +292,7 @@ class FilePermissionManagerTest {
         // Mock DocumentFile.fromSingleUri to return null
         mockkStatic("androidx.documentfile.provider.DocumentFile")
         every {
-            androidx.documentfile.provider.DocumentFile.fromSingleUri(
-                context,
-                invalidUri
-            )
+            androidx.documentfile.provider.DocumentFile.fromSingleUri(context, invalidUri)
         } returns null
 
         val result = filePermissionManager.validateDocumentUri(invalidUri)
@@ -313,7 +301,7 @@ class FilePermissionManagerTest {
         assertEquals(
             "Should be USER_SELECTED scope",
             FilePermissionManager.StorageScope.USER_SELECTED,
-            result.scope
+            result.scope,
         )
         assertFalse("Should not require permission", result.requiresPermission)
         assertNotNull("Should have error message", result.errorMessage)
@@ -333,20 +321,21 @@ class FilePermissionManagerTest {
 
     @Test
     fun `checkFileAccess should identify media file types correctly`() = runTest {
-        val testCases = mapOf(
-            "/storage/emulated/0/Pictures/test.jpg" to FilePermissionManager.StorageScope.MEDIA_IMAGES,
-            "/storage/emulated/0/Movies/test.mp4" to FilePermissionManager.StorageScope.MEDIA_VIDEO,
-            "/storage/emulated/0/Music/test.mp3" to FilePermissionManager.StorageScope.MEDIA_AUDIO,
-            "/storage/emulated/0/Documents/test.pdf" to FilePermissionManager.StorageScope.EXTERNAL_STORAGE
-        )
+        val testCases =
+            mapOf(
+                "/storage/emulated/0/Pictures/test.jpg" to
+                    FilePermissionManager.StorageScope.MEDIA_IMAGES,
+                "/storage/emulated/0/Movies/test.mp4" to
+                    FilePermissionManager.StorageScope.MEDIA_VIDEO,
+                "/storage/emulated/0/Music/test.mp3" to
+                    FilePermissionManager.StorageScope.MEDIA_AUDIO,
+                "/storage/emulated/0/Documents/test.pdf" to
+                    FilePermissionManager.StorageScope.EXTERNAL_STORAGE,
+            )
 
         mockkStatic(ContextCompat::class)
-        every {
-            ContextCompat.checkSelfPermission(
-                context,
-                any()
-            )
-        } returns PackageManager.PERMISSION_DENIED
+        every { ContextCompat.checkSelfPermission(context, any()) } returns
+            PackageManager.PERMISSION_DENIED
 
         testCases.forEach { (path, expectedScope) ->
             val result = filePermissionManager.checkFileAccess(path)
