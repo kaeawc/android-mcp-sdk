@@ -8,6 +8,11 @@ import androidx.core.net.toUri
 import dev.jasonpearson.mcpandroidsdk.models.AndroidResourceContent
 import io.modelcontextprotocol.kotlin.sdk.Resource
 import io.modelcontextprotocol.kotlin.sdk.ResourceTemplate
+import java.io.File
+import java.io.IOException
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.min
+import kotlin.math.pow
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,11 +27,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.io.IOException
-import java.util.concurrent.ConcurrentHashMap
-import kotlin.math.min
-import kotlin.math.pow
 
 /** Provider for MCP resources, allowing the server to expose Android-specific data. */
 class ResourceProvider(private val context: Context) {
@@ -119,7 +119,8 @@ class ResourceProvider(private val context: Context) {
             ResourceTemplate(
                 uriTemplate = "file://{path}",
                 name = "File Content",
-                description = "Read content of a file from app's private storage or allowed public directories.",
+                description =
+                    "Read content of a file from app's private storage or allowed public directories.",
                 mimeType = "text/plain",
             )
         )
@@ -128,11 +129,12 @@ class ResourceProvider(private val context: Context) {
     private suspend fun readFileResource(fileUri: String): AndroidResourceContent {
         return withContext(Dispatchers.IO) {
             try {
-                val requestedFile = getAndVerifyAccessibleFile(fileUri)
-                    ?: return@withContext AndroidResourceContent(
-                        uri = fileUri,
-                        text = "Access denied or invalid file URI for read.",
-                    )
+                val requestedFile =
+                    getAndVerifyAccessibleFile(fileUri)
+                        ?: return@withContext AndroidResourceContent(
+                            uri = fileUri,
+                            text = "Access denied or invalid file URI for read.",
+                        )
 
                 if (!requestedFile.exists() || !requestedFile.isFile) {
                     return@withContext AndroidResourceContent(
@@ -179,29 +181,32 @@ class ResourceProvider(private val context: Context) {
 
             // 2. Check app-specific external storage (getExternalFilesDir)
             val appExternalFilesDir = context.getExternalFilesDir(null)
-            if (appExternalFilesDir != null && requestedFile.canonicalPath.startsWith(
-                    appExternalFilesDir.canonicalPath
-                )
+            if (
+                appExternalFilesDir != null &&
+                    requestedFile.canonicalPath.startsWith(appExternalFilesDir.canonicalPath)
             ) {
                 return requestedFile
             }
 
             // 3. Check standard public directories (Downloads, Documents, Pictures, etc.)
             // This requires careful handling, especially on Android 10+ (API 29+)
-            // For simplicity, we'll check a few common ones. Real apps might need Storage Access Framework
+            // For simplicity, we'll check a few common ones. Real apps might need Storage Access
+            // Framework
             // or MediaStore for broader access, or specific permissions.
-            val standardPublicDirs = listOfNotNull(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
-                // Add other relevant public directories as needed
-            )
+            val standardPublicDirs =
+                listOfNotNull(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
+                    // Add other relevant public directories as needed
+                )
 
             standardPublicDirs.forEach { publicDir ->
                 if (requestedFile.canonicalPath.startsWith(publicDir.canonicalPath)) {
                     // TODO: On Android Q+, direct file path access to public dirs is restricted.
                     // This check might work for legacy storage or if proper permissions are held.
                     // For robust access, MediaStore or SAF would be needed.
-                    // For FileObserver, observing these paths might also be problematic without direct access.
+                    // For FileObserver, observing these paths might also be problematic without
+                    // direct access.
                     Log.i(TAG, "File $fileUri is in a standard public directory: ${publicDir.path}")
                     return requestedFile // Assuming direct access for now, needs refinement
                 }
@@ -209,7 +214,7 @@ class ResourceProvider(private val context: Context) {
 
             Log.w(
                 TAG,
-                "Access denied to file path: $fileUri. Not in app-specific or allowed public directories."
+                "Access denied to file path: $fileUri. Not in app-specific or allowed public directories.",
             )
             return null
         } catch (e: Exception) {
@@ -225,7 +230,7 @@ internal class ResourceSubscriptionManager(private val context: Context) {
         private const val TAG = "ResourceSubscriptionManager"
         private const val DEFAULT_POLL_INTERVAL_MS = 15000L // Increased default poll interval
         private const val MAX_POLL_INTERVAL_MS = 60000L // Max 1 minute
-        private const val MIN_POLL_INTERVAL_MS = 5000L  // Min 5 seconds
+        private const val MIN_POLL_INTERVAL_MS = 5000L // Min 5 seconds
         private const val POLLING_BACKOFF_FACTOR = 1.5
         private const val MAX_FILE_OBSERVERS = 50 // Limit number of active file observers
     }
@@ -237,10 +242,13 @@ internal class ResourceSubscriptionManager(private val context: Context) {
         var lastModifiedOrHash: String = "", // Store hash or last modified string
         var pollingJob: Job? = null,
         var currentPollIntervalMs: Long = DEFAULT_POLL_INTERVAL_MS,
-        var pollingErrorCount: Int = 0
+        var pollingErrorCount: Int = 0,
     )
 
-    private enum class SubscriptionType { FILE, DYNAMIC }
+    private enum class SubscriptionType {
+        FILE,
+        DYNAMIC,
+    }
 
     private val subscriptions = ConcurrentHashMap<String, ActiveSubscription>()
     private val _resourceUpdates = Channel<String>(Channel.BUFFERED)
@@ -260,23 +268,27 @@ internal class ResourceSubscriptionManager(private val context: Context) {
 
         Log.i(TAG, "Subscribing to resource: $uri")
         if (uri.startsWith("file://")) {
-            if (subscriptions.count { it.value.type == SubscriptionType.FILE } >= MAX_FILE_OBSERVERS) {
+            if (
+                subscriptions.count { it.value.type == SubscriptionType.FILE } >= MAX_FILE_OBSERVERS
+            ) {
                 Log.w(
                     TAG,
-                    "Max file observers limit reached ($MAX_FILE_OBSERVERS). Cannot subscribe to file: $uri"
+                    "Max file observers limit reached ($MAX_FILE_OBSERVERS). Cannot subscribe to file: $uri",
                 )
                 // Optionally notify error or treat as dynamic with less frequent polling
                 startDynamicResourcePolling(
                     uri,
                     pollIntervalMs = MAX_POLL_INTERVAL_MS,
-                    isFallback = true
+                    isFallback = true,
                 )
                 return
             }
             try {
-                val filePath = (context.applicationContext as ResourceProviderContainer)
-                    .getResourceProvider()
-                    .getAndVerifyAccessibleFile(uri)?.absolutePath
+                val filePath =
+                    (context.applicationContext as ResourceProviderContainer)
+                        .getResourceProvider()
+                        .getAndVerifyAccessibleFile(uri)
+                        ?.absolutePath
 
                 if (filePath != null) {
                     val file = File(filePath)
@@ -291,7 +303,7 @@ internal class ResourceSubscriptionManager(private val context: Context) {
                 } else {
                     Log.e(
                         TAG,
-                        "Could not get valid or accessible file path for URI: $uri. Fallback to dynamic polling."
+                        "Could not get valid or accessible file path for URI: $uri. Fallback to dynamic polling.",
                     )
                     startDynamicResourcePolling(uri, isFallback = true)
                 }
@@ -336,13 +348,12 @@ internal class ResourceSubscriptionManager(private val context: Context) {
         // to avoid issues with stale observers if paths changed or became inaccessible.
         stopAllObservers()
         subscriptions.clear()
-        currentSubs.keys.forEach { uri ->
-            subscribeToResource(uri)
-        }
+        currentSubs.keys.forEach { uri -> subscribeToResource(uri) }
     }
 
     private fun createFileObserver(filePathToObserve: String, originalUri: String): FileObserver {
-        val eventMask = FileObserver.MODIFY or
+        val eventMask =
+            FileObserver.MODIFY or
                 FileObserver.DELETE or
                 FileObserver.MOVED_FROM or
                 FileObserver.MOVED_TO or
@@ -354,7 +365,7 @@ internal class ResourceSubscriptionManager(private val context: Context) {
             override fun onEvent(event: Int, path: String?) {
                 Log.d(
                     TAG,
-                    "FileObserver event $event for URI $originalUri, observed path $filePathToObserve, event path $path"
+                    "FileObserver event $event for URI $originalUri, observed path $filePathToObserve, event path $path",
                 )
                 // If observing a directory, path will be relative name of file/dir that changed.
                 // We are interested in changes to the originalUri.
@@ -367,60 +378,69 @@ internal class ResourceSubscriptionManager(private val context: Context) {
     private fun startDynamicResourcePolling(
         uri: String,
         pollIntervalMs: Long = DEFAULT_POLL_INTERVAL_MS,
-        isFallback: Boolean = false
+        isFallback: Boolean = false,
     ) {
         val existingSub = subscriptions[uri]
-        if (existingSub?.type == SubscriptionType.DYNAMIC && existingSub.pollingJob?.isActive == true) {
+        if (
+            existingSub?.type == SubscriptionType.DYNAMIC &&
+                existingSub.pollingJob?.isActive == true
+        ) {
             Log.d(TAG, "Polling already active for dynamic resource: $uri")
             return
         }
 
         val initialPollInterval = if (isFallback) MAX_POLL_INTERVAL_MS else pollIntervalMs
         Log.i(TAG, "Starting dynamic polling for resource: $uri every $initialPollInterval ms")
-        val currentSub = existingSub ?: ActiveSubscription(
-            uri,
-            SubscriptionType.DYNAMIC,
-            currentPollIntervalMs = initialPollInterval
-        )
-
-        currentSub.pollingJob = coroutineScope.launch {
-            try {
-                val initialContentData = readAndProcessDynamicResource(uri)
-                currentSub.lastModifiedOrHash = initialContentData.hashOrTimestamp
-
-                while (isActive) {
-                    delay(currentSub.currentPollIntervalMs)
-                    val newContentData = readAndProcessDynamicResource(uri)
-                    if (newContentData.hashOrTimestamp != currentSub.lastModifiedOrHash) {
-                        Log.d(
-                            TAG,
-                            "Dynamic resource $uri changed (old: ${currentSub.lastModifiedOrHash}, new: ${newContentData.hashOrTimestamp}), notifying."
-                        )
-                        currentSub.lastModifiedOrHash = newContentData.hashOrTimestamp
-                        notifyResourceChanged(uri)
-                        // Reset error count and poll interval on successful change detection
-                        currentSub.pollingErrorCount = 0
-                        currentSub.currentPollIntervalMs = initialPollInterval
-                    } else {
-                        // No change, reset error count if it was > 0
-                        if (currentSub.pollingErrorCount > 0) currentSub.pollingErrorCount = 0
-                        currentSub.currentPollIntervalMs =
-                            initialPollInterval // Reset to base on no change
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error during polling for $uri", e)
-                currentSub.pollingErrorCount++
-                val backoffDelay =
-                    (initialPollInterval * POLLING_BACKOFF_FACTOR.pow(currentSub.pollingErrorCount)).toLong()
-                currentSub.currentPollIntervalMs = min(backoffDelay, MAX_POLL_INTERVAL_MS)
-                Log.w(
-                    TAG,
-                    "Polling for $uri failed ${currentSub.pollingErrorCount} times. Next attempt in ${currentSub.currentPollIntervalMs} ms."
+        val currentSub =
+            existingSub
+                ?: ActiveSubscription(
+                    uri,
+                    SubscriptionType.DYNAMIC,
+                    currentPollIntervalMs = initialPollInterval,
                 )
-                // Loop will continue with increased delay after this iteration's delay completes
+
+        currentSub.pollingJob =
+            coroutineScope.launch {
+                try {
+                    val initialContentData = readAndProcessDynamicResource(uri)
+                    currentSub.lastModifiedOrHash = initialContentData.hashOrTimestamp
+
+                    while (isActive) {
+                        delay(currentSub.currentPollIntervalMs)
+                        val newContentData = readAndProcessDynamicResource(uri)
+                        if (newContentData.hashOrTimestamp != currentSub.lastModifiedOrHash) {
+                            Log.d(
+                                TAG,
+                                "Dynamic resource $uri changed (old: ${currentSub.lastModifiedOrHash}, new: ${newContentData.hashOrTimestamp}), notifying.",
+                            )
+                            currentSub.lastModifiedOrHash = newContentData.hashOrTimestamp
+                            notifyResourceChanged(uri)
+                            // Reset error count and poll interval on successful change detection
+                            currentSub.pollingErrorCount = 0
+                            currentSub.currentPollIntervalMs = initialPollInterval
+                        } else {
+                            // No change, reset error count if it was > 0
+                            if (currentSub.pollingErrorCount > 0) currentSub.pollingErrorCount = 0
+                            currentSub.currentPollIntervalMs =
+                                initialPollInterval // Reset to base on no change
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error during polling for $uri", e)
+                    currentSub.pollingErrorCount++
+                    val backoffDelay =
+                        (initialPollInterval *
+                                POLLING_BACKOFF_FACTOR.pow(currentSub.pollingErrorCount))
+                            .toLong()
+                    currentSub.currentPollIntervalMs = min(backoffDelay, MAX_POLL_INTERVAL_MS)
+                    Log.w(
+                        TAG,
+                        "Polling for $uri failed ${currentSub.pollingErrorCount} times. Next attempt in ${currentSub.currentPollIntervalMs} ms.",
+                    )
+                    // Loop will continue with increased delay after this iteration's delay
+                    // completes
+                }
             }
-        }
         subscriptions[uri] =
             currentSub.copy(type = SubscriptionType.DYNAMIC) // Ensure type is DYNAMIC
     }
@@ -429,12 +449,13 @@ internal class ResourceSubscriptionManager(private val context: Context) {
 
     private suspend fun readAndProcessDynamicResource(uri: String): DynamicResourceData {
         // Placeholder: Fetch and process dynamic resource content
-        // In a real scenario, fetch from network/DB, then hash its content or get a last-modified header.
+        // In a real scenario, fetch from network/DB, then hash its content or get a last-modified
+        // header.
         val content =
             "Dynamic content for $uri at ${System.currentTimeMillis()}" // Simulate changing content
         return DynamicResourceData(
             content,
-            content.hashCode().toString()
+            content.hashCode().toString(),
         ) // Use hash for change detection
     }
 
@@ -444,14 +465,15 @@ internal class ResourceSubscriptionManager(private val context: Context) {
         if (!sent) {
             Log.w(
                 TAG,
-                "Failed to queue resource update for $uri, channel buffer might be full or closed."
+                "Failed to queue resource update for $uri, channel buffer might be full or closed.",
             )
         }
     }
 }
 
 // Interface to allow ResourceSubscriptionManager to access ResourceProvider's methods if needed
-// This avoids a direct circular dependency if ResourceProvider needed to call into manager for complex logic.
+// This avoids a direct circular dependency if ResourceProvider needed to call into manager for
+// complex logic.
 // For current getAndVerifyAccessibleFile, it is directly in ResourceProvider to keep it simple.
 interface ResourceProviderContainer {
     fun getResourceProvider(): ResourceProvider

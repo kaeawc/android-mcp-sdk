@@ -21,11 +21,13 @@ import io.modelcontextprotocol.kotlin.sdk.ReadResourceResult
 import io.modelcontextprotocol.kotlin.sdk.Resource
 import io.modelcontextprotocol.kotlin.sdk.ResourceTemplate
 import io.modelcontextprotocol.kotlin.sdk.Role
+import io.modelcontextprotocol.kotlin.sdk.ServerCapabilities as SdkServerCapabilities
 import io.modelcontextprotocol.kotlin.sdk.TextContent
 import io.modelcontextprotocol.kotlin.sdk.TextResourceContents
 import io.modelcontextprotocol.kotlin.sdk.Tool
 import io.modelcontextprotocol.kotlin.sdk.server.Server
 import io.modelcontextprotocol.kotlin.sdk.server.ServerOptions
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -33,8 +35,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import java.util.concurrent.atomic.AtomicBoolean
-import io.modelcontextprotocol.kotlin.sdk.ServerCapabilities as SdkServerCapabilities
 
 /**
  * Android-specific wrapper for MCP Server functionality. Provides easy integration of MCP servers
@@ -91,21 +91,24 @@ private constructor(
     private lateinit var promptProvider: PromptProvider
 
     // Server capabilities (using SDK model type for SDK interaction)
-    private val sdkServerCapabilities = SdkServerCapabilities(
-        tools = SdkServerCapabilities.Tools(listChanged = true),
-        resources = SdkServerCapabilities.Resources(subscribe = true, listChanged = true),
-        prompts = SdkServerCapabilities.Prompts(listChanged = true)
-    )
+    private val sdkServerCapabilities =
+        SdkServerCapabilities(
+            tools = SdkServerCapabilities.Tools(listChanged = true),
+            resources = SdkServerCapabilities.Resources(subscribe = true, listChanged = true),
+            prompts = SdkServerCapabilities.Prompts(listChanged = true),
+        )
 
     // Server capabilities (using local model type for ComprehensiveServerInfo)
-    private val serverCapabilitiesModel = dev.jasonpearson.mcpandroidsdk.models.ServerCapabilities(
-        tools = dev.jasonpearson.mcpandroidsdk.models.ToolsCapability(listChanged = true),
-        resources = dev.jasonpearson.mcpandroidsdk.models.ResourcesCapability(
-            subscribe = true,
-            listChanged = true,
-        ),
-        prompts = dev.jasonpearson.mcpandroidsdk.models.PromptsCapability(listChanged = true),
-    )
+    private val serverCapabilitiesModel =
+        dev.jasonpearson.mcpandroidsdk.models.ServerCapabilities(
+            tools = dev.jasonpearson.mcpandroidsdk.models.ToolsCapability(listChanged = true),
+            resources =
+                dev.jasonpearson.mcpandroidsdk.models.ResourcesCapability(
+                    subscribe = true,
+                    listChanged = true,
+                ),
+            prompts = dev.jasonpearson.mcpandroidsdk.models.PromptsCapability(listChanged = true),
+        )
 
     // Basic tool definitions for Android-specific functionality
     private val availableTools = mutableListOf<AndroidTool>()
@@ -318,10 +321,7 @@ private constructor(
     }
 
     /** Call an MCP tool */
-    suspend fun callMcpTool(
-        name: String,
-        arguments: Map<String, Any>,
-    ): CallToolResult {
+    suspend fun callMcpTool(name: String, arguments: Map<String, Any>): CallToolResult {
         return if (isInitialized()) {
             toolProvider.callTool(name, arguments)
         } else {
@@ -352,12 +352,13 @@ private constructor(
         } else {
             GetPromptResult(
                 description = "Server not initialized",
-                messages = listOf(
-                    PromptMessage(
-                        role = Role.user,
-                        content = TextContent(text = "Server not initialized"),
-                    )
-                ),
+                messages =
+                    listOf(
+                        PromptMessage(
+                            role = Role.user,
+                            content = TextContent(text = "Server not initialized"),
+                        )
+                    ),
             )
         }
     }
@@ -365,10 +366,7 @@ private constructor(
     // Helper methods for adding tools, resources, and prompts
 
     /** Add a custom MCP tool with its handler */
-    fun addMcpTool(
-        tool: Tool,
-        handler: suspend (Map<String, Any>) -> CallToolResult,
-    ) {
+    fun addMcpTool(tool: Tool, handler: suspend (Map<String, Any>) -> CallToolResult) {
         if (isInitialized()) {
             toolProvider.addTool(tool, handler)
             Log.i(TAG, "Added custom MCP tool: ${tool.name}")
@@ -392,10 +390,7 @@ private constructor(
     }
 
     /** Add a custom MCP resource with its content provider */
-    fun addMcpResource(
-        resource: Resource,
-        contentProvider: suspend () -> AndroidResourceContent,
-    ) {
+    fun addMcpResource(resource: Resource, contentProvider: suspend () -> AndroidResourceContent) {
         if (isInitialized()) {
             resourceProvider.addResource(resource, contentProvider)
             Log.i(TAG, "Added custom MCP resource: ${resource.uri}")
@@ -444,10 +439,7 @@ private constructor(
     }
 
     /** Add a custom MCP prompt with its handler */
-    fun addMcpPrompt(
-        prompt: Prompt,
-        handler: suspend (Map<String, Any?>) -> GetPromptResult,
-    ) {
+    fun addMcpPrompt(prompt: Prompt, handler: suspend (Map<String, Any?>) -> GetPromptResult) {
         if (isInitialized()) {
             promptProvider.addPrompt(prompt, handler)
             Log.i(TAG, "Added custom MCP prompt: ${prompt.name}")
@@ -496,12 +488,8 @@ private constructor(
         filePath: String,
         mimeType: String = "text/plain",
     ) {
-        val resource = Resource(
-            uri = uri,
-            name = name,
-            description = description,
-            mimeType = mimeType,
-        )
+        val resource =
+            Resource(uri = uri, name = name, description = description, mimeType = mimeType)
         addMcpResource(resource) {
             try {
                 val file = java.io.File(filePath)
@@ -523,21 +511,15 @@ private constructor(
         arguments: List<PromptArgument> = emptyList(),
         promptGenerator: suspend (Map<String, Any?>) -> String,
     ) {
-        val prompt = Prompt(
-            name = name,
-            description = description,
-            arguments = arguments,
-        )
+        val prompt = Prompt(name = name, description = description, arguments = arguments)
         addMcpPrompt(prompt) { args ->
             val promptText = promptGenerator(args)
             GetPromptResult(
                 description = description,
-                messages = listOf(
-                    PromptMessage(
-                        role = Role.user,
-                        content = TextContent(text = promptText),
-                    )
-                ),
+                messages =
+                    listOf(
+                        PromptMessage(role = Role.user, content = TextContent(text = promptText))
+                    ),
             )
         }
     }
@@ -567,11 +549,12 @@ private constructor(
                 // This is where you'd integrate your transport with the SDK
                 // For now, we just log the message
                 Log.d(TAG, "Delegating message to MCP server: $message")
-            } ?: run {
-                // Fallback for when SDK server is not available
-                val response = """{"jsonrpc": "2.0", "result": "Message received", "id": 1}"""
-                broadcastMessage(response)
             }
+                ?: run {
+                    // Fallback for when SDK server is not available
+                    val response = """{"jsonrpc": "2.0", "result": "Message received", "id": 1}"""
+                    broadcastMessage(response)
+                }
         } catch (e: Exception) {
             Log.e(TAG, "Error handling incoming message", e)
         }
@@ -579,24 +562,18 @@ private constructor(
 
     private fun createMcpServerWithSDK(): Server {
         // Create the MCP server using the official SDK
-        val implementation = Implementation(
-            name = name,
-            version = version
-        )
+        val implementation = Implementation(name = name, version = version)
 
         // Use the sdkServerCapabilities defined at class level for SDK Server instance
         val serverOptions = ServerOptions(capabilities = sdkServerCapabilities)
 
-        return Server(
-            serverInfo = implementation,
-            options = serverOptions
-        ).apply {
+        return Server(serverInfo = implementation, options = serverOptions).apply {
             // Register all tools from the tool provider
             toolProvider.getAllTools().forEach { tool ->
                 addTool(
                     name = tool.name,
                     description = tool.description ?: "",
-                    inputSchema = tool.inputSchema
+                    inputSchema = tool.inputSchema,
                 ) { request ->
                     toolProvider.callTool(request.name, request.arguments ?: emptyMap())
                 }
@@ -608,17 +585,18 @@ private constructor(
                     uri = resource.uri,
                     name = resource.name ?: "",
                     description = resource.description ?: "",
-                    mimeType = resource.mimeType ?: "text/plain"
+                    mimeType = resource.mimeType ?: "text/plain",
                 ) { request ->
                     val content = resourceProvider.readResource(request.uri)
                     ReadResourceResult(
-                        contents = listOf(
-                            TextResourceContents(
-                                text = content.text ?: "",
-                                uri = content.uri,
-                                mimeType = content.mimeType ?: "text/plain"
-                        )
-                    )
+                        contents =
+                            listOf(
+                                TextResourceContents(
+                                    text = content.text ?: "",
+                                    uri = content.uri,
+                                    mimeType = content.mimeType ?: "text/plain",
+                                )
+                            )
                     )
                 }
             }
@@ -628,7 +606,7 @@ private constructor(
                 addPrompt(
                     name = prompt.name,
                     description = prompt.description ?: "",
-                    arguments = prompt.arguments ?: emptyList()
+                    arguments = prompt.arguments ?: emptyList(),
                 ) { request ->
                     promptProvider.getPrompt(request.name, request.arguments ?: emptyMap())
                 }
@@ -637,7 +615,8 @@ private constructor(
     }
 
     // This creates the local model type, used for ComprehensiveServerInfo DTO.
-    private fun createAndroidServerCapabilities(): dev.jasonpearson.mcpandroidsdk.models.ServerCapabilities {
+    private fun createAndroidServerCapabilities():
+        dev.jasonpearson.mcpandroidsdk.models.ServerCapabilities {
         return serverCapabilitiesModel // Simply return the pre-defined local model instance
     }
 
