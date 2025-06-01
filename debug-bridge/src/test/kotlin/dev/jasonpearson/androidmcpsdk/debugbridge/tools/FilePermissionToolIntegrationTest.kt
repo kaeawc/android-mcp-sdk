@@ -9,6 +9,7 @@ import dev.jasonpearson.androidmcpsdk.core.features.tools.DefaultToolRegistry
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
+import java.io.File
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.test.runTest
@@ -18,11 +19,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.File
 
 /**
- * Integration tests for FilePermissionToolProvider that test complete workflows
- * and integration with the underlying FilePermissionManager.
+ * Integration tests for FilePermissionToolProvider that test complete workflows and integration
+ * with the underlying FilePermissionManager.
  */
 @RunWith(AndroidJUnit4::class)
 class FilePermissionToolIntegrationTest {
@@ -55,12 +55,9 @@ class FilePermissionToolIntegrationTest {
         val directoriesOutput = directoriesResult.content.first().toString()
         assertTrue(
             "Should contain APP_INTERNAL directories",
-            directoriesOutput.contains("APP_INTERNAL")
+            directoriesOutput.contains("APP_INTERNAL"),
         )
-        assertTrue(
-            "Should show accessible status",
-            directoriesOutput.contains("ACCESSIBLE")
-        )
+        assertTrue("Should show accessible status", directoriesOutput.contains("ACCESSIBLE"))
 
         // Step 2: Check access to internal file from discovered directories
         val internalFilePath = "${context.filesDir.absolutePath}/workflow-test.txt"
@@ -73,7 +70,7 @@ class FilePermissionToolIntegrationTest {
         assertTrue("Should show APP_INTERNAL scope", accessOutput.contains("APP_INTERNAL"))
         assertTrue(
             "Should show no permission required",
-            accessOutput.contains("Requires Permission: false")
+            accessOutput.contains("Requires Permission: false"),
         )
 
         // Step 3: Verify permission status for this scope
@@ -84,7 +81,7 @@ class FilePermissionToolIntegrationTest {
         val permissionOutput = permissionResult.content.first().toString()
         assertTrue(
             "Should show permissions granted",
-            permissionOutput.contains("All Permissions Granted: true")
+            permissionOutput.contains("All Permissions Granted: true"),
         )
     }
 
@@ -93,7 +90,7 @@ class FilePermissionToolIntegrationTest {
         // Mock permission system to simulate no media permissions
         mockkStatic(ContextCompat::class)
         every { ContextCompat.checkSelfPermission(context, any()) } returns
-                PackageManager.PERMISSION_DENIED
+            PackageManager.PERMISSION_DENIED
 
         // Step 1: Check permission requirements for media scope
         val permissionArgs = mapOf("scope" to "MEDIA_IMAGES")
@@ -101,16 +98,17 @@ class FilePermissionToolIntegrationTest {
 
         assertFalse(
             "Should successfully check media permissions",
-            permissionResult.isError ?: false
+            permissionResult.isError ?: false,
         )
         val permissionOutput = permissionResult.content.first().toString()
         assertTrue(
             "Should show permissions not granted",
-            permissionOutput.contains("All Permissions Granted: false")
+            permissionOutput.contains("All Permissions Granted: false"),
         )
         assertTrue(
             "Should list specific media permissions",
-            permissionOutput.contains("READ_MEDIA") || permissionOutput.contains("READ_EXTERNAL_STORAGE")
+            permissionOutput.contains("READ_MEDIA") ||
+                permissionOutput.contains("READ_EXTERNAL_STORAGE"),
         )
 
         // Step 2: Check access to media file
@@ -122,15 +120,12 @@ class FilePermissionToolIntegrationTest {
         val accessOutput = accessResult.content.first().toString()
         assertTrue(
             "Should show cannot access without permission",
-            accessOutput.contains("Can Access: false")
+            accessOutput.contains("Can Access: false"),
         )
-        assertTrue(
-            "Should show MEDIA_IMAGES scope",
-            accessOutput.contains("MEDIA_IMAGES")
-        )
+        assertTrue("Should show MEDIA_IMAGES scope", accessOutput.contains("MEDIA_IMAGES"))
         assertTrue(
             "Should show permission required",
-            accessOutput.contains("Requires Permission: true")
+            accessOutput.contains("Requires Permission: true"),
         )
 
         // Step 3: Verify directories reflect permission status
@@ -140,7 +135,7 @@ class FilePermissionToolIntegrationTest {
         // Should show media directories but mark them as not accessible
         assertTrue(
             "Should list MEDIA_IMAGES directories",
-            directoriesOutput.contains("MEDIA_IMAGES")
+            directoriesOutput.contains("MEDIA_IMAGES"),
         )
     }
 
@@ -154,20 +149,11 @@ class FilePermissionToolIntegrationTest {
         val intentOutput = intentResult.content.first().toString()
         assertTrue(
             "Should contain ACTION_OPEN_DOCUMENT",
-            intentOutput.contains("ACTION_OPEN_DOCUMENT")
+            intentOutput.contains("ACTION_OPEN_DOCUMENT"),
         )
-        assertTrue(
-            "Should contain image MIME type",
-            intentOutput.contains("image/*")
-        )
-        assertTrue(
-            "Should contain PDF MIME type",
-            intentOutput.contains("application/pdf")
-        )
-        assertTrue(
-            "Should contain usage instructions",
-            intentOutput.contains("Usage Instructions")
-        )
+        assertTrue("Should contain image MIME type", intentOutput.contains("image/*"))
+        assertTrue("Should contain PDF MIME type", intentOutput.contains("application/pdf"))
+        assertTrue("Should contain usage instructions", intentOutput.contains("Usage Instructions"))
 
         // Step 2: Validate a sample document URI (would normally come from intent result)
         val documentUri = "content://com.android.providers.downloads.documents/document/12345"
@@ -178,12 +164,9 @@ class FilePermissionToolIntegrationTest {
         val validateOutput = validateResult.content.first().toString()
         assertTrue(
             "Should contain validation results",
-            validateOutput.contains("Document URI Validation Results")
+            validateOutput.contains("Document URI Validation Results"),
         )
-        assertTrue(
-            "Should show USER_SELECTED scope",
-            validateOutput.contains("USER_SELECTED")
-        )
+        assertTrue("Should show USER_SELECTED scope", validateOutput.contains("USER_SELECTED"))
     }
 
     @Test
@@ -195,7 +178,7 @@ class FilePermissionToolIntegrationTest {
         assertTrue("Should return error for invalid scope", invalidScopeResult.isError ?: false)
         assertTrue(
             "Should explain valid scopes",
-            invalidScopeResult.content.first().toString().contains("Valid scopes")
+            invalidScopeResult.content.first().toString().contains("Valid scopes"),
         )
 
         // Test 2: Malformed URI in file access check
@@ -212,14 +195,14 @@ class FilePermissionToolIntegrationTest {
         assertTrue("Should return error for invalid URI format", invalidUriResult.isError ?: false)
         assertTrue(
             "Should explain URI format issue",
-            invalidUriResult.content.first().toString().contains("Invalid URI format")
+            invalidUriResult.content.first().toString().contains("Invalid URI format"),
         )
 
         // Test 4: Missing required parameters
         val missingParamResult = toolProvider.handleCheckFileAccess(emptyMap())
         assertTrue(
             "Should return error for missing parameters",
-            missingParamResult.isError ?: false
+            missingParamResult.isError ?: false,
         )
     }
 
@@ -229,29 +212,25 @@ class FilePermissionToolIntegrationTest {
         val output = directoriesResult.content.first().toString()
 
         // Should include all major storage scopes
-        val expectedScopes = listOf(
-            "APP_INTERNAL", "APP_EXTERNAL", "MEDIA_IMAGES",
-            "MEDIA_VIDEO", "MEDIA_AUDIO", "EXTERNAL_STORAGE"
-        )
+        val expectedScopes =
+            listOf(
+                "APP_INTERNAL",
+                "APP_EXTERNAL",
+                "MEDIA_IMAGES",
+                "MEDIA_VIDEO",
+                "MEDIA_AUDIO",
+                "EXTERNAL_STORAGE",
+            )
 
         expectedScopes.forEach { scope ->
-            assertTrue(
-                "Should include $scope in directory listing",
-                output.contains(scope)
-            )
+            assertTrue("Should include $scope in directory listing", output.contains(scope))
         }
 
         // Should show accessibility status for each directory
-        assertTrue(
-            "Should show accessible directories",
-            output.contains("ACCESSIBLE")
-        )
+        assertTrue("Should show accessible directories", output.contains("ACCESSIBLE"))
 
         // Should provide descriptions
-        assertTrue(
-            "Should provide directory descriptions",
-            output.contains("Description:")
-        )
+        assertTrue("Should provide directory descriptions", output.contains("Description:"))
     }
 
     @Test
@@ -274,9 +253,8 @@ class FilePermissionToolIntegrationTest {
             assertTrue("Should identify as internal storage", output.contains("APP_INTERNAL"))
             assertTrue(
                 "Should show no permission needed",
-                output.contains("Requires Permission: false")
+                output.contains("Requires Permission: false"),
             )
-
         } finally {
             if (testFile.exists()) {
                 testFile.delete()
@@ -289,32 +267,30 @@ class FilePermissionToolIntegrationTest {
         // Verify all tools are properly registered and accessible
         val registeredTools = toolRegistry.getAllTools()
 
-        val expectedToolNames = setOf(
-            "check_file_access",
-            "request_file_permissions",
-            "get_scoped_directories",
-            "create_document_picker_intent",
-            "validate_document_uri"
-        )
+        val expectedToolNames =
+            setOf(
+                "check_file_access",
+                "request_file_permissions",
+                "get_scoped_directories",
+                "create_document_picker_intent",
+                "validate_document_uri",
+            )
 
         val actualToolNames = registeredTools.map { it.name }.toSet()
 
         expectedToolNames.forEach { expectedTool ->
             assertTrue(
                 "Tool $expectedTool should be registered",
-                actualToolNames.contains(expectedTool)
+                actualToolNames.contains(expectedTool),
             )
         }
 
         // Test that tools can be called through the registry
         registeredTools.forEach { tool ->
-            assertTrue(
-                "Tool ${tool.name} should have a description",
-                tool.description.isNotBlank()
-            )
+            assertTrue("Tool ${tool.name} should have a description", tool.description.isNotBlank())
             assertTrue(
                 "Tool ${tool.name} should have input schema",
-                tool.inputSchema?.let { true } ?: false
+                tool.inputSchema?.let { true } ?: false,
             )
         }
     }
@@ -336,9 +312,7 @@ class FilePermissionToolIntegrationTest {
         }
 
         // Test directory listing (potentially expensive)
-        repeat(5) {
-            toolProvider.handleGetScopedDirectories(emptyMap())
-        }
+        repeat(5) { toolProvider.handleGetScopedDirectories(emptyMap()) }
 
         val endTime = System.currentTimeMillis()
         val duration = endTime - startTime
@@ -350,21 +324,27 @@ class FilePermissionToolIntegrationTest {
     fun `integration test - concurrent tool usage`() = runTest {
         // Test that tools can be used concurrently without issues
         coroutineScope {
-            val tasks = (1..10).map { index ->
-                async {
-                    when (index % 3) {
-                        0 -> toolProvider.handleCheckFileAccess(
-                            mapOf("uri" to "${context.filesDir.absolutePath}/concurrent_$index.txt")
-                        )
+            val tasks =
+                (1..10).map { index ->
+                    async {
+                        when (index % 3) {
+                            0 ->
+                                toolProvider.handleCheckFileAccess(
+                                    mapOf(
+                                        "uri" to
+                                            "${context.filesDir.absolutePath}/concurrent_$index.txt"
+                                    )
+                                )
 
-                        1 -> toolProvider.handleRequestPermissions(
-                            mapOf("scope" to "APP_INTERNAL")
-                        )
+                            1 ->
+                                toolProvider.handleRequestPermissions(
+                                    mapOf("scope" to "APP_INTERNAL")
+                                )
 
-                        else -> toolProvider.handleGetScopedDirectories(emptyMap())
+                            else -> toolProvider.handleGetScopedDirectories(emptyMap())
+                        }
                     }
                 }
-            }
 
             val results = tasks.map { it.await() }
 

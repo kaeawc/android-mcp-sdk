@@ -53,7 +53,7 @@ class FilePermissionToolProviderTest {
         assertTrue("Should have content", result.content.isNotEmpty())
         assertTrue(
             "Should contain file access information",
-            result.content.first().toString().contains("File Access Check Results")
+            result.content.first().toString().contains("File Access Check Results"),
         )
     }
 
@@ -66,7 +66,7 @@ class FilePermissionToolProviderTest {
         assertTrue("Should be an error", result.isError ?: false)
         assertTrue(
             "Should have error message",
-            result.content.first().toString().contains("Missing required parameter: uri")
+            result.content.first().toString().contains("Missing required parameter: uri"),
         )
     }
 
@@ -79,7 +79,7 @@ class FilePermissionToolProviderTest {
         assertFalse("Should not be an error", result.isError ?: false)
         assertTrue(
             "Should contain content URI handling",
-            result.content.first().toString().contains("content://")
+            result.content.first().toString().contains("content://"),
         )
     }
 
@@ -92,7 +92,7 @@ class FilePermissionToolProviderTest {
         assertFalse("Should not be an error", result.isError ?: false)
         assertTrue(
             "Should contain file URI handling",
-            result.content.first().toString().contains("file://")
+            result.content.first().toString().contains("file://"),
         )
     }
 
@@ -106,11 +106,11 @@ class FilePermissionToolProviderTest {
         assertFalse("Should not be an error", result.isError ?: false)
         assertTrue(
             "Should contain permission check results",
-            result.content.first().toString().contains("Permission Check Results")
+            result.content.first().toString().contains("Permission Check Results"),
         )
         assertTrue(
             "Should contain scope information",
-            result.content.first().toString().contains("APP_INTERNAL")
+            result.content.first().toString().contains("APP_INTERNAL"),
         )
     }
 
@@ -123,7 +123,7 @@ class FilePermissionToolProviderTest {
         assertTrue("Should be an error", result.isError ?: false)
         assertTrue(
             "Should have error message",
-            result.content.first().toString().contains("Missing required parameter: scope")
+            result.content.first().toString().contains("Missing required parameter: scope"),
         )
     }
 
@@ -136,16 +136,22 @@ class FilePermissionToolProviderTest {
         assertTrue("Should be an error", result.isError ?: false)
         assertTrue(
             "Should have invalid scope error",
-            result.content.first().toString().contains("Invalid storage scope")
+            result.content.first().toString().contains("Invalid storage scope"),
         )
     }
 
     @Test
     fun `handleRequestPermissions should handle all valid scopes`() = runTest {
-        val validScopes = listOf(
-            "APP_INTERNAL", "APP_EXTERNAL", "MEDIA_IMAGES",
-            "MEDIA_VIDEO", "MEDIA_AUDIO", "EXTERNAL_STORAGE", "USER_SELECTED"
-        )
+        val validScopes =
+            listOf(
+                "APP_INTERNAL",
+                "APP_EXTERNAL",
+                "MEDIA_IMAGES",
+                "MEDIA_VIDEO",
+                "MEDIA_AUDIO",
+                "EXTERNAL_STORAGE",
+                "USER_SELECTED",
+            )
 
         validScopes.forEach { scope ->
             val arguments = mapOf("scope" to scope)
@@ -154,7 +160,7 @@ class FilePermissionToolProviderTest {
             assertFalse("Should not be an error for scope $scope", result.isError ?: false)
             assertTrue(
                 "Should contain scope name for $scope",
-                result.content.first().toString().contains(scope)
+                result.content.first().toString().contains(scope),
             )
         }
     }
@@ -169,11 +175,11 @@ class FilePermissionToolProviderTest {
         assertFalse("Should not be an error", result.isError ?: false)
         assertTrue(
             "Should contain directory information",
-            result.content.first().toString().contains("Scoped Directory Access Information")
+            result.content.first().toString().contains("Scoped Directory Access Information"),
         )
         assertTrue(
             "Should contain at least APP_INTERNAL directories",
-            result.content.first().toString().contains("APP_INTERNAL")
+            result.content.first().toString().contains("APP_INTERNAL"),
         )
     }
 
@@ -188,16 +194,10 @@ class FilePermissionToolProviderTest {
         val content = result.content.first().toString()
         assertTrue(
             "Should contain intent information",
-            content.contains("Storage Access Framework Document Picker Intent")
+            content.contains("Storage Access Framework Document Picker Intent"),
         )
-        assertTrue(
-            "Should contain ACTION_OPEN_DOCUMENT",
-            content.contains("ACTION_OPEN_DOCUMENT")
-        )
-        assertTrue(
-            "Should contain usage instructions",
-            content.contains("Usage Instructions")
-        )
+        assertTrue("Should contain ACTION_OPEN_DOCUMENT", content.contains("ACTION_OPEN_DOCUMENT"))
+        assertTrue("Should contain usage instructions", content.contains("Usage Instructions"))
     }
 
     @Test
@@ -210,7 +210,7 @@ class FilePermissionToolProviderTest {
         val content = result.content.first().toString()
         assertTrue(
             "Should contain custom MIME types",
-            content.contains("image/*") && content.contains("video/*")
+            content.contains("image/*") && content.contains("video/*"),
         )
     }
 
@@ -224,7 +224,7 @@ class FilePermissionToolProviderTest {
         assertTrue("Should be an error", result.isError ?: false)
         assertTrue(
             "Should have error message",
-            result.content.first().toString().contains("Missing required parameter: uri")
+            result.content.first().toString().contains("Missing required parameter: uri"),
         )
     }
 
@@ -237,7 +237,7 @@ class FilePermissionToolProviderTest {
         assertTrue("Should be an error", result.isError ?: false)
         assertTrue(
             "Should have invalid URI error",
-            result.content.first().toString().contains("Invalid URI format")
+            result.content.first().toString().contains("Invalid URI format"),
         )
     }
 
@@ -251,7 +251,7 @@ class FilePermissionToolProviderTest {
         assertFalse("Should not be an error", result.isError ?: false)
         assertTrue(
             "Should contain validation results",
-            result.content.first().toString().contains("Document URI Validation Results")
+            result.content.first().toString().contains("Document URI Validation Results"),
         )
     }
 

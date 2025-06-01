@@ -11,9 +11,9 @@ import android.provider.MediaStore
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.File
 
 /**
  * Manages file access permissions and storage scopes for the Android MCP SDK. Handles Android 10+
@@ -82,7 +82,7 @@ class FilePermissionManager(private val context: Context) {
         val permissionStates =
             requiredPermissions.associateWith { permission ->
                 ContextCompat.checkSelfPermission(context, permission) ==
-                        PackageManager.PERMISSION_GRANTED
+                    PackageManager.PERMISSION_GRANTED
             }
 
         val allGranted = permissionStates.values.all { it }
