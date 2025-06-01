@@ -7,32 +7,25 @@ import dev.jasonpearson.androidmcpsdk.core.features.tools.ToolRegistry
 import io.modelcontextprotocol.kotlin.sdk.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.TextContent
 import io.modelcontextprotocol.kotlin.sdk.Tool
+import java.util.Locale
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
-import java.util.Locale
 
-/**
- * Provides application information tools for the debug bridge.
- */
+/** Provides application information tools for the debug bridge. */
 class ApplicationInfoToolProvider(private val context: Context) {
 
     companion object {
         private const val TAG = "ApplicationInfoProvider"
     }
 
-    @Serializable
-    data class AppInfoInput(
-        val package_name: String? = null
-    )
+    @Serializable data class AppInfoInput(val package_name: String? = null)
 
     fun registerTools(registry: ToolRegistry) {
         Log.d(TAG, "Registering application info tools")
 
         // App info tool
-        registry.addTool(createAppInfoTool()) { arguments ->
-            getAppInfo(arguments)
-        }
+        registry.addTool(createAppInfoTool()) { arguments -> getAppInfo(arguments) }
 
         Log.d(TAG, "Application info tools registered")
     }
@@ -41,21 +34,31 @@ class ApplicationInfoToolProvider(private val context: Context) {
         return Tool(
             name = "app_info",
             description = "Get information about installed applications",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {
-                    put("type", JsonPrimitive("object"))
-                    put("properties", buildJsonObject {
-                        put("package_name", buildJsonObject {
-                            put("type", JsonPrimitive("string"))
+            inputSchema =
+                Tool.Input(
+                    properties =
+                        buildJsonObject {
+                            put("type", JsonPrimitive("object"))
                             put(
-                                "description",
-                                JsonPrimitive("Package name of the app (optional, if not provided returns current app info)")
+                                "properties",
+                                buildJsonObject {
+                                    put(
+                                        "package_name",
+                                        buildJsonObject {
+                                            put("type", JsonPrimitive("string"))
+                                            put(
+                                                "description",
+                                                JsonPrimitive(
+                                                    "Package name of the app (optional, if not provided returns current app info)"
+                                                ),
+                                            )
+                                        },
+                                    )
+                                },
                             )
-                        })
-                    })
-                },
-                required = emptyList()
-            )
+                        },
+                    required = emptyList(),
+                ),
         )
     }
 
@@ -78,8 +81,7 @@ class ApplicationInfoToolProvider(private val context: Context) {
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
                         packageInfo.longVersionCode
                     } else {
-                        @Suppress("DEPRECATION")
-                        packageInfo.versionCode.toLong()
+                        @Suppress("DEPRECATION") packageInfo.versionCode.toLong()
                     }
                 appendLine("- Version Code: $versionCode")
 
@@ -91,7 +93,7 @@ class ApplicationInfoToolProvider(private val context: Context) {
                     "- Install Time: ${
                         java.text.SimpleDateFormat(
                             "yyyy-MM-dd HH:mm:ss",
-                            Locale.US
+                            Locale.US,
                         ).format(java.util.Date(packageInfo.firstInstallTime))
                     }"
                 )
@@ -99,7 +101,7 @@ class ApplicationInfoToolProvider(private val context: Context) {
                     "- Update Time: ${
                         java.text.SimpleDateFormat(
                             "yyyy-MM-dd HH:mm:ss",
-                            Locale.US
+                            Locale.US,
                         ).format(java.util.Date(packageInfo.lastUpdateTime))
                     }"
                 )
@@ -110,7 +112,7 @@ class ApplicationInfoToolProvider(private val context: Context) {
         } catch (e: PackageManager.NameNotFoundException) {
             CallToolResult(
                 content = listOf(TextContent(text = "Package not found: $packageName")),
-                isError = true
+                isError = true,
             )
         }
     }

@@ -20,11 +20,11 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.serializer
 
 /**
- * Main tool provider for the MCP server that manages tool registration
- * and provides type-safe tool creation utilities.
+ * Main tool provider for the MCP server that manages tool registration and provides type-safe tool
+ * creation utilities.
  *
- * This class manages tool registration via a ToolRegistry and provides
- * convenient methods for adding type-safe custom tools.
+ * This class manages tool registration via a ToolRegistry and provides convenient methods for
+ * adding type-safe custom tools.
  *
  * ## Nested Object Support
  *
@@ -429,7 +429,12 @@ class ToolProvider(private val context: Context) {
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to parse tool arguments for $name", e)
                 CallToolResult(
-                    content = listOf(io.modelcontextprotocol.kotlin.sdk.TextContent(text = "Invalid tool arguments: ${e.message}")),
+                    content =
+                        listOf(
+                            io.modelcontextprotocol.kotlin.sdk.TextContent(
+                                text = "Invalid tool arguments: ${e.message}"
+                            )
+                        ),
                     isError = true,
                 )
             }

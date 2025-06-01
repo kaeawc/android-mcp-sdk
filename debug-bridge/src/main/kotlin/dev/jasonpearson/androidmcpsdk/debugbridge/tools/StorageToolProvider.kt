@@ -7,8 +7,8 @@ import dev.jasonpearson.androidmcpsdk.core.features.tools.ToolRegistry
 /**
  * Provides storage tools for the debug bridge.
  *
- * TODO: Implement storage debugging tools like storage info,
- * directory listing, file operations, etc.
+ * TODO: Implement storage debugging tools like storage info, directory listing, file operations,
+ *   etc.
  */
 class StorageToolProvider(private val context: Context) {
 

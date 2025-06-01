@@ -12,16 +12,16 @@ import dev.jasonpearson.androidmcpsdk.debugbridge.tools.StorageToolProvider
 
 /**
  * Main tool contributor for the debug-bridge module.
- * 
- * This contributor registers all Android-specific debugging tools
- * with the core MCP server registry.
+ *
+ * This contributor registers all Android-specific debugging tools with the core MCP server
+ * registry.
  */
 class DebugBridgeToolContributor(private val context: Context) : ToolContributor {
-    
+
     companion object {
         private const val TAG = "DebugBridgeContrib"
     }
-    
+
     override fun registerTools(registry: ToolRegistry) {
         Log.i(TAG, "Registering debug-bridge tools")
 
@@ -38,9 +38,9 @@ class DebugBridgeToolContributor(private val context: Context) : ToolContributor
         appProvider.registerTools(registry)
         networkProvider.registerTools(registry)
         storageProvider.registerTools(registry)
-        
+
         Log.i(TAG, "Debug-bridge tools registered successfully")
     }
-    
+
     override fun getProviderName(): String = "DebugBridge"
 }

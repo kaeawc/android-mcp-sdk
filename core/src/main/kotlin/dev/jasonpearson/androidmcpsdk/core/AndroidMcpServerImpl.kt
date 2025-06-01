@@ -19,6 +19,7 @@ import io.modelcontextprotocol.kotlin.sdk.Resource
 import io.modelcontextprotocol.kotlin.sdk.ResourceTemplate
 import io.modelcontextprotocol.kotlin.sdk.Root
 import io.modelcontextprotocol.kotlin.sdk.Tool
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -26,7 +27,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Complete Android MCP Server implementation using the MCP Kotlin SDK.
@@ -98,13 +98,15 @@ private constructor(
     }
 
     /**
-     * Register debug-bridge tool contributor if the debug-bridge module is available.
-     * This uses reflection to avoid hard dependency on the debug-bridge module.
+     * Register debug-bridge tool contributor if the debug-bridge module is available. This uses
+     * reflection to avoid hard dependency on the debug-bridge module.
      */
     private fun registerDebugBridgeTools() {
         try {
             val debugBridgeClass =
-                Class.forName("dev.jasonpearson.androidmcpsdk.debugbridge.DebugBridgeToolContributor")
+                Class.forName(
+                    "dev.jasonpearson.androidmcpsdk.debugbridge.DebugBridgeToolContributor"
+                )
             val constructor = debugBridgeClass.getConstructor(Context::class.java)
             val contributor = constructor.newInstance(context)
 

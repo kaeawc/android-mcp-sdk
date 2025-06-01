@@ -11,9 +11,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 
-/**
- * Provides device information tools for the debug bridge.
- */
+/** Provides device information tools for the debug bridge. */
 class DeviceInfoToolProvider(private val context: Context) {
 
     companion object {
@@ -29,19 +27,13 @@ class DeviceInfoToolProvider(private val context: Context) {
         Log.d(TAG, "Registering device info tools")
 
         // Device info tool
-        registry.addTool(createDeviceInfoTool()) { arguments ->
-            getDeviceInfo(arguments)
-        }
+        registry.addTool(createDeviceInfoTool()) { arguments -> getDeviceInfo(arguments) }
 
         // Hardware info tool
-        registry.addTool(createHardwareInfoTool()) { arguments ->
-            getHardwareInfo(arguments)
-        }
+        registry.addTool(createHardwareInfoTool()) { arguments -> getHardwareInfo(arguments) }
 
         // System info tool
-        registry.addTool(createSystemInfoTool()) { arguments ->
-            getSystemInfo(arguments)
-        }
+        registry.addTool(createSystemInfoTool()) { arguments -> getSystemInfo(arguments) }
 
         Log.d(TAG, "Device info tools registered")
     }
@@ -50,12 +42,11 @@ class DeviceInfoToolProvider(private val context: Context) {
         return Tool(
             name = "device_info",
             description = "Get information about the Android device",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {
-                    put("type", JsonPrimitive("object"))
-                },
-                required = emptyList()
-            )
+            inputSchema =
+                Tool.Input(
+                    properties = buildJsonObject { put("type", JsonPrimitive("object")) },
+                    required = emptyList(),
+                ),
         )
     }
 
@@ -63,25 +54,24 @@ class DeviceInfoToolProvider(private val context: Context) {
         return Tool(
             name = "hardware_info",
             description = "Get hardware information including CPU, display, and sensor details",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {
-                    put("type", JsonPrimitive("object"))
-                },
-                required = emptyList()
-            )
+            inputSchema =
+                Tool.Input(
+                    properties = buildJsonObject { put("type", JsonPrimitive("object")) },
+                    required = emptyList(),
+                ),
         )
     }
 
     private fun createSystemInfoTool(): Tool {
         return Tool(
             name = "system_info",
-            description = "Get detailed system information including build details and SDK versions",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {
-                    put("type", JsonPrimitive("object"))
-                },
-                required = emptyList()
-            )
+            description =
+                "Get detailed system information including build details and SDK versions",
+            inputSchema =
+                Tool.Input(
+                    properties = buildJsonObject { put("type", JsonPrimitive("object")) },
+                    required = emptyList(),
+                ),
         )
     }
 
@@ -99,10 +89,7 @@ class DeviceInfoToolProvider(private val context: Context) {
             appendLine("Display: ${Build.DISPLAY}")
         }
 
-        return CallToolResult(
-            content = listOf(TextContent(text = deviceInfo)),
-            isError = false
-        )
+        return CallToolResult(content = listOf(TextContent(text = deviceInfo)), isError = false)
     }
 
     private suspend fun getHardwareInfo(arguments: Map<String, Any>): CallToolResult {
@@ -125,10 +112,7 @@ class DeviceInfoToolProvider(private val context: Context) {
             appendLine("  - Scaled Density: ${metrics.scaledDensity}")
         }
 
-        return CallToolResult(
-            content = listOf(TextContent(text = hardwareInfo)),
-            isError = false
-        )
+        return CallToolResult(content = listOf(TextContent(text = hardwareInfo)), isError = false)
     }
 
     private suspend fun getSystemInfo(arguments: Map<String, Any>): CallToolResult {
@@ -147,9 +131,6 @@ class DeviceInfoToolProvider(private val context: Context) {
             }
         }
 
-        return CallToolResult(
-            content = listOf(TextContent(text = systemInfo)),
-            isError = false
-        )
+        return CallToolResult(content = listOf(TextContent(text = systemInfo)), isError = false)
     }
 }

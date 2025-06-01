@@ -7,8 +7,8 @@ import io.modelcontextprotocol.kotlin.sdk.Tool
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Default implementation of ToolRegistry that manages tool registration
- * and delegation to tool handlers.
+ * Default implementation of ToolRegistry that manages tool registration and delegation to tool
+ * handlers.
  */
 class DefaultToolRegistry : ToolRegistry {
 
@@ -37,14 +37,15 @@ class DefaultToolRegistry : ToolRegistry {
             } catch (e: Exception) {
                 Log.e(TAG, "Error calling tool $name", e)
                 CallToolResult(
-                    content = listOf(TextContent(text = "Error executing tool $name: ${e.message}")),
-                    isError = true
+                    content =
+                        listOf(TextContent(text = "Error executing tool $name: ${e.message}")),
+                    isError = true,
                 )
             }
         } else {
             CallToolResult(
                 content = listOf(TextContent(text = "Tool not found: $name")),
-                isError = true
+                isError = true,
             )
         }
     }
@@ -62,9 +63,7 @@ class DefaultToolRegistry : ToolRegistry {
         return removed
     }
 
-    /**
-     * Register a tool contributor with this registry
-     */
+    /** Register a tool contributor with this registry */
     fun registerContributor(contributor: ToolContributor) {
         val providerName = contributor.getProviderName()
         Log.i(TAG, "Registering tool contributor: $providerName")
@@ -75,8 +74,6 @@ class DefaultToolRegistry : ToolRegistry {
         Log.i(TAG, "Registered tool contributor: $providerName, total tools: ${tools.size}")
     }
 
-    /**
-     * Get the names of all registered contributors
-     */
+    /** Get the names of all registered contributors */
     fun getContributors(): Set<String> = contributors.toSet()
 }
