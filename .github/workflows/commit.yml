@@ -350,8 +350,7 @@ jobs:
         run: uv sync
 
       - name: "Build documentation"
-        working-directory: scripts/docs
-        run: ./deploy.sh build
+        run: scripts/docs/deploy.sh build
 
       - name: "Setup Pages"
         uses: actions/configure-pages@v5
