@@ -1,9 +1,9 @@
 site_name: Android MCP SDK
 site_description: An Android library that integrates the MCP Kotlin SDK to enable Android applications to host MCP (Model Context Protocol) servers.
 site_author: Jason Pearson
-site_url: https://jasonpearson.dev/android-mcp-sdk/
-repo_name: jasonpearson/android-mcp-sdk
-repo_url: https://github.com/jasonpearson/android-mcp-sdk
+site_url: https://kaeawc.github.io/android-mcp-sdk/
+repo_name: kaeawc/android-mcp-sdk
+repo_url: https://github.com/kaeawc/android-mcp-sdk
 edit_uri: edit/main/docs/
 
 copyright: 'Copyright &copy; 2025 Jason Pearson'
@@ -45,13 +45,14 @@ theme:
 
 extra:
   social:
+    - icon: fontawesome/emojis/nerd-face
+      link: https://www.jasonpearson.dev
     - icon: fontawesome/brands/github
-      link: https://github.com/jasonpearson
-    - icon: fontawesome/brands/twitter
-      link: https://twitter.com/jasonpearson
-  analytics:
-    provider: google
-    property: !ENV GOOGLE_ANALYTICS_KEY
+      link: https://github.com/kaeawc
+    - icon: fontawesome/brands/bluesky
+      link: https://bsky.app/@kaeawc
+    - icon: fontawesome/brands/linkedin-in
+      link: https://linkedin.com/in/jasondpearson
 
 markdown_extensions:
   - admonition
