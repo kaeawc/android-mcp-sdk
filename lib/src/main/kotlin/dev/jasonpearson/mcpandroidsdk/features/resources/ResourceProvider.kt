@@ -8,11 +8,6 @@ import androidx.core.net.toUri
 import dev.jasonpearson.mcpandroidsdk.models.AndroidResourceContent
 import io.modelcontextprotocol.kotlin.sdk.Resource
 import io.modelcontextprotocol.kotlin.sdk.ResourceTemplate
-import java.io.File
-import java.io.IOException
-import java.util.concurrent.ConcurrentHashMap
-import kotlin.math.min
-import kotlin.math.pow
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +22,10 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.IOException
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.pow
 
 /** Provider for MCP resources, allowing the server to expose Android-specific data. */
 class ResourceProvider(private val context: Context) {
@@ -44,7 +43,7 @@ class ResourceProvider(private val context: Context) {
     // Flow for resource update notifications
     @OptIn(FlowPreview::class)
     val resourceUpdates: Flow<String> =
-        subscriptionManager.resourceUpdates.debounce(500) // Debounce notifications
+        subscriptionManager.resourceUpdates
 
     fun getAllResources(): List<Resource> {
         val builtIn = createBuiltInResources()
@@ -204,7 +203,6 @@ class ResourceProvider(private val context: Context) {
                 if (requestedFile.canonicalPath.startsWith(publicDir.canonicalPath)) {
                     // TODO: On Android Q+, direct file path access to public dirs is restricted.
                     // This check might work for legacy storage or if proper permissions are held.
-                    // For robust access, MediaStore or SAF would be needed.
                     // For FileObserver, observing these paths might also be problematic without
                     // direct access.
                     Log.i(TAG, "File $fileUri is in a standard public directory: ${publicDir.path}")
@@ -228,31 +226,34 @@ class ResourceProvider(private val context: Context) {
 internal class ResourceSubscriptionManager(private val context: Context) {
     companion object {
         private const val TAG = "ResourceSubscriptionManager"
-        private const val DEFAULT_POLL_INTERVAL_MS = 15000L // Increased default poll interval
-        private const val MAX_POLL_INTERVAL_MS = 60000L // Max 1 minute
-        private const val MIN_POLL_INTERVAL_MS = 5000L // Min 5 seconds
+        internal const val DEBOUNCE_TIME_MS = 500L // For debouncing notifications
+        internal var MAX_FILE_OBSERVERS =
+            50 // Limit number of active file observers (var for testability)
+        private const val DEFAULT_POLL_INTERVAL_MS = 15000L
+        private const val MAX_POLL_INTERVAL_MS = 60000L
+        private const val MIN_POLL_INTERVAL_MS = 5000L
         private const val POLLING_BACKOFF_FACTOR = 1.5
-        private const val MAX_FILE_OBSERVERS = 50 // Limit number of active file observers
     }
 
-    private data class ActiveSubscription(
+    // Made internal for test access
+    internal data class ActiveSubscription(
         val uri: String,
         val type: SubscriptionType,
         var fileObserver: FileObserver? = null,
-        var lastModifiedOrHash: String = "", // Store hash or last modified string
+        var lastModifiedOrHash: String = "",
         var pollingJob: Job? = null,
         var currentPollIntervalMs: Long = DEFAULT_POLL_INTERVAL_MS,
-        var pollingErrorCount: Int = 0,
+        var pollingErrorCount: Int = 0
     )
 
-    private enum class SubscriptionType {
-        FILE,
-        DYNAMIC,
-    }
+    // Made internal for test access
+    internal enum class SubscriptionType { FILE, DYNAMIC }
 
     private val subscriptions = ConcurrentHashMap<String, ActiveSubscription>()
     private val _resourceUpdates = Channel<String>(Channel.BUFFERED)
-    val resourceUpdates: Flow<String> = _resourceUpdates.receiveAsFlow()
+
+    @OptIn(kotlinx.coroutines.FlowPreview::class) // For debounce
+    val resourceUpdates: Flow<String> = _resourceUpdates.receiveAsFlow().debounce(DEBOUNCE_TIME_MS)
 
     private val coroutineExceptionHandler = CoroutineExceptionHandler { _, throwable ->
         Log.e(TAG, "Coroutine exception in ResourceSubscriptionManager", throwable)
@@ -268,42 +269,41 @@ internal class ResourceSubscriptionManager(private val context: Context) {
 
         Log.i(TAG, "Subscribing to resource: $uri")
         if (uri.startsWith("file://")) {
-            if (
-                subscriptions.count { it.value.type == SubscriptionType.FILE } >= MAX_FILE_OBSERVERS
-            ) {
+            if (subscriptions.count { it.value.type == SubscriptionType.FILE } >= MAX_FILE_OBSERVERS) {
                 Log.w(
                     TAG,
-                    "Max file observers limit reached ($MAX_FILE_OBSERVERS). Cannot subscribe to file: $uri",
+                    "Max file observers limit reached ($MAX_FILE_OBSERVERS). Fallback to dynamic polling for file: $uri"
                 )
-                // Optionally notify error or treat as dynamic with less frequent polling
                 startDynamicResourcePolling(
                     uri,
                     pollIntervalMs = MAX_POLL_INTERVAL_MS,
-                    isFallback = true,
+                    isFallback = true
                 )
                 return
             }
             try {
-                val filePath =
-                    (context.applicationContext as ResourceProviderContainer)
-                        .getResourceProvider()
-                        .getAndVerifyAccessibleFile(uri)
-                        ?.absolutePath
+                val filePath = (context.applicationContext as ResourceProviderContainer)
+                    .getResourceProvider()
+                    .getAndVerifyAccessibleFile(uri)?.absolutePath
 
                 if (filePath != null) {
                     val file = File(filePath)
-                    val parentPath =
+                    val pathToObserve =
                         if (file.exists()) filePath else file.parentFile?.absolutePath ?: filePath
-                    val fileObserver =
-                        createFileObserver(parentPath, uri) // Observe parent if file doesn't exist
+                    val fileObserver = createFileObserver(pathToObserve, uri)
                     fileObserver.startWatching()
                     subscriptions[uri] =
-                        ActiveSubscription(uri, SubscriptionType.FILE, fileObserver)
-                    Log.d(TAG, "Started FileObserver for $uri on path $parentPath")
+                        ActiveSubscription(
+                            uri,
+                            SubscriptionType.FILE,
+                            fileObserver,
+                            currentPollIntervalMs = DEFAULT_POLL_INTERVAL_MS
+                        ) // Ensure correct interval is set
+                    Log.d(TAG, "Started FileObserver for $uri on path $pathToObserve")
                 } else {
                     Log.e(
                         TAG,
-                        "Could not get valid or accessible file path for URI: $uri. Fallback to dynamic polling.",
+                        "Could not get valid or accessible file path for URI: $uri. Fallback to dynamic polling."
                     )
                     startDynamicResourcePolling(uri, isFallback = true)
                 }
@@ -378,85 +378,81 @@ internal class ResourceSubscriptionManager(private val context: Context) {
     private fun startDynamicResourcePolling(
         uri: String,
         pollIntervalMs: Long = DEFAULT_POLL_INTERVAL_MS,
-        isFallback: Boolean = false,
+        isFallback: Boolean = false
     ) {
         val existingSub = subscriptions[uri]
-        if (
-            existingSub?.type == SubscriptionType.DYNAMIC &&
-                existingSub.pollingJob?.isActive == true
-        ) {
+        if (existingSub?.type == SubscriptionType.DYNAMIC && existingSub.pollingJob?.isActive == true) {
             Log.d(TAG, "Polling already active for dynamic resource: $uri")
             return
         }
 
         val initialPollInterval = if (isFallback) MAX_POLL_INTERVAL_MS else pollIntervalMs
         Log.i(TAG, "Starting dynamic polling for resource: $uri every $initialPollInterval ms")
-        val currentSub =
-            existingSub
-                ?: ActiveSubscription(
-                    uri,
-                    SubscriptionType.DYNAMIC,
-                    currentPollIntervalMs = initialPollInterval,
-                )
 
-        currentSub.pollingJob =
-            coroutineScope.launch {
+        // Ensure new or existing subscription has the correct initial poll interval
+        val currentSub = subscriptions.computeIfAbsent(uri) {
+            ActiveSubscription(
+                uri,
+                SubscriptionType.DYNAMIC,
+                currentPollIntervalMs = initialPollInterval
+            )
+        }.apply {
+            this.currentPollIntervalMs = initialPollInterval // Explicitly set/reset interval
+            this.pollingErrorCount = 0 // Reset error count
+        }
+
+        currentSub.pollingJob = coroutineScope.launch {
+            try {
+                val initialContentData = readAndProcessDynamicResource(uri)
+                currentSub.lastModifiedOrHash = initialContentData.hashOrTimestamp
+            } catch (e: Exception) {
+                Log.w(TAG, "Initial content read failed for $uri, will continue polling", e)
+                currentSub.lastModifiedOrHash = "" // Start with empty hash
+            }
+
+            while (isActive) {
+                delay(currentSub.currentPollIntervalMs)
                 try {
-                    val initialContentData = readAndProcessDynamicResource(uri)
-                    currentSub.lastModifiedOrHash = initialContentData.hashOrTimestamp
-
-                    while (isActive) {
-                        delay(currentSub.currentPollIntervalMs)
-                        val newContentData = readAndProcessDynamicResource(uri)
-                        if (newContentData.hashOrTimestamp != currentSub.lastModifiedOrHash) {
-                            Log.d(
-                                TAG,
-                                "Dynamic resource $uri changed (old: ${currentSub.lastModifiedOrHash}, new: ${newContentData.hashOrTimestamp}), notifying.",
-                            )
-                            currentSub.lastModifiedOrHash = newContentData.hashOrTimestamp
-                            notifyResourceChanged(uri)
-                            // Reset error count and poll interval on successful change detection
-                            currentSub.pollingErrorCount = 0
-                            currentSub.currentPollIntervalMs = initialPollInterval
-                        } else {
-                            // No change, reset error count if it was > 0
-                            if (currentSub.pollingErrorCount > 0) currentSub.pollingErrorCount = 0
-                            currentSub.currentPollIntervalMs =
-                                initialPollInterval // Reset to base on no change
-                        }
+                    val newContentData = readAndProcessDynamicResource(uri)
+                    if (newContentData.hashOrTimestamp != currentSub.lastModifiedOrHash) {
+                        Log.d(
+                            TAG,
+                            "Dynamic resource $uri changed (old: ${currentSub.lastModifiedOrHash}, new: ${newContentData.hashOrTimestamp}), notifying."
+                        )
+                        currentSub.lastModifiedOrHash = newContentData.hashOrTimestamp
+                        notifyResourceChanged(uri)
+                        currentSub.pollingErrorCount = 0
+                        currentSub.currentPollIntervalMs = initialPollInterval
+                    } else {
+                        if (currentSub.pollingErrorCount > 0) currentSub.pollingErrorCount = 0
+                        currentSub.currentPollIntervalMs = initialPollInterval
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "Error during polling for $uri", e)
                     currentSub.pollingErrorCount++
                     val backoffDelay =
-                        (initialPollInterval *
-                                POLLING_BACKOFF_FACTOR.pow(currentSub.pollingErrorCount))
-                            .toLong()
-                    currentSub.currentPollIntervalMs = min(backoffDelay, MAX_POLL_INTERVAL_MS)
+                        (initialPollInterval * POLLING_BACKOFF_FACTOR.pow(currentSub.pollingErrorCount)).toLong()
+                    currentSub.currentPollIntervalMs =
+                        minOf(backoffDelay, MAX_POLL_INTERVAL_MS) // Corrected usage of min
+                    currentSub.currentPollIntervalMs = maxOf(
+                        currentSub.currentPollIntervalMs,
+                        MIN_POLL_INTERVAL_MS
+                    ) // Ensure it doesn't go below min
+
                     Log.w(
                         TAG,
-                        "Polling for $uri failed ${currentSub.pollingErrorCount} times. Next attempt in ${currentSub.currentPollIntervalMs} ms.",
+                        "Polling for $uri failed ${currentSub.pollingErrorCount} times. Next attempt in ${currentSub.currentPollIntervalMs} ms."
                     )
-                    // Loop will continue with increased delay after this iteration's delay
-                    // completes
                 }
             }
-        subscriptions[uri] =
-            currentSub.copy(type = SubscriptionType.DYNAMIC) // Ensure type is DYNAMIC
-    }
-
-    private data class DynamicResourceData(val content: String, val hashOrTimestamp: String)
-
-    private suspend fun readAndProcessDynamicResource(uri: String): DynamicResourceData {
-        // Placeholder: Fetch and process dynamic resource content
-        // In a real scenario, fetch from network/DB, then hash its content or get a last-modified
-        // header.
-        val content =
-            "Dynamic content for $uri at ${System.currentTimeMillis()}" // Simulate changing content
-        return DynamicResourceData(
-            content,
-            content.hashCode().toString(),
-        ) // Use hash for change detection
+            Log.d(TAG, "Polling job for $uri cancelled or completed.")
+        }
+        // Ensure the subscription in the map is updated with the new job and correct type/interval.
+        subscriptions[uri] = currentSub.copy(
+            type = SubscriptionType.DYNAMIC,
+            pollingJob = currentSub.pollingJob,
+            currentPollIntervalMs = currentSub.currentPollIntervalMs
+        )
     }
 
     private fun notifyResourceChanged(uri: String) {
@@ -465,9 +461,16 @@ internal class ResourceSubscriptionManager(private val context: Context) {
         if (!sent) {
             Log.w(
                 TAG,
-                "Failed to queue resource update for $uri, channel buffer might be full or closed.",
+                "Failed to queue resource update for $uri, channel buffer might be full or closed."
             )
         }
+    }
+
+    private data class DynamicResourceData(val content: String, val hashOrTimestamp: String)
+
+    private suspend fun readAndProcessDynamicResource(uri: String): DynamicResourceData {
+        val content = "Dynamic content for $uri at ${System.currentTimeMillis()}"
+        return DynamicResourceData(content, content.hashCode().toString())
     }
 }
 

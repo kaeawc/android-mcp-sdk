@@ -67,14 +67,13 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.okhttp.sse)
 
-    testImplementation(libs.junit)
-    testImplementation(libs.mockito.core)
-    testImplementation(libs.mockito.android)
-    testImplementation(libs.mockito.kotlin)
-    testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.robolectric)
-    testImplementation(libs.androidx.core)
+    testImplementation(libs.junit) // JUnit 4
+    testImplementation(libs.kotlinx.coroutines.test) // For testing coroutines
+    testImplementation(libs.robolectric) // Android framework mocks for unit tests
+    testImplementation(libs.core.ktx) // For ApplicationProvider, etc. (using specific version)
+    testImplementation(libs.androidx.junit.ktx) // For AndroidJUnit4 runner (using specific version)
+    testImplementation(libs.mockk) // MockK for Kotlin
 
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.junit) // Already present
+    androidTestImplementation(libs.androidx.espresso.core) // Already present
 }
