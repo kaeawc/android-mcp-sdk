@@ -404,19 +404,6 @@ class ToolProviderTest {
         assertTrue(message.contains("Invalid tool arguments"))
     }
 
-    // Built-in Tools Integration Tests
-    @Test
-    fun `should include built-in tools in getAllTools`() {
-        val tools = toolProvider.getAllTools()
-
-        assertEquals(5, tools.size)
-        assertTrue(tools.any { it.name == "device_info" })
-        assertTrue(tools.any { it.name == "app_info" })
-        assertTrue(tools.any { it.name == "system_time" })
-        assertTrue(tools.any { it.name == "memory_info" })
-        assertTrue(tools.any { it.name == "battery_info" })
-    }
-
     // Tool Management Tests
     @Test
     fun `should remove custom tools`() = runTest {

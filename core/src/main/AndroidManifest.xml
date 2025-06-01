@@ -10,7 +10,7 @@
             android:exported="false"
             tools:node="merge">
             <meta-data
-                android:name="dev.jasonpearson.mcpandroidsdk.McpServerManagerInitializer"
+                android:name="dev.jasonpearson.androidmcpsdk.core.McpServerManagerInitializer"
                 android:value="androidx.startup" />
         </provider>
     </application>

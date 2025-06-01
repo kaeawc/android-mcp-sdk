@@ -9,7 +9,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        minSdk = 21
+        minSdk = 29
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
@@ -32,6 +32,13 @@ android {
     }
 
     kotlinOptions { jvmTarget = "11" }
+
+    testOptions {
+        unitTests {
+            isReturnDefaultValues = true
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
@@ -50,7 +57,11 @@ dependencies {
 
     // Testing
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.core.ktx)
+    testImplementation(libs.androidx.junit.ktx)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }

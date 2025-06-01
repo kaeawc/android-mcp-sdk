@@ -19,7 +19,6 @@ import io.modelcontextprotocol.kotlin.sdk.Resource
 import io.modelcontextprotocol.kotlin.sdk.ResourceTemplate
 import io.modelcontextprotocol.kotlin.sdk.Root
 import io.modelcontextprotocol.kotlin.sdk.Tool
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -27,6 +26,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Complete Android MCP Server implementation using the MCP Kotlin SDK.
@@ -80,18 +80,45 @@ private constructor(
             return@runCatching
         }
 
-        Log.d(TAG, "Initializing Android MCP server: \$serverName v\$serverVersion")
+        Log.d(TAG, "Initializing Android MCP server: $serverName v$serverVersion")
 
         // Initialize feature providers
         toolProvider = ToolProvider(context)
         resourceProvider = ResourceProvider(context)
         promptProvider = PromptProvider(context)
 
+        // Register debug-bridge tool contributor if available
+        registerDebugBridgeTools()
+
         // Add default roots
         addDefaultRoots()
 
         isInitialized.set(true)
         Log.i(TAG, "Android MCP server initialized successfully")
+    }
+
+    /**
+     * Register debug-bridge tool contributor if the debug-bridge module is available.
+     * This uses reflection to avoid hard dependency on the debug-bridge module.
+     */
+    private fun registerDebugBridgeTools() {
+        try {
+            val debugBridgeClass =
+                Class.forName("dev.jasonpearson.androidmcpsdk.debugbridge.DebugBridgeToolContributor")
+            val constructor = debugBridgeClass.getConstructor(Context::class.java)
+            val contributor = constructor.newInstance(context)
+
+            // Cast to ToolContributor and register
+            val toolContributor =
+                contributor as dev.jasonpearson.androidmcpsdk.core.features.tools.ToolContributor
+            toolProvider.registerContributor(toolContributor)
+
+            Log.i(TAG, "Debug-bridge tools registered successfully via reflection")
+        } catch (e: ClassNotFoundException) {
+            Log.d(TAG, "Debug-bridge module not available - no additional tools registered")
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to register debug-bridge tools: ${e.message}")
+        }
     }
 
     /** Start the MCP server */
@@ -177,7 +204,7 @@ private constructor(
     }
 
     fun addTool(tool: Tool, handler: suspend (Map<String, Any>) -> CallToolResult) {
-        Log.d(TAG, "Adding tool: \${tool.name}")
+        Log.d(TAG, "Adding tool: ${tool.name}")
         toolProvider.addToolInternal(tool, handler)
     }
 
@@ -236,13 +263,13 @@ private constructor(
 
     fun addRoot(root: Root) {
         roots.add(root)
-        Log.i(TAG, "Added root: \${root.uri}")
+        Log.i(TAG, "Added root: ${root.uri}")
     }
 
     fun removeRoot(uri: String): Boolean {
         val removed = roots.removeIf { it.uri == uri }
         if (removed) {
-            Log.i(TAG, "Removed root: \$uri")
+            Log.i(TAG, "Removed root: $uri")
         }
         return removed
     }
@@ -250,7 +277,7 @@ private constructor(
     // Sampling operations
     suspend fun requestSampling(request: SamplingRequest): Result<String> {
         // TODO: Implement sampling requests to clients
-        Log.d(TAG, "Sampling request: \$request")
+        Log.d(TAG, "Sampling request: $request")
         return Result.failure(UnsupportedOperationException("Sampling not yet implemented"))
     }
 
@@ -264,16 +291,16 @@ private constructor(
 
     private fun addDefaultRoots() {
         // Add app's internal files directory
-        addRoot(Root(uri = "file://\${context.filesDir.absolutePath}", name = "App Files"))
+        addRoot(Root(uri = "file://${context.filesDir.absolutePath}", name = "App Files"))
 
         // Add app's cache directory
-        addRoot(Root(uri = "file://\${context.cacheDir.absolutePath}", name = "App Cache"))
+        addRoot(Root(uri = "file://${context.cacheDir.absolutePath}", name = "App Cache"))
 
         // Add external files directory if available
         context.getExternalFilesDir(null)?.let { externalDir ->
-            addRoot(Root(uri = "file://\${externalDir.absolutePath}", name = "External Files"))
+            addRoot(Root(uri = "file://${externalDir.absolutePath}", name = "External Files"))
         }
 
-        Log.i(TAG, "Added \${roots.size} default roots")
+        Log.i(TAG, "Added ${roots.size} default roots")
     }
 }
