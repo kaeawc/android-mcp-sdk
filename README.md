@@ -1,8 +1,7 @@
 # Android MCP SDK
 
-An Android library that integrates
-the [MCP Kotlin SDK](https://github.com/modelcontextprotocol/kotlin-sdk) to enable Android
-applications to host MCP (Model Context Protocol) servers.
+An Android library that integrates the [MCP Kotlin SDK](https://github.com/modelcontextprotocol/kotlin-sdk) to enable Android applications to host MCP (Model Context Protocol) servers.
+The overall goal is to enable Android apps to provide MCP servers access to AI tools in development environments.
 
 ## Quick Start
 
@@ -14,21 +13,7 @@ dependencies {
 }
 ```
 
-Initialize in your Application class:
-
-```kotlin
-class MyApplication : Application() {
-    override fun onCreate() {
-        super.onCreate()
-        
-        // MCP server is automatically initialized via AndroidX Startup
-        if (McpStartup.isInitialized()) {
-            val manager = McpStartup.getManager()
-            manager.startServerAsync()
-        }
-    }
-}
-```
+Unless you need to remove or delay the MCP server startup it'll be there in debug variants. I'm making it impossible to include in release variants for now.
 
 ## Features
 
@@ -41,7 +26,7 @@ class MyApplication : Application() {
 
 ## Documentation
 
-📚 **[Read the full documentation →](https://jasonpearson.dev/android-mcp-sdk/)**
+📚 **[Read the full documentation →](https://github.io/kaeawc/android-mcp-sdk/)**
 
 - [Getting Started Guide](docs/getting-started.md)
 - [Usage Examples](docs/usage.md)
@@ -49,11 +34,6 @@ class MyApplication : Application() {
 - [Transport Configuration](docs/transport.md)
 - [Development Roadmap](roadmap/README.md)
 
-## Project Goal
-
-Enable Android apps to provide MCP servers accessible to AI tools and development environments via
-adb-connected workstations.
-
 ## License
 
-[MIT License](LICENSE)
+[Apache 2.0 License](LICENSE)
