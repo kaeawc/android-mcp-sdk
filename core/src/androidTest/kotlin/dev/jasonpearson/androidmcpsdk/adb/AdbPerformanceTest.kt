@@ -59,14 +59,8 @@ class AdbPerformanceTest {
         val results = AdbTestUtils.performLatencyTest(iterations = 10)
 
         // SSE performance assertions
-        assertTrue(
-            "SSE success rate should be high",
-            results.sseSuccessRate > 0.8
-        )
-        assertTrue(
-            "SSE average latency should be acceptable",
-            results.sseAverage < 1000
-        )
+        assertTrue("SSE success rate should be high", results.sseSuccessRate > 0.8)
+        assertTrue("SSE average latency should be acceptable", results.sseAverage < 1000)
 
         println("Latency Performance Results:")
         println("SSE:")
@@ -81,20 +75,23 @@ class AdbPerformanceTest {
         val concurrentClients = 5
         val results = mutableListOf<AdbTestUtils.ConnectionTestResult>()
 
-        val jobs = (1..concurrentClients).map { clientId ->
-            async {
-                val testMessage = """
+        val jobs =
+            (1..concurrentClients).map { clientId ->
+                async {
+                    val testMessage =
+                        """
                     {
                         "jsonrpc": "2.0",
                         "id": $clientId,
                         "method": "tools/list",
                         "params": {}
                     }
-                """.trimIndent()
+                """
+                            .trimIndent()
 
-                AdbTestUtils.sendMcpSseMessage(testMessage)
+                    AdbTestUtils.sendMcpSseMessage(testMessage)
+                }
             }
-        }
 
         val connectionResults = jobs.awaitAll()
         results.addAll(connectionResults)
@@ -124,14 +121,16 @@ class AdbPerformanceTest {
 
         while (System.currentTimeMillis() - startTime < testDurationMs) {
             requestCount++
-            val testMessage = """
+            val testMessage =
+                """
                 {
                     "jsonrpc": "2.0",
                     "id": $requestCount,
                     "method": "device_info",
                     "params": {}
                 }
-            """.trimIndent()
+            """
+                    .trimIndent()
 
             val result = AdbTestUtils.sendMcpSseMessage(testMessage)
             results.add(result)
@@ -153,10 +152,7 @@ class AdbPerformanceTest {
         println("- Average latency: ${averageLatency.toInt()}ms")
     }
 
-    private suspend fun waitForCondition(
-        timeoutMs: Long = 10000,
-        condition: () -> Boolean
-    ) {
+    private suspend fun waitForCondition(timeoutMs: Long = 10000, condition: () -> Boolean) {
         val startTime = System.currentTimeMillis()
         while (!condition() && (System.currentTimeMillis() - startTime) < timeoutMs) {
             kotlinx.coroutines.delay(100)

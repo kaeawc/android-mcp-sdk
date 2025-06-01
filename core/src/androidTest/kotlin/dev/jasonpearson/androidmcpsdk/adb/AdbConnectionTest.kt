@@ -77,14 +77,16 @@ class AdbConnectionTest {
 
     @Test
     fun testMcpSseMessage() = runBlocking {
-        val testMessage = """
+        val testMessage =
+            """
             {
                 "jsonrpc": "2.0",
                 "id": 1,
                 "method": "tools/list",
                 "params": {}
             }
-        """.trimIndent()
+        """
+                .trimIndent()
 
         val result = AdbTestUtils.sendMcpSseMessage(testMessage)
 
@@ -97,10 +99,7 @@ class AdbConnectionTest {
         println("- Round-trip time: ${result.latencyMs}ms")
     }
 
-    private suspend fun waitForCondition(
-        timeoutMs: Long = 10000,
-        condition: () -> Boolean
-    ) {
+    private suspend fun waitForCondition(timeoutMs: Long = 10000, condition: () -> Boolean) {
         val startTime = System.currentTimeMillis()
         while (!condition() && (System.currentTimeMillis() - startTime) < timeoutMs) {
             kotlinx.coroutines.delay(100)

@@ -88,24 +88,27 @@ class AdbReliabilityTest {
     @Test
     fun testMultipleClientReconnection() = runBlocking {
         val clientCount = 3
-        val testMessage = """
+        val testMessage =
+            """
             {
                 "jsonrpc": "2.0",
                 "id": 1,
                 "method": "tools/list",
                 "params": {}
             }
-        """.trimIndent()
+        """
+                .trimIndent()
 
         // Test initial connections
-        val initialResults = (1..clientCount).map {
-            async { AdbTestUtils.sendMcpSseMessage(testMessage) }
-        }.awaitAll()
+        val initialResults =
+            (1..clientCount)
+                .map { async { AdbTestUtils.sendMcpSseMessage(testMessage) } }
+                .awaitAll()
 
         val initialSuccessCount = initialResults.count { it.success }
         assertTrue(
             "Most initial connections should succeed",
-            initialSuccessCount >= clientCount * 0.5
+            initialSuccessCount >= clientCount * 0.5,
         )
 
         // Simulate connection disruption by restarting server
@@ -116,15 +119,13 @@ class AdbReliabilityTest {
         delay(3000) // Additional stabilization time
 
         // Test reconnections
-        val reconnectResults = (1..clientCount).map {
-            async { AdbTestUtils.sendMcpSseMessage(testMessage) }
-        }.awaitAll()
+        val reconnectResults =
+            (1..clientCount)
+                .map { async { AdbTestUtils.sendMcpSseMessage(testMessage) } }
+                .awaitAll()
 
         val reconnectSuccessCount = reconnectResults.count { it.success }
-        assertTrue(
-            "Most reconnections should succeed",
-            reconnectSuccessCount >= clientCount * 0.5
-        )
+        assertTrue("Most reconnections should succeed", reconnectSuccessCount >= clientCount * 0.5)
 
         println("Multiple client reconnection test:")
         println("- Client count: $clientCount")
@@ -145,14 +146,16 @@ class AdbReliabilityTest {
         while (System.currentTimeMillis() - startTime < testDurationMs) {
             totalPings++
 
-            val pingMessage = """
+            val pingMessage =
+                """
                 {
                     "jsonrpc": "2.0",
                     "id": $totalPings,
                     "method": "tools/list",
                     "params": {}
                 }
-            """.trimIndent()
+            """
+                    .trimIndent()
 
             val result = AdbTestUtils.sendMcpSseMessage(pingMessage)
 
@@ -182,10 +185,7 @@ class AdbReliabilityTest {
         println("- Max consecutive failures: $consecutiveFailures")
     }
 
-    private suspend fun waitForCondition(
-        timeoutMs: Long = 10000,
-        condition: () -> Boolean
-    ) {
+    private suspend fun waitForCondition(timeoutMs: Long = 10000, condition: () -> Boolean) {
         val startTime = System.currentTimeMillis()
         while (!condition() && (System.currentTimeMillis() - startTime) < timeoutMs) {
             kotlinx.coroutines.delay(100)
