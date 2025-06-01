@@ -21,13 +21,11 @@ import io.modelcontextprotocol.kotlin.sdk.ReadResourceResult
 import io.modelcontextprotocol.kotlin.sdk.Resource
 import io.modelcontextprotocol.kotlin.sdk.ResourceTemplate
 import io.modelcontextprotocol.kotlin.sdk.Role
-import io.modelcontextprotocol.kotlin.sdk.ServerCapabilities as SdkServerCapabilities
 import io.modelcontextprotocol.kotlin.sdk.TextContent
 import io.modelcontextprotocol.kotlin.sdk.TextResourceContents
 import io.modelcontextprotocol.kotlin.sdk.Tool
 import io.modelcontextprotocol.kotlin.sdk.server.Server
 import io.modelcontextprotocol.kotlin.sdk.server.ServerOptions
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -35,6 +33,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
+import io.modelcontextprotocol.kotlin.sdk.ServerCapabilities as SdkServerCapabilities
 
 /**
  * Android-specific wrapper for MCP Server functionality. Provides easy integration of MCP servers
@@ -368,7 +368,7 @@ private constructor(
     /** Add a custom MCP tool with its handler */
     fun addMcpTool(tool: Tool, handler: suspend (Map<String, Any>) -> CallToolResult) {
         if (isInitialized()) {
-            toolProvider.addTool(tool, handler)
+            toolProvider.addToolInternal(tool, handler)
             Log.i(TAG, "Added custom MCP tool: ${tool.name}")
         } else {
             Log.w(TAG, "Cannot add tool, server not initialized")

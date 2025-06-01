@@ -5,11 +5,24 @@ import android.util.Log
 import dev.jasonpearson.mcpandroidsdk.features.prompts.PromptProvider
 import dev.jasonpearson.mcpandroidsdk.features.resources.ResourceProvider
 import dev.jasonpearson.mcpandroidsdk.features.tools.ToolProvider
-import dev.jasonpearson.mcpandroidsdk.models.*
-import io.modelcontextprotocol.kotlin.sdk.*
+import dev.jasonpearson.mcpandroidsdk.models.AndroidResourceContent
+import dev.jasonpearson.mcpandroidsdk.models.ComprehensiveServerInfo
+import dev.jasonpearson.mcpandroidsdk.models.SamplingRequest
+import io.modelcontextprotocol.kotlin.sdk.CallToolResult
+import io.modelcontextprotocol.kotlin.sdk.GetPromptResult
+import io.modelcontextprotocol.kotlin.sdk.Prompt
+import io.modelcontextprotocol.kotlin.sdk.Resource
+import io.modelcontextprotocol.kotlin.sdk.ResourceTemplate
+import io.modelcontextprotocol.kotlin.sdk.Root
+import io.modelcontextprotocol.kotlin.sdk.Tool
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlinx.coroutines.*
-import kotlinx.serialization.json.*
 
 /**
  * Complete Android MCP Server implementation using the MCP Kotlin SDK.
@@ -165,8 +178,8 @@ private constructor(
     }
 
     fun addTool(tool: Tool, handler: suspend (Map<String, Any>) -> CallToolResult) {
-        checkInitialized()
-        toolProvider.addTool(tool, handler)
+        Log.d(TAG, "Adding tool: ${tool.name}")
+        toolProvider.addToolInternal(tool, handler)
     }
 
     // Resource operations
