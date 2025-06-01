@@ -47,8 +47,6 @@ message routing, error handling, and performance over adb forwarded connections.
 
 **Should Complete First:**
 
-- [06-transport-integration-testing.md](06-transport-integration-testing.md) - Transport layer
-  testing
 - [11-mcp-client-communication-testing.md](11-mcp-client-communication-testing.md) - Client
   communication testing
 

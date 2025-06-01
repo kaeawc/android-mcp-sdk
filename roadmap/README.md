@@ -36,6 +36,44 @@ This directory contains detailed task specifications for completing the Android 
 - `[B]` Blocked (waiting for dependency)
 - `[N/A]` Not Applicable (handled by MCP SDK)
 
+## Debug-Bridge Module Tool Implementation Status
+
+### ✅ Fully Implemented Tool Providers
+
+**AndroidSystemToolProvider** (3/3 tools complete):
+
+- ✅ `system_time` - Get current system time in various formats (ISO, timestamp, readable)
+- ✅ `memory_info` - System and heap memory usage with detailed metrics
+- ✅ `battery_info` - Complete battery status, health, charging state, temperature, voltage
+
+**DeviceInfoToolProvider** (3/3 tools complete):
+
+- ✅ `device_info` - Device model, manufacturer, brand, hardware details
+- ✅ `hardware_info` - CPU ABI, display metrics, density information
+- ✅ `system_info` - Android version, API level, build details, security patch
+
+**ApplicationInfoToolProvider** (1/1 tools complete):
+
+- ✅ `app_info` - Application details including version, SDK targets, install/update times
+
+### ⚠️ Partially Implemented Tool Providers
+
+**NetworkToolProvider** (0/4 planned tools implemented):
+
+- `[ ]` `network_info` - Network connection details
+- `[ ]` `connectivity_status` - Current connectivity state
+- `[ ]` `wifi_info` - WiFi network information
+- `[ ]` `network_stats` - Network usage statistics
+
+**StorageToolProvider** (0/4 planned tools implemented):
+
+- `[ ]` `storage_info` - Available storage space and volumes
+- `[ ]` `directory_listing` - File system directory contents
+- `[ ]` `file_info` - File metadata and details
+- `[ ]` `disk_usage` - Storage usage analysis
+
+### Summary: 7/11 Debug-Bridge Tools Complete (64%)
+
 ## Task Categories & Status
 
 ### 🔴 Critical Path (Blocks Production)
@@ -49,25 +87,23 @@ This directory contains detailed task specifications for completing the Android 
 
 - `[C]` [01-resource-subscription-logic.md](01-resource-subscription-logic.md) - File observers for
   resource subscriptions **[COMPLETED]**
-- `[ ]` [06-transport-integration-testing.md](06-transport-integration-testing.md) - Transport layer
-  verification testing
 - `[ ]` [07-filesystem-resources-permissions.md](07-filesystem-resources-permissions.md) - Android
   permissions validation
-
-### 🟢 Medium Priority (Enhancement)
-
-- `[ ]` [02-sampling-requests-implementation.md](02-sampling-requests-implementation.md) - Sampling
-  requests (TODO in AndroidMcpServerImpl.kt)
 - `[ ]` [08-database-resources-implementation.md](08-database-resources-implementation.md) -
   Database resources for app data
 - `[ ]` [16-database-querying.md](16-database-querying.md) - Database query execution and results
 - `[ ]` [17-database-editing.md](17-database-editing.md) - Database modification operations
 - `[ ]` [18-shared-preferences-resources-implementation.md](18-shared-preferences-resources-implementation.md) -
-SharedPreferences as MCP resources
+  SharedPreferences as MCP resources
 - `[ ]` [19-shared-preferences-querying.md](19-shared-preferences-querying.md) -
   SharedPreferences data querying
 - `[ ]` [20-shared-preferences-editing.md](20-shared-preferences-editing.md) -
   SharedPreferences modification operations
+
+### 🟢 Medium Priority (Enhancement)
+
+- `[ ]` [02-sampling-requests-implementation.md](02-sampling-requests-implementation.md) - Sampling
+  requests (TODO in AndroidMcpServerImpl.kt)
 - `[P]` [13-sample-app-enhancement.md](13-sample-app-enhancement.md) - Enhance sample app with
   comprehensive examples
 

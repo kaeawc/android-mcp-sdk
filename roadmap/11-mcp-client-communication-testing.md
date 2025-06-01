@@ -49,7 +49,6 @@ handling, and ensuring compatibility with the broader MCP ecosystem.
 **Should Complete First:**
 
 - [03-jsonrpc-message-parsing.md](03-jsonrpc-message-parsing.md) - Message parsing
-- [06-transport-integration-testing.md](06-transport-integration-testing.md) - Transport testing
 
 ## Implementation Steps
 

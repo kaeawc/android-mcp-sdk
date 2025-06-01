@@ -58,12 +58,11 @@ Create `lib/src/androidTest/kotlin/dev/jasonpearson/mcpandroidsdk/tools/`:
 **ToolValidationFramework.kt:**
 
 ```kotlin
-package dev.jasonpearson.mcpandroidsdk.tools
+package dev.jasonpearson.androidmcpsdk.debugbridge.tools
 
 import android.content.Context
 import androidx.test.platform.app.InstrumentationRegistry
-import dev.jasonpearson.mcpandroidsdk.McpServerManager
-import dev.jasonpearson.mcpandroidsdk.AndroidTool
+import dev.jasonpearson.androidmcpsdk.core.AndroidMcpServerManager
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import org.junit.Assert.*
@@ -94,11 +93,11 @@ abstract class ToolValidationFramework {
     
     protected fun setupTestEnvironment() {
         context = InstrumentationRegistry.getInstrumentation().targetContext
-        serverManager = McpServerManager.getInstance()
+      serverManager = AndroidMcpServerManager.getInstance(context)
         
         runBlocking {
             if (!serverManager.isInitialized()) {
-                serverManager.initialize(context, "Tool Validation Test Server", "1.0.0")
+              serverManager.initialize()
             }
             if (!serverManager.isServerRunning()) {
                 serverManager.startServer()
@@ -114,7 +113,7 @@ abstract class ToolValidationFramework {
             var result = ""
             val executionTime = measureTimeMillis {
                 result = runBlocking {
-                    val toolResult = serverManager.executeAndroidTool(toolName, arguments)
+                  val toolResult = serverManager.executeDebugBridgeTool(toolName, arguments)
                     if (toolResult.success) {
                         toolResult.result
                     } else {
@@ -1210,7 +1209,7 @@ class AllToolsValidationTest : ToolValidationFramework() {
     @Test
     fun testAllToolsExist() {
         val availableTools = runBlocking {
-            serverManager.getAvailableTools()
+            serverManager.getAvailableDebugBridgeTools()
         }
         
         for (tool in allBuiltInTools) {
@@ -1407,23 +1406,23 @@ class AllToolsValidationTest : ToolValidationFramework() {
 #### Step V1: Run Individual Tool Tests
 
 ```bash
-./gradlew :core:connectedAndroidTest --tests "*DeviceInfoToolTest"
-./gradlew :core:connectedAndroidTest --tests "*AppInfoToolTest"
-./gradlew :core:connectedAndroidTest --tests "*SystemTimeToolTest"
-./gradlew :core:connectedAndroidTest --tests "*MemoryInfoToolTest"
-./gradlew :core:connectedAndroidTest --tests "*BatteryInfoToolTest"
+./gradlew :debug-bridge:connectedAndroidTest --tests "*DeviceInfoToolTest"
+./gradlew :debug-bridge:connectedAndroidTest --tests "*AppInfoToolTest"
+./gradlew :debug-bridge:connectedAndroidTest --tests "*SystemTimeToolTest"
+./gradlew :debug-bridge:connectedAndroidTest --tests "*MemoryInfoToolTest"
+./gradlew :debug-bridge:connectedAndroidTest --tests "*BatteryInfoToolTest"
 ```
 
 #### Step V2: Run Comprehensive Tool Validation
 
 ```bash
-./gradlew :core:connectedAndroidTest --tests "*AllToolsValidationTest"
+./gradlew :debug-bridge:connectedAndroidTest --tests "*AllToolsValidationTest"
 ```
 
 #### Step V3: Run All Tool Tests
 
 ```bash
-./gradlew :core:connectedAndroidTest --tests "*.tools.*"
+./gradlew :debug-bridge:connectedAndroidTest --tests "*.tools.*"
 ```
 
 ### Manual Verification

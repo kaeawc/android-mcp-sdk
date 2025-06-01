@@ -38,7 +38,6 @@ Both commands complete successfully, confirming the transport implementation is 
 
 This task is complete. For transport testing and validation, see:
 
-- [06-transport-integration-testing.md](06-transport-integration-testing.md)
 - [09-integration-testing-suite.md](09-integration-testing-suite.md)
 
 ### Testing
