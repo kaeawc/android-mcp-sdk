@@ -3,10 +3,13 @@ package dev.jasonpearson.mcpandroidsdk.features.tools
 import android.content.Context
 import android.os.Build
 import android.util.Log
-import dev.jasonpearson.mcpandroidsdk.models.*
-import io.modelcontextprotocol.kotlin.sdk.*
+import io.modelcontextprotocol.kotlin.sdk.CallToolResult
+import io.modelcontextprotocol.kotlin.sdk.TextContent
+import io.modelcontextprotocol.kotlin.sdk.Tool
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
 import java.util.concurrent.ConcurrentHashMap
-import kotlinx.serialization.json.*
 
 /**
  * Enhanced tool provider with comprehensive Android-specific functionality.
@@ -211,10 +214,13 @@ class AndroidSpecificToolProvider(private val context: Context) {
                             put(
                                 "package_name",
                                 buildJsonObject {
-                                    put("type", JsonPrimitive("string"))
+                                    put(
+                                        "type",
+                                        JsonPrimitive("string")
+                                    )
                                     put(
                                         "description",
-                                        JsonPrimitive("Package name of the app (optional)"),
+                                        JsonPrimitive("Package name of the app (optional)")
                                     )
                                 },
                             )
@@ -238,7 +244,7 @@ class AndroidSpecificToolProvider(private val context: Context) {
                                     put("type", JsonPrimitive("boolean"))
                                     put(
                                         "description",
-                                        JsonPrimitive("Include system apps in the list"),
+                                        JsonPrimitive("Include system apps in the list")
                                     )
                                     put("default", JsonPrimitive(false))
                                 },
@@ -249,7 +255,7 @@ class AndroidSpecificToolProvider(private val context: Context) {
                                     put("type", JsonPrimitive("integer"))
                                     put(
                                         "description",
-                                        JsonPrimitive("Maximum number of apps to return"),
+                                        JsonPrimitive("Maximum number of apps to return")
                                     )
                                     put("default", JsonPrimitive(50))
                                 },
@@ -301,7 +307,7 @@ class AndroidSpecificToolProvider(private val context: Context) {
                                         "description",
                                         JsonPrimitive(
                                             "Directory path to list (relative to app's files directory)"
-                                        ),
+                                        )
                                     )
                                     put("default", JsonPrimitive("."))
                                 },
@@ -402,9 +408,7 @@ class AndroidSpecificToolProvider(private val context: Context) {
             appendLine("Device: ${Build.DEVICE}")
             appendLine("Product: ${Build.PRODUCT}")
             appendLine("Hardware: ${Build.HARDWARE}")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                appendLine("Supported ABIs: ${Build.SUPPORTED_ABIS.joinToString(", ")}")
-            }
+            appendLine("Supported ABIs: ${Build.SUPPORTED_ABIS.joinToString(", ")}")
             appendLine("Board: ${Build.BOARD}")
             appendLine("Display: ${Build.DISPLAY}")
         }
@@ -423,9 +427,7 @@ class AndroidSpecificToolProvider(private val context: Context) {
             appendLine("Fingerprint: ${Build.FINGERPRINT}")
             appendLine("Incremental: ${Build.VERSION.INCREMENTAL}")
             appendLine("Codename: ${Build.VERSION.CODENAME}")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                appendLine("Security Patch: ${Build.VERSION.SECURITY_PATCH}")
-            }
+            appendLine("Security Patch: ${Build.VERSION.SECURITY_PATCH}")
         }
 
         return CallToolResult(content = listOf(TextContent(text = systemInfo)), isError = false)
@@ -435,9 +437,7 @@ class AndroidSpecificToolProvider(private val context: Context) {
         val hardwareInfo = buildString {
             appendLine("=== HARDWARE INFORMATION ===")
             appendLine("CPU ABI: ${Build.CPU_ABI}")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                appendLine("CPU ABI2: ${Build.CPU_ABI2}")
-            }
+            appendLine("CPU ABI2: ${Build.CPU_ABI2}")
 
             val windowManager =
                 context.getSystemService(Context.WINDOW_SERVICE) as android.view.WindowManager

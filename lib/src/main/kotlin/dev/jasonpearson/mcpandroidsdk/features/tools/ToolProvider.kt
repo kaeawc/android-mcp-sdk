@@ -4,10 +4,14 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
-import dev.jasonpearson.mcpandroidsdk.models.*
-import io.modelcontextprotocol.kotlin.sdk.*
+import io.modelcontextprotocol.kotlin.sdk.CallToolResult
+import io.modelcontextprotocol.kotlin.sdk.TextContent
+import io.modelcontextprotocol.kotlin.sdk.Tool
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
-import kotlinx.serialization.json.*
 
 /**
  * Provider for MCP tools that exposes Android-specific functionality to MCP clients.
@@ -244,10 +248,16 @@ class ToolProvider(private val context: Context) {
                 appendLine("- Target SDK: ${appInfo.targetSdkVersion}")
                 appendLine("- Min SDK: ${appInfo.minSdkVersion}")
                 appendLine(
-                    "- Install Time: ${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(java.util.Date(packageInfo.firstInstallTime))}"
+                    "- Install Time: ${
+                        java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
+                            .format(java.util.Date(packageInfo.firstInstallTime))
+                    }"
                 )
                 appendLine(
-                    "- Update Time: ${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(java.util.Date(packageInfo.lastUpdateTime))}"
+                    "- Update Time: ${
+                        java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
+                            .format(java.util.Date(packageInfo.lastUpdateTime))
+                    }"
                 )
                 appendLine("- Data Directory: ${appInfo.dataDir}")
             }
@@ -280,7 +290,7 @@ class ToolProvider(private val context: Context) {
                 "readable" -> {
                     val readableTime =
                         java.text
-                            .SimpleDateFormat("yyyy-MM-dd HH:mm:ss z")
+                            .SimpleDateFormat("yyyy-MM-dd HH:mm:ss z", Locale.US)
                             .format(java.util.Date(currentTime))
                     appendLine("- Readable Format: $readableTime")
                 }
@@ -288,7 +298,12 @@ class ToolProvider(private val context: Context) {
                     appendLine("- ISO Format: ${java.time.Instant.ofEpochMilli(currentTime)}")
                     appendLine("- Timestamp: $currentTime")
                     appendLine(
-                        "- Readable Format: ${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss z").format(java.util.Date(currentTime))}"
+                        "- Readable Format: ${
+                            java.text.SimpleDateFormat(
+                                "yyyy-MM-dd HH:mm:ss z",
+                                Locale.US
+                            ).format(java.util.Date(currentTime))
+                        }"
                     )
                 }
             }
@@ -297,7 +312,7 @@ class ToolProvider(private val context: Context) {
                 appendLine("- Requested Timezone: $timezone")
                 try {
                     val tz = java.util.TimeZone.getTimeZone(timezone)
-                    val formatter = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss z")
+                    val formatter = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss z", Locale.US)
                     formatter.timeZone = tz
                     appendLine(
                         "- Time in $timezone: ${formatter.format(java.util.Date(currentTime))}"
@@ -352,41 +367,37 @@ class ToolProvider(private val context: Context) {
         val info = buildString {
             appendLine("Battery Information:")
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                val level =
-                    batteryManager.getIntProperty(
-                        android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY
-                    )
-                appendLine("- Battery Level: $level%")
+            val level =
+                batteryManager.getIntProperty(
+                    android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY
+                )
+            appendLine("- Battery Level: $level%")
 
-                val isCharging = batteryManager.isCharging
-                appendLine("- Charging: $isCharging")
+            val isCharging = batteryManager.isCharging
+            appendLine("- Charging: $isCharging")
 
-                val chargeCounter =
-                    batteryManager.getIntProperty(
-                        android.os.BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER
-                    )
-                if (chargeCounter > 0) {
-                    appendLine("- Charge Counter: $chargeCounter μAh")
-                }
+            val chargeCounter =
+                batteryManager.getIntProperty(
+                    android.os.BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER
+                )
+            if (chargeCounter > 0) {
+                appendLine("- Charge Counter: $chargeCounter μAh")
+            }
 
-                val currentNow =
-                    batteryManager.getIntProperty(
-                        android.os.BatteryManager.BATTERY_PROPERTY_CURRENT_NOW
-                    )
-                if (currentNow != Integer.MIN_VALUE) {
-                    appendLine("- Current: ${currentNow / 1000f} mA")
-                }
+            val currentNow =
+                batteryManager.getIntProperty(
+                    android.os.BatteryManager.BATTERY_PROPERTY_CURRENT_NOW
+                )
+            if (currentNow != Integer.MIN_VALUE) {
+                appendLine("- Current: ${currentNow / 1000f} mA")
+            }
 
-                val energyCounter =
-                    batteryManager.getLongProperty(
-                        android.os.BatteryManager.BATTERY_PROPERTY_ENERGY_COUNTER
-                    )
-                if (energyCounter > 0) {
-                    appendLine("- Energy Counter: ${energyCounter / 1000000f} Wh")
-                }
-            } else {
-                appendLine("- Detailed battery info requires Android 5.0+")
+            val energyCounter =
+                batteryManager.getLongProperty(
+                    android.os.BatteryManager.BATTERY_PROPERTY_ENERGY_COUNTER
+                )
+            if (energyCounter > 0) {
+                appendLine("- Energy Counter: ${energyCounter / 1000000f} Wh")
             }
 
             // Get battery intent info
@@ -455,6 +466,6 @@ class ToolProvider(private val context: Context) {
             unitIndex++
         }
 
-        return String.format("%.2f %s", size, units[unitIndex])
+        return String.format(Locale.US, "%.2f %s", size, units[unitIndex])
     }
 }

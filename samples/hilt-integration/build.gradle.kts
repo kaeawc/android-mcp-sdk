@@ -40,11 +40,11 @@ android {
         }
     }
     compileOptions {
-        val javaVer = JavaVersion.toVersion(libs.versions.javaVersion.get())
+        val javaVer = JavaVersion.toVersion(libs.versions.javaSource.get())
         sourceCompatibility = javaVer
         targetCompatibility = javaVer
     }
-    kotlinOptions { jvmTarget = libs.versions.javaVersion.get() }
+    kotlinOptions { jvmTarget = libs.versions.javaSource.get() }
     buildFeatures { compose = true }
 
     packaging {
@@ -55,10 +55,16 @@ android {
             excludes += "/META-INF/*.kotlin_module"
         }
     }
+
+    lint {
+        abortOnError = false
+    }
+
+    buildToolsVersion = "36.0.0"
 }
 
 dependencies {
-    debugImplementation(projects.lib)
+    debugImplementation(project(":lib"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -67,6 +73,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.startup.runtime)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

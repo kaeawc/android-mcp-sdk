@@ -25,11 +25,13 @@ android {
         }
     }
     compileOptions {
-        val javaVer = JavaVersion.toVersion(libs.versions.javaVersion.get())
+        val javaVer = JavaVersion.toVersion(libs.versions.javaSource.get())
         sourceCompatibility = javaVer
         targetCompatibility = javaVer
     }
-    kotlinOptions { jvmTarget = libs.versions.javaVersion.get() }
+    kotlinOptions {
+        jvmTarget = libs.versions.javaSource.get()
+    }
 
     packaging {
         resources {
@@ -54,7 +56,7 @@ dependencies {
     implementation(libs.kotlin.sdk.jvm)
     implementation(libs.androidx.startup.runtime)
     implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation("androidx.lifecycle:lifecycle-process:2.9.0")
+    implementation(libs.androidx.lifecycle.process)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.json)
 

@@ -1,24 +1,24 @@
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
-
-pluginManagement {
-    repositories {
-        google {
-            content {
-                includeGroupByRegex("com\\.android.*")
-                includeGroupByRegex("com\\.google.*")
-                includeGroupByRegex("androidx.*")
-            }
-        }
-        mavenCentral()
-        gradlePluginPortal()
-    }
-}
 
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
+    }
+}
+
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+
+        // R8 repo for R8/D8 releases
+        exclusiveContent {
+            forRepository {
+                maven("https://storage.googleapis.com/r8-releases/raw") { name = "R8-releases" }
+            }
+            filter { includeModule("com.android.tools", "r8") }
+        }
     }
 }
 
@@ -30,3 +30,5 @@ include(":lib")
 include(":samples:simple")
 
 include(":samples:hilt-integration")
+
+//enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")

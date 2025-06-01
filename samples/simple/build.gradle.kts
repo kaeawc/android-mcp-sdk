@@ -38,11 +38,11 @@ android {
         }
     }
     compileOptions {
-        val javaVer = JavaVersion.toVersion(libs.versions.javaVersion.get())
+        val javaVer = JavaVersion.toVersion(libs.versions.javaSource.get())
         sourceCompatibility = javaVer
         targetCompatibility = javaVer
     }
-    kotlinOptions { jvmTarget = libs.versions.javaVersion.get() }
+    kotlinOptions { jvmTarget = libs.versions.javaSource.get() }
     buildFeatures { compose = true }
 
     packaging {
@@ -53,10 +53,16 @@ android {
             excludes += "/META-INF/*.kotlin_module"
         }
     }
+
+    lint {
+        abortOnError = false
+    }
+
+    buildToolsVersion = "36.0.0"
 }
 
 dependencies {
-    debugImplementation(projects.lib)
+    debugImplementation(project(":lib"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

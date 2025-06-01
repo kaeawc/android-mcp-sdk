@@ -10,8 +10,11 @@ their adb connected workstation.
 
 ## Building
 
+Never run clean unless the Gradle build cache/outputs seem corrupted. Usually that's from annotation processing.
+
 - **Build the library**: `./gradlew :lib:compileDebugKotlin`
 - **Build the project**: `./gradlew build`
+- **Android Lint the project**: `./gradlew lint`
 
 ## Android Studio IDE Actions
 

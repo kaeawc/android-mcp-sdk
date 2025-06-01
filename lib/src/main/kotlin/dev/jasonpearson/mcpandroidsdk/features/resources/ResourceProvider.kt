@@ -1,17 +1,16 @@
 package dev.jasonpearson.mcpandroidsdk.features.resources
 
 import android.content.Context
-import android.net.Uri
 import android.util.Log
-import dev.jasonpearson.mcpandroidsdk.*
-import dev.jasonpearson.mcpandroidsdk.models.*
+import androidx.core.net.toUri
+import dev.jasonpearson.mcpandroidsdk.models.AndroidResourceContent
 import io.modelcontextprotocol.kotlin.sdk.Resource
 import io.modelcontextprotocol.kotlin.sdk.ResourceTemplate
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 /** Provider for MCP resources, allowing the server to expose Android-specific data. */
 class ResourceProvider(private val context: Context) {
@@ -104,7 +103,7 @@ class ResourceProvider(private val context: Context) {
     private suspend fun readFileResource(fileUri: String): AndroidResourceContent {
         return withContext(Dispatchers.IO) {
             try {
-                val parsedUri = Uri.parse(fileUri)
+                val parsedUri = fileUri.toUri()
                 if (parsedUri.scheme != "file" || parsedUri.path == null) {
                     return@withContext AndroidResourceContent(
                         uri = fileUri,
