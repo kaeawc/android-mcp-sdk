@@ -21,9 +21,7 @@ plugins {
 allprojects {
     plugins.withType<JavaPlugin> {
         extensions.configure<JavaPluginExtension> {
-            toolchain {
-                languageVersion.set(JavaLanguageVersion.of(libs.versions.jdk.get()))
-            }
+            toolchain { languageVersion.set(JavaLanguageVersion.of(libs.versions.jdk.get())) }
         }
     }
 }

@@ -29,9 +29,7 @@ android {
         sourceCompatibility = javaVer
         targetCompatibility = javaVer
     }
-    kotlinOptions {
-        jvmTarget = libs.versions.javaSource.get()
-    }
+    kotlinOptions { jvmTarget = libs.versions.javaSource.get() }
 
     packaging {
         resources {

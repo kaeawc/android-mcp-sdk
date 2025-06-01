@@ -6,11 +6,11 @@ import androidx.core.net.toUri
 import dev.jasonpearson.mcpandroidsdk.models.AndroidResourceContent
 import io.modelcontextprotocol.kotlin.sdk.Resource
 import io.modelcontextprotocol.kotlin.sdk.ResourceTemplate
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /** Provider for MCP resources, allowing the server to expose Android-specific data. */
 class ResourceProvider(private val context: Context) {

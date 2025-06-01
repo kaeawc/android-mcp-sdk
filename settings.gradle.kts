@@ -1,4 +1,3 @@
-
 dependencyResolutionManagement {
     repositories {
         google()
@@ -29,6 +28,8 @@ include(":lib")
 // Sample applications
 include(":samples:simple")
 
-include(":samples:hilt-integration")
+include(
+    ":samples:hilt-integration"
+)
 
-//enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+// enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")

@@ -56,9 +56,7 @@ android {
         }
     }
 
-    lint {
-        abortOnError = false
-    }
+    lint { abortOnError = false }
 
     buildToolsVersion = "36.0.0"
 }

@@ -6,10 +6,10 @@ import android.util.Log
 import io.modelcontextprotocol.kotlin.sdk.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.TextContent
 import io.modelcontextprotocol.kotlin.sdk.Tool
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Enhanced tool provider with comprehensive Android-specific functionality.
@@ -214,13 +214,10 @@ class AndroidSpecificToolProvider(private val context: Context) {
                             put(
                                 "package_name",
                                 buildJsonObject {
-                                    put(
-                                        "type",
-                                        JsonPrimitive("string")
-                                    )
+                                    put("type", JsonPrimitive("string"))
                                     put(
                                         "description",
-                                        JsonPrimitive("Package name of the app (optional)")
+                                        JsonPrimitive("Package name of the app (optional)"),
                                     )
                                 },
                             )
@@ -244,7 +241,7 @@ class AndroidSpecificToolProvider(private val context: Context) {
                                     put("type", JsonPrimitive("boolean"))
                                     put(
                                         "description",
-                                        JsonPrimitive("Include system apps in the list")
+                                        JsonPrimitive("Include system apps in the list"),
                                     )
                                     put("default", JsonPrimitive(false))
                                 },
@@ -255,7 +252,7 @@ class AndroidSpecificToolProvider(private val context: Context) {
                                     put("type", JsonPrimitive("integer"))
                                     put(
                                         "description",
-                                        JsonPrimitive("Maximum number of apps to return")
+                                        JsonPrimitive("Maximum number of apps to return"),
                                     )
                                     put("default", JsonPrimitive(50))
                                 },
@@ -307,7 +304,7 @@ class AndroidSpecificToolProvider(private val context: Context) {
                                         "description",
                                         JsonPrimitive(
                                             "Directory path to list (relative to app's files directory)"
-                                        )
+                                        ),
                                     )
                                     put("default", JsonPrimitive("."))
                                 },

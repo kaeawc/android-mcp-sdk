@@ -7,11 +7,11 @@ import android.util.Log
 import io.modelcontextprotocol.kotlin.sdk.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.TextContent
 import io.modelcontextprotocol.kotlin.sdk.Tool
+import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
-import java.util.Locale
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Provider for MCP tools that exposes Android-specific functionality to MCP clients.
@@ -301,7 +301,7 @@ class ToolProvider(private val context: Context) {
                         "- Readable Format: ${
                             java.text.SimpleDateFormat(
                                 "yyyy-MM-dd HH:mm:ss z",
-                                Locale.US
+                                Locale.US,
                             ).format(java.util.Date(currentTime))
                         }"
                     )
@@ -368,9 +368,7 @@ class ToolProvider(private val context: Context) {
             appendLine("Battery Information:")
 
             val level =
-                batteryManager.getIntProperty(
-                    android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY
-                )
+                batteryManager.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY)
             appendLine("- Battery Level: $level%")
 
             val isCharging = batteryManager.isCharging
