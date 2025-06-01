@@ -10,8 +10,8 @@ their adb connected workstation.
 
 ## Building
 
-- **Build the library**: `./gradlew :lib:compileDebug`
-- **Build the project**: `./gradlew :sample:assembleDebug`
+- **Build the library**: `./gradlew :lib:compileDebugKotlin`
+- **Build the project**: `./gradlew build`
 
 ## Android Studio IDE Actions
 
