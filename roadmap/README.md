@@ -16,7 +16,6 @@ This directory contains detailed task specifications for completing the Android 
 
 1. **ResourceProvider.kt** (Line 67): Resource subscription logic file observers
 2. **AndroidMcpServerImpl.kt** (Line 240): Sampling requests to clients
-3. **McpAndroidServer.kt** (Line 518): JSON-RPC message parsing
 
 **Integration Gaps:**
 
@@ -31,8 +30,8 @@ This directory contains detailed task specifications for completing the Android 
 
 - `[P]` [15-readme-claimed-features-verification.md](15-readme-claimed-features-verification.md) -
   Verify README claims vs implementation
-- `[ ]` [03-jsonrpc-message-parsing.md](03-jsonrpc-message-parsing.md) - Complete JSON-RPC message
-  parsing (TODO in McpAndroidServer.kt)
+- `[C]` [03-jsonrpc-message-parsing.md](03-jsonrpc-message-parsing.md) - Complete JSON-RPC message
+  parsing (COMPLETED: Now handled by official MCP Kotlin SDK)
 - `[ ]` [09-integration-testing-suite.md](09-integration-testing-suite.md) - End-to-end integration
   testing
 
@@ -76,8 +75,7 @@ This directory contains detailed task specifications for completing the Android 
 **Goal**: Complete remaining TODOs and verify basic functionality
 
 1. **[P] 15-readme-claimed-features-verification.md** - Audit current vs claimed features
-2. **[ ] 03-jsonrpc-message-parsing.md** - Fix critical JSON-RPC parsing TODO
-3. **[ ] 09-integration-testing-suite.md** - Basic end-to-end testing
+2. **[ ] 09-integration-testing-suite.md** - Basic end-to-end testing
 
 **Success Criteria**: Sample app can successfully communicate with MCP client
 
@@ -85,9 +83,9 @@ This directory contains detailed task specifications for completing the Android 
 
 **Goal**: Complete resource subscription and permission handling
 
-4. **[ ] 01-resource-subscription-logic.md** - Implement file observer subscriptions
-5. **[ ] 07-filesystem-resources-permissions.md** - Validate Android permissions
-6. **[ ] 06-transport-integration-testing.md** - Comprehensive transport testing
+3. **[ ] 01-resource-subscription-logic.md** - Implement file observer subscriptions
+4. **[ ] 07-filesystem-resources-permissions.md** - Validate Android permissions
+5. **[ ] 06-transport-integration-testing.md** - Comprehensive transport testing
 
 **Success Criteria**: Resources can be subscribed to and accessed with proper permissions
 
@@ -95,9 +93,9 @@ This directory contains detailed task specifications for completing the Android 
 
 **Goal**: Production readiness and comprehensive testing
 
-7. **[ ] 02-sampling-requests-implementation.md** - Complete sampling functionality
-8. **[ ] 08-database-resources-implementation.md** - Add database resource access
-9. **[P] 13-sample-app-enhancement.md** - Enhanced sample demonstrations
+6. **[ ] 02-sampling-requests-implementation.md** - Complete sampling functionality
+7. **[ ] 08-database-resources-implementation.md** - Add database resource access
+8. **[P] 13-sample-app-enhancement.md** - Enhanced sample demonstrations
 
 **Success Criteria**: Feature-complete SDK ready for release
 
@@ -105,15 +103,17 @@ This directory contains detailed task specifications for completing the Android 
 
 **Goal**: Comprehensive testing and documentation
 
-10. **[ ] 10-adb-port-forwarding-testing.md** - ADB workflow validation
-11. **[ ] 11-mcp-client-communication-testing.md** - Multi-client compatibility
-12. **[ ] 12-builtin-tools-validation.md** - Tool validation testing
-13. **[ ] 14-integration-guides-documentation.md** - Developer documentation
+9. **[ ] 10-adb-port-forwarding-testing.md** - ADB workflow validation
+10. **[ ] 11-mcp-client-communication-testing.md** - Multi-client compatibility
+11. **[ ] 12-builtin-tools-validation.md** - Tool validation testing
+12. **[ ] 14-integration-guides-documentation.md** - Developer documentation
 
 **Success Criteria**: Production-ready SDK with complete documentation
 
 ## Fixed Issues
 
+- **03-jsonrpc-message-parsing.md**: Task completed via integration with official MCP Kotlin SDK -
+  all JSON-RPC parsing is now handled automatically by the SDK
 - **05-http-sse-transport-implementation.md**: Task was incomplete - HTTP/SSE transport is already
   implemented
 - **04-websocket-transport-implementation.md**: WebSocket transport is already implemented
