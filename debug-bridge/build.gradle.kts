@@ -52,6 +52,9 @@ dependencies {
     // Android
     implementation(libs.androidx.core.ktx)
 
+    // Network
+    implementation(libs.okhttp)
+
     // Core module
     implementation(project(":core"))
 

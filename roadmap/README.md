@@ -20,6 +20,8 @@ This directory contains detailed task specifications for completing the Android 
 
 1. **ResourceProvider.kt** (Line 203): Android Q+ file path access restrictions
 2. **AndroidMcpServerImpl.kt** (Line 253): Sampling requests to clients
+3. **StorageToolProvider.kt** (Line 10, 22): Storage debugging tools implementation
+4. **NetworkInspector.kt** (Line 149, 152, 206): Request/response body capture and size calculations
 
 **Integration Gaps:**
 
@@ -56,14 +58,22 @@ This directory contains detailed task specifications for completing the Android 
 
 - ✅ `app_info` - Application details including version, SDK targets, install/update times
 
+**NetworkToolProvider** (4/4 tools complete):
+
+- ✅ `network_start_monitoring` - Start network request monitoring with configuration
+- ✅ `network_stop_monitoring` - Stop network request monitoring
+- ✅ `network_get_requests` - Get captured network requests with filtering
+- ✅ `network_analyze_request` - Analyze specific request for performance/security
+
+**FilePermissionToolProvider** (5/5 tools complete):
+
+- ✅ `check_file_access` - Check file accessibility and required permissions for given URI/path
+- ✅ `request_file_permissions` - Check permission status for specific storage scopes
+- ✅ `get_scoped_directories` - Get accessible directories categorized by storage scope
+- ✅ `create_document_picker_intent` - Create Storage Access Framework document picker intent
+- ✅ `validate_document_uri` - Validate document URI from Storage Access Framework
+
 ### ⚠️ Partially Implemented Tool Providers
-
-**NetworkToolProvider** (0/4 planned tools implemented):
-
-- `[ ]` `network_info` - Network connection details
-- `[ ]` `connectivity_status` - Current connectivity state
-- `[ ]` `wifi_info` - WiFi network information
-- `[ ]` `network_stats` - Network usage statistics
 
 **StorageToolProvider** (0/4 planned tools implemented):
 
@@ -72,7 +82,7 @@ This directory contains detailed task specifications for completing the Android 
 - `[ ]` `file_info` - File metadata and details
 - `[ ]` `disk_usage` - Storage usage analysis
 
-### Summary: 7/11 Debug-Bridge Tools Complete (64%)
+### Summary: 16/20 Debug-Bridge Tools Complete (80%)
 
 ## Task Categories & Status
 
@@ -118,8 +128,8 @@ This directory contains detailed task specifications for completing the Android 
   inspection
 - `[ ]` [22-accessibility-inspection.md](22-accessibility-inspection.md) - Accessibility service
   integration
-- `[ ]` [23-network-request-inspection.md](23-network-request-inspection.md) - Network traffic
-  monitoring
+- `[C]` [23-network-request-inspection.md](23-network-request-inspection.md) - Network traffic
+  monitoring **[COMPLETED]**
 - `[ ]` [24-network-request-replay.md](24-network-request-replay.md) - Network request replay
   functionality
 - `[C]` [10-adb-port-forwarding-testing.md](10-adb-port-forwarding-testing.md) - ADB workflow
