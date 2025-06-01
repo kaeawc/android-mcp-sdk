@@ -1,6 +1,7 @@
 package dev.jasonpearson.androidmcpsdk.core.features.permissions
 
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -12,6 +13,8 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
@@ -166,7 +169,7 @@ class FilePermissionManagerTest {
     fun `requestFilePermissions should check permissions for media scopes`() = runTest {
         mockkStatic(ContextCompat::class)
         every { ContextCompat.checkSelfPermission(context, any()) } returns
-            PackageManager.PERMISSION_DENIED
+                PackageManager.PERMISSION_DENIED
 
         val result =
             filePermissionManager.requestFilePermissions(
@@ -340,6 +343,278 @@ class FilePermissionManagerTest {
         testCases.forEach { (path, expectedScope) ->
             val result = filePermissionManager.checkFileAccess(path)
             assertEquals("Should identify correct scope for $path", expectedScope, result.scope)
+        }
+    }
+
+    @Test
+    fun `requestFilePermissions should handle all storage scopes correctly`() = runTest {
+        val allScopes = FilePermissionManager.StorageScope.values()
+
+        allScopes.forEach { scope ->
+            val result = filePermissionManager.requestFilePermissions(scope)
+
+            assertNotNull("Should return result for scope ${scope.name}", result)
+
+            when (scope) {
+                FilePermissionManager.StorageScope.APP_INTERNAL,
+                FilePermissionManager.StorageScope.APP_EXTERNAL,
+                FilePermissionManager.StorageScope.USER_SELECTED -> {
+                    assertTrue("No-permission scopes should be granted", result.granted)
+                    assertTrue(
+                        "No-permission scopes should have empty permissions map",
+                        result.permissions.isEmpty()
+                    )
+                }
+
+                else -> {
+                    assertFalse(
+                        "Permission scopes should have permissions to check",
+                        result.permissions.isEmpty()
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `getScopedDirectories should include all expected directory types`() {
+        val directories = filePermissionManager.getScopedDirectories()
+
+        // Should have at least internal files and cache
+        val scopeTypes = directories.map { it.scope }.toSet()
+        assertTrue(
+            "Should include APP_INTERNAL",
+            scopeTypes.contains(FilePermissionManager.StorageScope.APP_INTERNAL)
+        )
+
+        // Verify internal directories have expected paths
+        val internalDirs = directories.filter {
+            it.scope == FilePermissionManager.StorageScope.APP_INTERNAL
+        }
+        val internalPaths = internalDirs.map { it.path }
+
+        assertTrue(
+            "Should include files directory",
+            internalPaths.any { it.contains(context.filesDir.name) })
+        assertTrue(
+            "Should include cache directory",
+            internalPaths.any { it.contains(context.cacheDir.name) })
+    }
+
+    @Test
+    fun `getScopedDirectories should mark accessibility correctly`() {
+        val directories = filePermissionManager.getScopedDirectories()
+
+        // Internal directories should always be accessible
+        val internalDirs = directories.filter {
+            it.scope == FilePermissionManager.StorageScope.APP_INTERNAL
+        }
+        assertTrue(
+            "All internal directories should be accessible",
+            internalDirs.all { it.isAccessible })
+
+        // App external directories should be accessible (no permissions needed)
+        val appExternalDirs = directories.filter {
+            it.scope == FilePermissionManager.StorageScope.APP_EXTERNAL
+        }
+        assertTrue(
+            "All app external directories should be accessible",
+            appExternalDirs.all { it.isAccessible })
+    }
+
+    @Test
+    fun `createDocumentPickerIntent should handle single MIME type`() {
+        val mimeType = "image/jpeg"
+        val intent = filePermissionManager.createDocumentPickerIntent(arrayOf(mimeType))
+
+        assertEquals("Should set single MIME type", mimeType, intent.type)
+        assertNull(
+            "Should not have extra MIME types for single type",
+            intent.getStringArrayExtra(Intent.EXTRA_MIME_TYPES)
+        )
+    }
+
+    @Test
+    fun `createDocumentPickerIntent should enable multiple selection`() {
+        val intent = filePermissionManager.createDocumentPickerIntent()
+
+        assertTrue(
+            "Should allow multiple selection",
+            intent.getBooleanExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
+        )
+    }
+
+    @Test
+    fun `validateDocumentUri should handle non-existent document`() = runTest {
+        val validUri = Uri.parse("content://com.android.providers.downloads.documents/document/999")
+
+        mockkStatic("androidx.documentfile.provider.DocumentFile")
+        val mockDocumentFile = mockk<androidx.documentfile.provider.DocumentFile>()
+        every {
+            androidx.documentfile.provider.DocumentFile.fromSingleUri(context, validUri)
+        } returns mockDocumentFile
+        every { mockDocumentFile.exists() } returns false
+
+        val result = filePermissionManager.validateDocumentUri(validUri)
+
+        assertFalse("Should not be able to access non-existent document", result.canAccess)
+        assertEquals(
+            "Should be USER_SELECTED scope",
+            FilePermissionManager.StorageScope.USER_SELECTED, result.scope
+        )
+        assertFalse("Should not require permission", result.requiresPermission)
+    }
+
+    @Test
+    fun `validateDocumentUri should handle exceptions gracefully`() = runTest {
+        val validUri = Uri.parse("content://com.android.providers.downloads.documents/document/123")
+
+        mockkStatic("androidx.documentfile.provider.DocumentFile")
+        every {
+            androidx.documentfile.provider.DocumentFile.fromSingleUri(context, validUri)
+        } throws SecurityException("Access denied")
+
+        val result = filePermissionManager.validateDocumentUri(validUri)
+
+        assertFalse("Should handle exceptions gracefully", result.canAccess)
+        assertNotNull("Should have error message", result.errorMessage)
+        assertTrue(
+            "Should mention the exception",
+            result.errorMessage!!.contains("Error validating document URI")
+        )
+    }
+
+    @Test
+    fun `checkFileAccess should handle complex app external paths`() = runTest {
+        // Test various app external path formats
+        val externalDir = context.getExternalFilesDir(null)
+        assumeNotNull("External files dir should be available", externalDir)
+
+        val testPaths = listOf(
+            "${externalDir!!.absolutePath}/subdir/file.txt",
+            "${externalDir.absolutePath}/../cache/temp.txt",
+            "/Android/data/${context.packageName}/files/test.txt",
+            "/Android/data/${context.packageName}/cache/cache.txt"
+        )
+
+        testPaths.forEach { path ->
+            val result = filePermissionManager.checkFileAccess(path)
+
+            assertTrue(
+                "Path $path should be accessible or APP_EXTERNAL scope",
+                result.canAccess || result.scope == FilePermissionManager.StorageScope.APP_EXTERNAL
+            )
+        }
+    }
+
+    @Test
+    fun `checkFileAccess should detect MediaStore authority correctly`() = runTest {
+        val mediaStoreUris = listOf(
+            "content://media/external/images/media/123",
+            "content://media/external/video/media/456",
+            "content://media/external/audio/media/789"
+        )
+
+        mediaStoreUris.forEach { uri ->
+            val result = filePermissionManager.checkFileAccess(uri)
+
+            assertEquals(
+                "MediaStore URI should be MEDIA_IMAGES scope",
+                FilePermissionManager.StorageScope.MEDIA_IMAGES, result.scope
+            )
+        }
+    }
+
+    @Test
+    fun `checkFileAccess should handle Storage Access Framework URIs`() = runTest {
+        val safUris = listOf(
+            "content://com.android.providers.downloads.documents/document/123",
+            "content://com.android.externalstorage.documents/tree/primary%3A",
+            "content://com.google.android.apps.docs.storage/documents/123"
+        )
+
+        safUris.forEach { uri ->
+            val result = filePermissionManager.checkFileAccess(uri)
+
+            assertTrue("SAF URI $uri should be accessible", result.canAccess)
+            assertEquals(
+                "SAF URI should be USER_SELECTED scope",
+                FilePermissionManager.StorageScope.USER_SELECTED, result.scope
+            )
+            assertFalse("SAF URI should not require permission", result.requiresPermission)
+        }
+    }
+
+    @Test
+    fun `requestFilePermissions should return appropriate permissions for API level`() = runTest {
+        // Test that different API levels return correct permissions
+        val mediaImageResult = filePermissionManager.requestFilePermissions(
+            FilePermissionManager.StorageScope.MEDIA_IMAGES
+        )
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            assertTrue(
+                "Should check READ_MEDIA_IMAGES on API 33+",
+                mediaImageResult.permissions.keys.any {
+                    it == android.Manifest.permission.READ_MEDIA_IMAGES
+                })
+        } else {
+            assertTrue(
+                "Should check READ_EXTERNAL_STORAGE on API < 33",
+                mediaImageResult.permissions.keys.any {
+                    it == android.Manifest.permission.READ_EXTERNAL_STORAGE
+                })
+        }
+    }
+
+    @Test
+    fun `getScopedDirectories should provide meaningful descriptions`() {
+        val directories = filePermissionManager.getScopedDirectories()
+
+        directories.forEach { dir ->
+            assertFalse(
+                "Description should not be empty for ${dir.path}",
+                dir.description.isBlank()
+            )
+            assertTrue(
+                "Description should be informative for ${dir.path}",
+                dir.description.length > 10
+            )
+        }
+    }
+
+    @Test
+    fun `filePermissionManager should handle concurrent access`() = runTest {
+        // Test that FilePermissionManager is thread-safe
+        val results = (1..10).map { index ->
+            async {
+                filePermissionManager.checkFileAccess("${context.filesDir.absolutePath}/test$index.txt")
+            }
+        }.awaitAll()
+
+        assertEquals("Should handle all concurrent requests", 10, results.size)
+        results.forEach { result ->
+            assertTrue("All concurrent results should be successful", result.canAccess)
+        }
+    }
+
+    @Test
+    fun `checkFileAccess should normalize paths correctly`() = runTest {
+        val basePath = context.filesDir.absolutePath
+        val testPaths = listOf(
+            "$basePath/./test.txt",           // Same directory reference
+            "$basePath/../${context.filesDir.name}/test.txt", // Parent then back down
+            "$basePath//test.txt",            // Double slash
+            "$basePath/test.txt/",            // Trailing slash
+        )
+
+        testPaths.forEach { path ->
+            val result = filePermissionManager.checkFileAccess(path)
+            assertTrue("Normalized path $path should be accessible", result.canAccess)
+            assertEquals(
+                "Should be APP_INTERNAL scope",
+                FilePermissionManager.StorageScope.APP_INTERNAL, result.scope
+            )
         }
     }
 

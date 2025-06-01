@@ -11,9 +11,9 @@ import android.provider.MediaStore
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
 
 /**
  * Manages file access permissions and storage scopes for the Android MCP SDK. Handles Android 10+
@@ -72,24 +72,23 @@ class FilePermissionManager(private val context: Context) {
         }
 
     /** Requests file permissions for a specific storage scope. */
-    suspend fun requestFilePermissions(scope: StorageScope): PermissionResult =
-        withContext(Dispatchers.Main) {
-            val requiredPermissions = getRequiredPermissions(scope)
+    suspend fun requestFilePermissions(scope: StorageScope): PermissionResult {
+        val requiredPermissions = getRequiredPermissions(scope)
 
-            if (requiredPermissions.isEmpty()) {
-                return@withContext PermissionResult(granted = true, permissions = emptyMap())
+        if (requiredPermissions.isEmpty()) {
+            return PermissionResult(granted = true, permissions = emptyMap())
+        }
+
+        val permissionStates =
+            requiredPermissions.associateWith { permission ->
+                ContextCompat.checkSelfPermission(context, permission) ==
+                        PackageManager.PERMISSION_GRANTED
             }
 
-            val permissionStates =
-                requiredPermissions.associateWith { permission ->
-                    ContextCompat.checkSelfPermission(context, permission) ==
-                        PackageManager.PERMISSION_GRANTED
-                }
+        val allGranted = permissionStates.values.all { it }
 
-            val allGranted = permissionStates.values.all { it }
-
-            PermissionResult(granted = allGranted, permissions = permissionStates)
-        }
+        return PermissionResult(granted = allGranted, permissions = permissionStates)
+    }
 
     /** Gets all accessible directories categorized by storage scope. */
     fun getScopedDirectories(): List<ScopedDirectory> {

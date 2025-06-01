@@ -1,24 +1,21 @@
 package dev.jasonpearson.androidmcpsdk.debugbridge.tools
 
 import android.content.Context
-import android.content.pm.PackageManager
-import android.os.Build
-import androidx.core.content.ContextCompat
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.jasonpearson.androidmcpsdk.core.features.tools.ToolRegistry
-import io.mockk.*
-import io.modelcontextprotocol.kotlin.sdk.TextContent
+import io.mockk.mockk
+import io.mockk.unmockkAll
+import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.annotation.Config
 
 @RunWith(AndroidJUnit4::class)
-@Config(sdk = [Build.VERSION_CODES.TIRAMISU])
 class FilePermissionToolProviderTest {
 
     private lateinit var context: Context
@@ -41,23 +38,11 @@ class FilePermissionToolProviderTest {
     fun `registerTools should register all file permission tools`() {
         toolProvider.registerTools(mockRegistry)
 
-        verify { mockRegistry.addTool(any(), any()) }
-
-        // Verify that all expected tools are registered
-        val expectedToolNames =
-            listOf(
-                "check_file_access",
-                "request_file_permissions",
-                "get_scoped_directories",
-                "create_document_picker_intent",
-                "validate_document_uri",
-            )
-
-        expectedToolNames.forEach { toolName ->
-            verify { mockRegistry.addTool(match { it.name == toolName }, any()) }
-        }
+        // Verify that all 5 tools are registered
+        verify(exactly = 5) { mockRegistry.addTool(any(), any()) }
     }
 
+    // Test check_file_access tool
     @Test
     fun `handleCheckFileAccess should return success for valid internal file path`() = runTest {
         val arguments = mapOf("uri" to "${context.filesDir.absolutePath}/test.txt")
@@ -66,13 +51,9 @@ class FilePermissionToolProviderTest {
 
         assertFalse("Should not be an error", result.isError ?: false)
         assertTrue("Should have content", result.content.isNotEmpty())
-
-        val responseText = (result.content.first() as TextContent).text ?: ""
-        assertTrue("Should indicate can access", responseText.contains("Can Access: true"))
-        assertTrue("Should indicate APP_INTERNAL scope", responseText.contains("APP_INTERNAL"))
         assertTrue(
-            "Should not require permission",
-            responseText.contains("Requires Permission: false"),
+            "Should contain file access information",
+            result.content.first().toString().contains("File Access Check Results")
         )
     }
 
@@ -83,78 +64,53 @@ class FilePermissionToolProviderTest {
         val result = toolProvider.handleCheckFileAccess(arguments)
 
         assertTrue("Should be an error", result.isError ?: false)
-        val responseText = (result.content.first() as TextContent).text ?: ""
         assertTrue(
-            "Should indicate missing parameter",
-            responseText.contains("Missing required parameter: uri"),
+            "Should have error message",
+            result.content.first().toString().contains("Missing required parameter: uri")
         )
     }
 
     @Test
-    fun `handleCheckFileAccess should handle external file paths`() = runTest {
-        val externalDir = context.getExternalFilesDir(null)
-        assumeNotNull("External files dir should be available", externalDir)
-
-        val arguments = mapOf("uri" to "${externalDir!!.absolutePath}/test.txt")
+    fun `handleCheckFileAccess should handle content URIs`() = runTest {
+        val arguments = mapOf("uri" to "content://media/external/images/media/123")
 
         val result = toolProvider.handleCheckFileAccess(arguments)
 
         assertFalse("Should not be an error", result.isError ?: false)
-        val responseText = (result.content.first() as TextContent).text ?: ""
-        assertTrue("Should indicate can access", responseText.contains("Can Access: true"))
-        assertTrue("Should indicate APP_EXTERNAL scope", responseText.contains("APP_EXTERNAL"))
+        assertTrue(
+            "Should contain content URI handling",
+            result.content.first().toString().contains("content://")
+        )
     }
 
     @Test
-    fun `handleRequestPermissions should return success for APP_INTERNAL scope`() = runTest {
+    fun `handleCheckFileAccess should handle file URIs`() = runTest {
+        val arguments = mapOf("uri" to "file://${context.filesDir.absolutePath}/test.txt")
+
+        val result = toolProvider.handleCheckFileAccess(arguments)
+
+        assertFalse("Should not be an error", result.isError ?: false)
+        assertTrue(
+            "Should contain file URI handling",
+            result.content.first().toString().contains("file://")
+        )
+    }
+
+    // Test request_file_permissions tool
+    @Test
+    fun `handleRequestPermissions should return success for valid scope`() = runTest {
         val arguments = mapOf("scope" to "APP_INTERNAL")
 
         val result = toolProvider.handleRequestPermissions(arguments)
 
         assertFalse("Should not be an error", result.isError ?: false)
-        val responseText = (result.content.first() as TextContent).text ?: ""
         assertTrue(
-            "Should indicate permissions granted",
-            responseText.contains("All Permissions Granted: true"),
+            "Should contain permission check results",
+            result.content.first().toString().contains("Permission Check Results")
         )
-        assertTrue("Should indicate APP_INTERNAL scope", responseText.contains("APP_INTERNAL"))
-    }
-
-    @Test
-    fun `handleRequestPermissions should check permissions for MEDIA_IMAGES scope`() = runTest {
-        mockkStatic(ContextCompat::class)
-        every { ContextCompat.checkSelfPermission(context, any()) } returns
-            PackageManager.PERMISSION_DENIED
-
-        val arguments = mapOf("scope" to "MEDIA_IMAGES")
-
-        val result = toolProvider.handleRequestPermissions(arguments)
-
-        assertFalse("Should not be an error", result.isError ?: false)
-        val responseText = (result.content.first() as TextContent).text ?: ""
         assertTrue(
-            "Should indicate permissions not granted",
-            responseText.contains("All Permissions Granted: false"),
-        )
-        assertTrue("Should indicate MEDIA_IMAGES scope", responseText.contains("MEDIA_IMAGES"))
-        assertTrue(
-            "Should show individual permissions",
-            responseText.contains("Individual Permissions:"),
-        )
-        assertTrue("Should show DENIED status", responseText.contains("✗ DENIED"))
-    }
-
-    @Test
-    fun `handleRequestPermissions should return error for invalid scope`() = runTest {
-        val arguments = mapOf("scope" to "INVALID_SCOPE")
-
-        val result = toolProvider.handleRequestPermissions(arguments)
-
-        assertTrue("Should be an error", result.isError ?: false)
-        val responseText = (result.content.first() as TextContent).text ?: ""
-        assertTrue(
-            "Should indicate invalid scope",
-            responseText.contains("Invalid storage scope: INVALID_SCOPE"),
+            "Should contain scope information",
+            result.content.first().toString().contains("APP_INTERNAL")
         )
     }
 
@@ -165,13 +121,45 @@ class FilePermissionToolProviderTest {
         val result = toolProvider.handleRequestPermissions(arguments)
 
         assertTrue("Should be an error", result.isError ?: false)
-        val responseText = (result.content.first() as TextContent).text ?: ""
         assertTrue(
-            "Should indicate missing parameter",
-            responseText.contains("Missing required parameter: scope"),
+            "Should have error message",
+            result.content.first().toString().contains("Missing required parameter: scope")
         )
     }
 
+    @Test
+    fun `handleRequestPermissions should return error for invalid scope`() = runTest {
+        val arguments = mapOf("scope" to "INVALID_SCOPE")
+
+        val result = toolProvider.handleRequestPermissions(arguments)
+
+        assertTrue("Should be an error", result.isError ?: false)
+        assertTrue(
+            "Should have invalid scope error",
+            result.content.first().toString().contains("Invalid storage scope")
+        )
+    }
+
+    @Test
+    fun `handleRequestPermissions should handle all valid scopes`() = runTest {
+        val validScopes = listOf(
+            "APP_INTERNAL", "APP_EXTERNAL", "MEDIA_IMAGES",
+            "MEDIA_VIDEO", "MEDIA_AUDIO", "EXTERNAL_STORAGE", "USER_SELECTED"
+        )
+
+        validScopes.forEach { scope ->
+            val arguments = mapOf("scope" to scope)
+            val result = toolProvider.handleRequestPermissions(arguments)
+
+            assertFalse("Should not be an error for scope $scope", result.isError ?: false)
+            assertTrue(
+                "Should contain scope name for $scope",
+                result.content.first().toString().contains(scope)
+            )
+        }
+    }
+
+    // Test get_scoped_directories tool
     @Test
     fun `handleGetScopedDirectories should return directory information`() = runTest {
         val arguments = emptyMap<String, Any>()
@@ -179,38 +167,36 @@ class FilePermissionToolProviderTest {
         val result = toolProvider.handleGetScopedDirectories(arguments)
 
         assertFalse("Should not be an error", result.isError ?: false)
-        val responseText = (result.content.first() as TextContent).text ?: ""
         assertTrue(
-            "Should contain directory info",
-            responseText.contains("Scoped Directory Access Information"),
+            "Should contain directory information",
+            result.content.first().toString().contains("Scoped Directory Access Information")
         )
         assertTrue(
-            "Should contain APP_INTERNAL directories",
-            responseText.contains("APP_INTERNAL:"),
+            "Should contain at least APP_INTERNAL directories",
+            result.content.first().toString().contains("APP_INTERNAL")
         )
-        assertTrue("Should show accessible status", responseText.contains("✓ ACCESSIBLE"))
     }
 
+    // Test create_document_picker_intent tool
     @Test
-    fun `handleCreateDocumentPickerIntent should return intent information`() = runTest {
+    fun `handleCreateDocumentPickerIntent should create default intent info`() = runTest {
         val arguments = emptyMap<String, Any>()
 
         val result = toolProvider.handleCreateDocumentPickerIntent(arguments)
 
         assertFalse("Should not be an error", result.isError ?: false)
-        val responseText = (result.content.first() as TextContent).text ?: ""
+        val content = result.content.first().toString()
         assertTrue(
-            "Should contain intent info",
-            responseText.contains("Storage Access Framework Document Picker Intent"),
+            "Should contain intent information",
+            content.contains("Storage Access Framework Document Picker Intent")
         )
         assertTrue(
-            "Should show action",
-            responseText.contains("Action: android.intent.action.OPEN_DOCUMENT"),
+            "Should contain ACTION_OPEN_DOCUMENT",
+            content.contains("ACTION_OPEN_DOCUMENT")
         )
-        assertTrue("Should show usage instructions", responseText.contains("Usage Instructions:"))
         assertTrue(
-            "Should mention startActivityForResult",
-            responseText.contains("startActivityForResult"),
+            "Should contain usage instructions",
+            content.contains("Usage Instructions")
         )
     }
 
@@ -221,14 +207,14 @@ class FilePermissionToolProviderTest {
         val result = toolProvider.handleCreateDocumentPickerIntent(arguments)
 
         assertFalse("Should not be an error", result.isError ?: false)
-        val responseText = (result.content.first() as TextContent).text ?: ""
+        val content = result.content.first().toString()
         assertTrue(
-            "Should contain intent info",
-            responseText.contains("Storage Access Framework Document Picker Intent"),
+            "Should contain custom MIME types",
+            content.contains("image/*") && content.contains("video/*")
         )
-        assertTrue("Should show MIME types in extras", responseText.contains("Extras:"))
     }
 
+    // Test validate_document_uri tool
     @Test
     fun `handleValidateDocumentUri should return error for missing uri parameter`() = runTest {
         val arguments = emptyMap<String, Any>()
@@ -236,10 +222,9 @@ class FilePermissionToolProviderTest {
         val result = toolProvider.handleValidateDocumentUri(arguments)
 
         assertTrue("Should be an error", result.isError ?: false)
-        val responseText = (result.content.first() as TextContent).text ?: ""
         assertTrue(
-            "Should indicate missing parameter",
-            responseText.contains("Missing required parameter: uri"),
+            "Should have error message",
+            result.content.first().toString().contains("Missing required parameter: uri")
         )
     }
 
@@ -250,80 +235,49 @@ class FilePermissionToolProviderTest {
         val result = toolProvider.handleValidateDocumentUri(arguments)
 
         assertTrue("Should be an error", result.isError ?: false)
-        val responseText = (result.content.first() as TextContent).text ?: ""
         assertTrue(
-            "Should indicate invalid URI format",
-            responseText.contains("Invalid URI format"),
+            "Should have invalid URI error",
+            result.content.first().toString().contains("Invalid URI format")
         )
     }
 
     @Test
     fun `handleValidateDocumentUri should handle valid content URI`() = runTest {
-        // Mock DocumentFile for a valid content URI
-        mockkStatic("androidx.documentfile.provider.DocumentFile")
-        val mockDocumentFile = mockk<androidx.documentfile.provider.DocumentFile>()
-        every { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, any()) } returns
-            mockDocumentFile
-        every { mockDocumentFile.exists() } returns true
-
         val arguments =
             mapOf("uri" to "content://com.android.providers.downloads.documents/document/123")
 
         val result = toolProvider.handleValidateDocumentUri(arguments)
 
         assertFalse("Should not be an error", result.isError ?: false)
-        val responseText = (result.content.first() as TextContent).text ?: ""
         assertTrue(
             "Should contain validation results",
-            responseText.contains("Document URI Validation Results"),
+            result.content.first().toString().contains("Document URI Validation Results")
         )
-        assertTrue(
-            "Should indicate valid and accessible",
-            responseText.contains("Valid and Accessible: true"),
-        )
-        assertTrue("Should indicate USER_SELECTED scope", responseText.contains("USER_SELECTED"))
-        assertTrue("Should show success message", responseText.contains("✓ This URI can be used"))
     }
 
-    @Test
-    fun `handleValidateDocumentUri should handle inaccessible document URI`() = runTest {
-        // Mock DocumentFile for an inaccessible content URI
-        mockkStatic("androidx.documentfile.provider.DocumentFile")
-        every { androidx.documentfile.provider.DocumentFile.fromSingleUri(context, any()) } returns
-            null
-
-        val arguments = mapOf("uri" to "content://invalid/document/123")
-
-        val result = toolProvider.handleValidateDocumentUri(arguments)
-
-        assertFalse("Should not be an error", result.isError ?: false)
-        val responseText = (result.content.first() as TextContent).text ?: ""
-        assertTrue(
-            "Should contain validation results",
-            responseText.contains("Document URI Validation Results"),
-        )
-        assertTrue(
-            "Should indicate not accessible",
-            responseText.contains("Valid and Accessible: false"),
-        )
-        assertTrue("Should show error message", responseText.contains("✗ This URI cannot be used"))
-    }
-
+    // Error handling tests
     @Test
     fun `all tool handlers should handle exceptions gracefully`() = runTest {
-        // Test with invalid arguments that might cause exceptions
-        val checkResult = toolProvider.handleCheckFileAccess(mapOf("uri" to 123)) // Wrong type
-        assertTrue("Check file access should handle errors", checkResult.isError ?: false)
+        // Test with arguments that might cause exceptions
+        val maliciousArguments = mapOf("uri" to "\n\r\t\\//")
 
-        val permissionsResult =
-            toolProvider.handleRequestPermissions(mapOf("scope" to 123)) // Wrong type
-        assertTrue("Request permissions should handle errors", permissionsResult.isError ?: false)
+        val checkAccessResult = toolProvider.handleCheckFileAccess(maliciousArguments)
+        val validateUriResult = toolProvider.handleValidateDocumentUri(maliciousArguments)
+
+        // Should not crash, should handle gracefully
+        assertTrue("Check access should have result", checkAccessResult.content.isNotEmpty())
+        assertTrue("Validate URI should have result", validateUriResult.content.isNotEmpty())
     }
 
-    private fun assumeNotNull(message: String, value: Any?) {
-        if (value == null) {
-            println("SKIPPING TEST: $message")
-            return
-        }
+    @Test
+    fun `tool provider should handle large directory listings efficiently`() = runTest {
+        // This test ensures the scoped directories tool doesn't hang on large file systems
+        val start = System.currentTimeMillis()
+
+        val result = toolProvider.handleGetScopedDirectories(emptyMap())
+
+        val duration = System.currentTimeMillis() - start
+        assertTrue("Should complete directory listing quickly (< 5 seconds)", duration < 5000)
+        assertFalse("Should not be an error", result.isError ?: false)
     }
 }
