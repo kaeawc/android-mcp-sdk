@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+         <loc>https://jasonpearson.dev/android-mcp-sdk/</loc>
+         <lastmod>2025-06-01</lastmod>
+    </url>
+    <url>
+         <loc>https://jasonpearson.dev/android-mcp-sdk/COMPLETE_MCP_SERVER_WRAPPER/</loc>
+         <lastmod>2025-06-01</lastmod>
+    </url>
+    <url>
+         <loc>https://jasonpearson.dev/android-mcp-sdk/api-reference/</loc>
+         <lastmod>2025-06-01</lastmod>
+    </url>
+    <url>
+         <loc>https://jasonpearson.dev/android-mcp-sdk/getting-started/</loc>
+         <lastmod>2025-06-01</lastmod>
+    </url>
+    <url>
+         <loc>https://jasonpearson.dev/android-mcp-sdk/transport/</loc>
+         <lastmod>2025-06-01</lastmod>
+    </url>
+    <url>
+         <loc>https://jasonpearson.dev/android-mcp-sdk/usage/</loc>
+         <lastmod>2025-06-01</lastmod>
+    </url>
+    <url>
+         <loc>https://jasonpearson.dev/android-mcp-sdk/ai/implementation-summary/</loc>
+         <lastmod>2025-06-01</lastmod>
+    </url>
+    <url>
+         <loc>https://jasonpearson.dev/android-mcp-sdk/ai/validation/</loc>
+         <lastmod>2025-06-01</lastmod>
+    </url>
+</urlset>
