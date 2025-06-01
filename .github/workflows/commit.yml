@@ -349,6 +349,18 @@ jobs:
         working-directory: scripts/docs
         run: uv sync
 
-      - name: "Deploy documentation"
+      - name: "Build documentation"
         working-directory: scripts/docs
-        run: ./deploy.sh deploy
+        run: ./deploy.sh build
+
+      - name: "Setup Pages"
+        uses: actions/configure-pages@v5
+
+      - name: "Upload artifact"
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './site'
+
+      - name: "Deploy to GitHub Pages"
+        id: deployment
+        uses: actions/deploy-pages@v4
