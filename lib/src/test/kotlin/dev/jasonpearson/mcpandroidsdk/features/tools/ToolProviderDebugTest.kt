@@ -12,11 +12,7 @@ class ToolProviderDebugTest {
     private lateinit var mockContext: Context
     private lateinit var toolProvider: ToolProvider
 
-    @Serializable
-    data class SimpleInput(
-        val name: String,
-        val age: Int = 25
-    )
+    @Serializable data class SimpleInput(val name: String, val age: Int = 25)
 
     @Before
     fun setUp() {
@@ -91,7 +87,6 @@ class ToolProviderDebugTest {
             // Test 6: Call getAllFieldPaths
             val fields = toolProvider.getAllFieldPaths<SimpleInput>()
             println("getAllFieldPaths result: $fields")
-
         } catch (e: Exception) {
             println("Exception in detailed debug: ${e.message}")
             e.printStackTrace()

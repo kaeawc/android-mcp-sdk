@@ -25,34 +25,22 @@ class ToolProviderTest {
     data class UserSettings(
         val theme: String = "light",
         val notifications: Boolean = true,
-        val language: String = "en"
+        val language: String = "en",
     )
 
     @Serializable
-    data class DatabaseConfig(
-        val host: String,
-        val port: Int = 5432,
-        val ssl: Boolean = false
-    )
+    data class DatabaseConfig(val host: String, val port: Int = 5432, val ssl: Boolean = false)
+
+    @Serializable data class SimpleInput(val name: String, val age: Int = 25)
 
     @Serializable
-    data class SimpleInput(
-        val name: String,
-        val age: Int = 25
-    )
-
-    @Serializable
-    data class NestedInput(
-        val user: UserSettings,
-        val enabled: Boolean,
-        val count: Int = 10
-    )
+    data class NestedInput(val user: UserSettings, val enabled: Boolean, val count: Int = 10)
 
     @Serializable
     data class DeepNestedInput(
         val user: UserSettings,
         val database: DatabaseConfig,
-        val metadata: Map<String, String> = emptyMap()
+        val metadata: Map<String, String> = emptyMap(),
     )
 
     @Serializable
@@ -60,7 +48,7 @@ class ToolProviderTest {
         val id: String,
         val settings: UserSettings = UserSettings(),
         val config: DatabaseConfig? = null,
-        val active: Boolean = true
+        val active: Boolean = true,
     )
 
     @Before
@@ -124,13 +112,19 @@ class ToolProviderTest {
     fun `should flatten JsonObject recursively`() {
         val jsonObject = buildJsonObject {
             put("name", JsonPrimitive("test"))
-            put("user", buildJsonObject {
-                put("id", JsonPrimitive(123))
-                put("profile", buildJsonObject {
-                    put("bio", JsonPrimitive("hello"))
-                    put("age", JsonPrimitive(30))
-                })
-            })
+            put(
+                "user",
+                buildJsonObject {
+                    put("id", JsonPrimitive(123))
+                    put(
+                        "profile",
+                        buildJsonObject {
+                            put("bio", JsonPrimitive("hello"))
+                            put("age", JsonPrimitive(30))
+                        },
+                    )
+                },
+            )
             put("active", JsonPrimitive(true))
         }
 
@@ -167,9 +161,10 @@ class ToolProviderTest {
     fun `should throw exception for invalid required fields`() {
         val invalidFields = listOf("name", "invalid_field", "age")
 
-        val exception = assertThrows(IllegalArgumentException::class.java) {
-            toolProvider.validateFieldPaths<SimpleInput>(invalidFields, "required")
-        }
+        val exception =
+            assertThrows(IllegalArgumentException::class.java) {
+                toolProvider.validateFieldPaths<SimpleInput>(invalidFields, "required")
+            }
 
         assertTrue(exception.message?.contains("Invalid required fields for SimpleInput") ?: false)
         assertTrue(exception.message?.contains("invalid_field") ?: false)
@@ -180,9 +175,10 @@ class ToolProviderTest {
     fun `should throw exception for invalid nested fields`() {
         val invalidFields = listOf("user.invalid", "enabled", "user.bad_field")
 
-        val exception = assertThrows(IllegalArgumentException::class.java) {
-            toolProvider.validateFieldPaths<NestedInput>(invalidFields, "optional")
-        }
+        val exception =
+            assertThrows(IllegalArgumentException::class.java) {
+                toolProvider.validateFieldPaths<NestedInput>(invalidFields, "optional")
+            }
 
         assertTrue(exception.message?.contains("Invalid optional fields for NestedInput") ?: false)
         assertTrue(exception.message?.contains("user.invalid") ?: false)
@@ -206,7 +202,7 @@ class ToolProviderTest {
         toolProvider.addTool<SimpleInput>(
             name = "simple_tool",
             description = "A simple test tool",
-            required = listOf("name")
+            required = listOf("name"),
         ) { input ->
             receivedInput = input
             CallToolResult(content = listOf(TextContent(text = "OK")))
@@ -227,17 +223,18 @@ class ToolProviderTest {
         toolProvider.addTool<NestedInput>(
             name = "nested_tool",
             description = "A nested test tool",
-            required = listOf("user.theme", "enabled")
+            required = listOf("user.theme", "enabled"),
         ) { input ->
             receivedInput = input
             CallToolResult(content = listOf(TextContent(text = "OK")))
         }
 
-        val arguments = mapOf(
-            "user" to mapOf("theme" to "dark", "notifications" to false, "language" to "es"),
-            "enabled" to true,
-            "count" to 5
-        )
+        val arguments =
+            mapOf(
+                "user" to mapOf("theme" to "dark", "notifications" to false, "language" to "es"),
+                "enabled" to true,
+                "count" to 5,
+            )
         val result = toolProvider.callTool("nested_tool", arguments)
 
         assertEquals("dark", receivedInput?.user?.theme)
@@ -253,7 +250,7 @@ class ToolProviderTest {
             toolProvider.addTool<SimpleInput>(
                 name = "invalid_tool",
                 description = "Tool with invalid fields",
-                required = listOf("name", "invalid_field")
+                required = listOf("name", "invalid_field"),
             ) {
                 CallToolResult(content = listOf(TextContent(text = "OK")))
             }
@@ -268,7 +265,7 @@ class ToolProviderTest {
         toolProvider.addTool<SimpleInput>(
             name = "optional_simple",
             description = "Simple tool with optional fields",
-            optional = listOf("age").asOptional()
+            optional = listOf("age").asOptional(),
         ) { input ->
             receivedInput = input
             CallToolResult(content = listOf(TextContent(text = "OK")))
@@ -288,23 +285,19 @@ class ToolProviderTest {
         toolProvider.addTool<ComplexInput>(
             name = "optional_complex",
             description = "Complex tool with optional nested fields",
-            optional = ToolProvider.OptionalFields(
-                listOf(
-                    "settings.theme",
-                    "config.port",
-                    "active"
-                )
-            )
+            optional =
+                ToolProvider.OptionalFields(listOf("settings.theme", "config.port", "active")),
         ) { input ->
             receivedInput = input
             CallToolResult(content = listOf(TextContent(text = "OK")))
         }
 
-        val arguments = mapOf(
-            "id" to "test123",
-            "settings" to mapOf("notifications" to false, "language" to "fr"),
-            "config" to mapOf("host" to "localhost", "ssl" to true)
-        )
+        val arguments =
+            mapOf(
+                "id" to "test123",
+                "settings" to mapOf("notifications" to false, "language" to "fr"),
+                "config" to mapOf("host" to "localhost", "ssl" to true),
+            )
         toolProvider.callTool("optional_complex", arguments)
 
         assertEquals("test123", receivedInput?.id)
@@ -321,7 +314,7 @@ class ToolProviderTest {
             toolProvider.addTool<NestedInput>(
                 name = "invalid_optional",
                 description = "Tool with invalid optional fields",
-                optional = listOf("user.invalid", "bad_field").asOptional()
+                optional = listOf("user.invalid", "bad_field").asOptional(),
             ) {
                 CallToolResult(content = listOf(TextContent(text = "OK")))
             }
@@ -330,20 +323,19 @@ class ToolProviderTest {
 
     @Test
     fun `should calculate required fields correctly from optional`() = runTest {
-        // If we make user.theme and count optional, then user.notifications, user.language, and enabled should be required
+        // If we make user.theme and count optional, then user.notifications, user.language, and
+        // enabled should be required
         toolProvider.addTool<NestedInput>(
             name = "calculated_required",
             description = "Tool with calculated required fields",
-            optional = listOf("user.theme", "count").asOptional()
+            optional = listOf("user.theme", "count").asOptional(),
         ) { input ->
             CallToolResult(content = listOf(TextContent(text = "OK")))
         }
 
         // This should succeed with required fields provided
-        val validArgs = mapOf(
-            "user" to mapOf("notifications" to true, "language" to "en"),
-            "enabled" to true
-        )
+        val validArgs =
+            mapOf("user" to mapOf("notifications" to true, "language" to "en"), "enabled" to true)
         val result = toolProvider.callTool("calculated_required", validArgs)
         assertFalse(result.isError ?: true)
     }
@@ -356,17 +348,14 @@ class ToolProviderTest {
         toolProvider.addTool<ComplexInput>(
             name = "execution_test",
             description = "Test tool execution",
-            required = listOf("id")
+            required = listOf("id"),
         ) { input ->
             executedInput = input
             CallToolResult(content = listOf(TextContent(text = "Executed with id: ${input.id}")))
         }
 
-        val arguments = mapOf(
-            "id" to "test123",
-            "settings" to mapOf("theme" to "dark"),
-            "active" to false
-        )
+        val arguments =
+            mapOf("id" to "test123", "settings" to mapOf("theme" to "dark"), "active" to false)
 
         val result = toolProvider.callTool("execution_test", arguments)
 
@@ -383,7 +372,7 @@ class ToolProviderTest {
         toolProvider.addTool<SimpleInput>(
             name = "error_test",
             description = "Tool that throws error",
-            required = listOf("name")
+            required = listOf("name"),
         ) { input ->
             throw RuntimeException("Test error")
         }
@@ -401,7 +390,7 @@ class ToolProviderTest {
         toolProvider.addTool<SimpleInput>(
             name = "invalid_args_test",
             description = "Tool with invalid args test",
-            required = listOf("name")
+            required = listOf("name"),
         ) { input ->
             CallToolResult(content = listOf(TextContent(text = "OK")))
         }
@@ -434,7 +423,7 @@ class ToolProviderTest {
         toolProvider.addTool<SimpleInput>(
             name = "removable_tool",
             description = "Tool to be removed",
-            required = listOf("name")
+            required = listOf("name"),
         ) {
             CallToolResult(content = listOf(TextContent(text = "OK")))
         }

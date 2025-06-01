@@ -7,6 +7,8 @@ import android.util.Log
 import io.modelcontextprotocol.kotlin.sdk.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.TextContent
 import io.modelcontextprotocol.kotlin.sdk.Tool
+import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -17,8 +19,6 @@ import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonObject
-import java.util.Locale
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Provider for MCP tools that exposes Android-specific functionality to MCP clients.
@@ -29,7 +29,6 @@ import java.util.concurrent.ConcurrentHashMap
  * ## Nested Object Support
  *
  * The type-safe addTool methods now support nested @Serializable objects with dot notation:
- *
  * ```kotlin
  * @Serializable
  * data class User(val name: String, val email: String)
@@ -69,16 +68,10 @@ class ToolProvider(private val context: Context) {
         val placeholder: String? = null // Empty input schema
     )
 
-    @Serializable
-    data class AppInfoInput(
-        val package_name: String? = null
-    )
+    @Serializable data class AppInfoInput(val package_name: String? = null)
 
     @Serializable
-    data class SystemTimeInput(
-        val format: String = "iso",
-        val timezone: String? = null
-    )
+    data class SystemTimeInput(val format: String = "iso", val timezone: String? = null)
 
     @Serializable
     data class MemoryInfoInput(
@@ -152,9 +145,7 @@ class ToolProvider(private val context: Context) {
         return fields
     }
 
-    /**
-     * Get all flattened field paths from a data class, including nested objects.
-     */
+    /** Get all flattened field paths from a data class, including nested objects. */
     public inline fun <reified T> getAllFieldPaths(): List<String> {
         return try {
             val sampleInstance = T::class.java.getDeclaredConstructor().newInstance()
@@ -166,12 +157,10 @@ class ToolProvider(private val context: Context) {
         }
     }
 
-    /**
-     * Validate that all specified field paths exist in the data class.
-     */
+    /** Validate that all specified field paths exist in the data class. */
     public inline fun <reified T> validateFieldPaths(
         fieldPaths: List<String>,
-        fieldType: String
+        fieldType: String,
     ): List<String> {
         val allFields = getAllFieldPaths<T>()
         val invalidFields = fieldPaths.filterNot { it in allFields }
@@ -196,9 +185,7 @@ class ToolProvider(private val context: Context) {
         return builtInTools + customToolList
     }
 
-    /**
-     * Call a specific tool by name with the provided arguments
-     */
+    /** Call a specific tool by name with the provided arguments */
     internal suspend fun callTool(name: String, arguments: Map<String, Any>): CallToolResult {
         Log.d(TAG, "Calling tool: $name with arguments: $arguments")
 
@@ -222,29 +209,22 @@ class ToolProvider(private val context: Context) {
     }
 
     /** Internal method to add a tool with its handler (used by type-safe methods) */
-    public fun addToolInternal(
-        tool: Tool,
-        handler: suspend (Map<String, Any>) -> CallToolResult
-    ) {
+    public fun addToolInternal(tool: Tool, handler: suspend (Map<String, Any>) -> CallToolResult) {
         customTools[tool.name] = Pair(tool, handler)
         Log.i(TAG, "Added custom tool: ${tool.name}")
     }
 
-    /**
-     * Wrapper class to distinguish optional fields specification from required fields.
-     */
-    @JvmInline
-    value class OptionalFields(val fields: List<String>)
+    /** Wrapper class to distinguish optional fields specification from required fields. */
+    @JvmInline value class OptionalFields(val fields: List<String>)
 
-    /**
-     * Convenience extension to create OptionalFields from a list.
-     */
+    /** Convenience extension to create OptionalFields from a list. */
     fun List<String>.asOptional() = OptionalFields(this)
 
     /**
      * Add a custom tool with type-safe input handling using optional field specification.
      *
-     * This automatically calculates required fields by taking all fields and excluding the optional ones.
+     * This automatically calculates required fields by taking all fields and excluding the optional
+     * ones.
      *
      * Example usage:
      * ```kotlin
@@ -291,7 +271,7 @@ class ToolProvider(private val context: Context) {
         name: String,
         description: String,
         optional: OptionalFields,
-        noinline handler: suspend (T) -> CallToolResult
+        noinline handler: suspend (T) -> CallToolResult,
     ) {
         // Validate optional field paths
         val validatedOptional = validateFieldPaths<T>(optional.fields, "optional")
@@ -303,12 +283,7 @@ class ToolProvider(private val context: Context) {
         val required = allFields.filterNot { it in validatedOptional }
 
         // Delegate to the existing required-based implementation
-        addTool(
-            name = name,
-            description = description,
-            required = required,
-            handler = handler
-        )
+        addTool(name = name, description = description, required = required, handler = handler)
     }
 
     /**
@@ -359,47 +334,44 @@ class ToolProvider(private val context: Context) {
         name: String,
         description: String,
         required: List<String> = emptyList(),
-        noinline handler: suspend (T) -> CallToolResult
+        noinline handler: suspend (T) -> CallToolResult,
     ) {
         // Validate field paths
         val validatedRequired = validateFieldPaths<T>(required, "required")
 
         // Create a sample instance to generate the schema
-        val schemaGenerator = try {
-            // Try to create instance with no-arg constructor
-            T::class.java.getDeclaredConstructor().newInstance()
-        } catch (e: Exception) {
-            // If no no-arg constructor, we'll generate schema differently
-            null
-        }
+        val schemaGenerator =
+            try {
+                // Try to create instance with no-arg constructor
+                T::class.java.getDeclaredConstructor().newInstance()
+            } catch (e: Exception) {
+                // If no no-arg constructor, we'll generate schema differently
+                null
+            }
 
-        val inputSchema = if (schemaGenerator != null) {
-            // Generate schema from the data class
-            val jsonSchema = schemaGenerator.toJsonObject()
+        val inputSchema =
+            if (schemaGenerator != null) {
+                // Generate schema from the data class
+                val jsonSchema = schemaGenerator.toJsonObject()
 
-            // Convert to proper JSON Schema format
-            Tool.Input(
-                properties = buildJsonObject {
-                    put("type", JsonPrimitive("object"))
-                    put("properties", jsonSchema)
-                },
-                required = validatedRequired
-            )
-        } else {
-            // Fallback to simple object schema
-            Tool.Input(
-                properties = buildJsonObject {
-                    put("type", JsonPrimitive("object"))
-                },
-                required = validatedRequired
-            )
-        }
+                // Convert to proper JSON Schema format
+                Tool.Input(
+                    properties =
+                        buildJsonObject {
+                            put("type", JsonPrimitive("object"))
+                            put("properties", jsonSchema)
+                        },
+                    required = validatedRequired,
+                )
+            } else {
+                // Fallback to simple object schema
+                Tool.Input(
+                    properties = buildJsonObject { put("type", JsonPrimitive("object")) },
+                    required = validatedRequired,
+                )
+            }
 
-        val tool = Tool(
-            name = name,
-            description = description,
-            inputSchema = inputSchema
-        )
+        val tool = Tool(name = name, description = description, inputSchema = inputSchema)
 
         // Wrapper handler that converts Map to typed input
         val typedHandler: suspend (Map<String, Any>) -> CallToolResult = { arguments ->
@@ -410,7 +382,7 @@ class ToolProvider(private val context: Context) {
                 Log.e(TAG, "Failed to parse tool arguments for $name", e)
                 CallToolResult(
                     content = listOf(TextContent(text = "Invalid tool arguments: ${e.message}")),
-                    isError = true
+                    isError = true,
                 )
             }
         }
@@ -473,12 +445,11 @@ class ToolProvider(private val context: Context) {
         return Tool(
             name = "device_info",
             description = "Get information about the Android device",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {
-                    put("type", JsonPrimitive("object"))
-                },
-                required = emptyList()
-            ),
+            inputSchema =
+                Tool.Input(
+                    properties = buildJsonObject { put("type", JsonPrimitive("object")) },
+                    required = emptyList(),
+                ),
         )
     }
 
@@ -486,21 +457,31 @@ class ToolProvider(private val context: Context) {
         return Tool(
             name = "app_info",
             description = "Get information about installed applications",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {
-                    put("type", JsonPrimitive("object"))
-                    put("properties", buildJsonObject {
-                        put("package_name", buildJsonObject {
-                            put("type", JsonPrimitive("string"))
+            inputSchema =
+                Tool.Input(
+                    properties =
+                        buildJsonObject {
+                            put("type", JsonPrimitive("object"))
                             put(
-                                "description",
-                                JsonPrimitive("Package name of the app (optional, if not provided returns current app info)")
+                                "properties",
+                                buildJsonObject {
+                                    put(
+                                        "package_name",
+                                        buildJsonObject {
+                                            put("type", JsonPrimitive("string"))
+                                            put(
+                                                "description",
+                                                JsonPrimitive(
+                                                    "Package name of the app (optional, if not provided returns current app info)"
+                                                ),
+                                            )
+                                        },
+                                    )
+                                },
                             )
-                        })
-                    })
-                },
-                required = emptyList(),
-            ),
+                        },
+                    required = emptyList(),
+                ),
         )
     }
 
@@ -508,34 +489,52 @@ class ToolProvider(private val context: Context) {
         return Tool(
             name = "system_time",
             description = "Get current system time in various formats",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {
-                    put("type", JsonPrimitive("object"))
-                    put("properties", buildJsonObject {
-                        put("format", buildJsonObject {
-                            put("type", JsonPrimitive("string"))
+            inputSchema =
+                Tool.Input(
+                    properties =
+                        buildJsonObject {
+                            put("type", JsonPrimitive("object"))
                             put(
-                                "description",
-                                JsonPrimitive("Time format (iso, timestamp, readable)")
+                                "properties",
+                                buildJsonObject {
+                                    put(
+                                        "format",
+                                        buildJsonObject {
+                                            put("type", JsonPrimitive("string"))
+                                            put(
+                                                "description",
+                                                JsonPrimitive(
+                                                    "Time format (iso, timestamp, readable)"
+                                                ),
+                                            )
+                                            put(
+                                                "enum",
+                                                buildJsonArray {
+                                                    add(JsonPrimitive("iso"))
+                                                    add(JsonPrimitive("timestamp"))
+                                                    add(JsonPrimitive("readable"))
+                                                },
+                                            )
+                                            put("default", JsonPrimitive("iso"))
+                                        },
+                                    )
+                                    put(
+                                        "timezone",
+                                        buildJsonObject {
+                                            put("type", JsonPrimitive("string"))
+                                            put(
+                                                "description",
+                                                JsonPrimitive(
+                                                    "Timezone (optional, defaults to system timezone)"
+                                                ),
+                                            )
+                                        },
+                                    )
+                                },
                             )
-                            put("enum", buildJsonArray {
-                                add(JsonPrimitive("iso"))
-                                add(JsonPrimitive("timestamp"))
-                                add(JsonPrimitive("readable"))
-                            })
-                            put("default", JsonPrimitive("iso"))
-                        })
-                        put("timezone", buildJsonObject {
-                            put("type", JsonPrimitive("string"))
-                            put(
-                                "description",
-                                JsonPrimitive("Timezone (optional, defaults to system timezone)")
-                            )
-                        })
-                    })
-                },
-                required = emptyList(),
-            ),
+                        },
+                    required = emptyList(),
+                ),
         )
     }
 
@@ -543,12 +542,11 @@ class ToolProvider(private val context: Context) {
         return Tool(
             name = "memory_info",
             description = "Get current memory usage information",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {
-                    put("type", JsonPrimitive("object"))
-                },
-                required = emptyList()
-            ),
+            inputSchema =
+                Tool.Input(
+                    properties = buildJsonObject { put("type", JsonPrimitive("object")) },
+                    required = emptyList(),
+                ),
         )
     }
 
@@ -556,24 +554,24 @@ class ToolProvider(private val context: Context) {
         return Tool(
             name = "battery_info",
             description = "Get current battery status and information",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {
-                    put("type", JsonPrimitive("object"))
-                },
-                required = emptyList()
-            ),
+            inputSchema =
+                Tool.Input(
+                    properties = buildJsonObject { put("type", JsonPrimitive("object")) },
+                    required = emptyList(),
+                ),
         )
     }
 
     // Built-in tool implementations
 
     private fun getDeviceInfo(arguments: Map<String, Any>): CallToolResult {
-        val input = try {
-            arguments.toDataClass<DeviceInfoInput>()
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to parse device_info arguments, using defaults", e)
-            DeviceInfoInput()
-        }
+        val input =
+            try {
+                arguments.toDataClass<DeviceInfoInput>()
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to parse device_info arguments, using defaults", e)
+                DeviceInfoInput()
+            }
 
         val deviceInfo = buildString {
             appendLine("Device Information:")
@@ -592,12 +590,13 @@ class ToolProvider(private val context: Context) {
     }
 
     private fun getAppInfo(arguments: Map<String, Any>): CallToolResult {
-        val input = try {
-            arguments.toDataClass<AppInfoInput>()
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to parse app_info arguments, using defaults", e)
-            AppInfoInput()
-        }
+        val input =
+            try {
+                arguments.toDataClass<AppInfoInput>()
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to parse app_info arguments, using defaults", e)
+                AppInfoInput()
+            }
 
         val packageName = input.package_name ?: context.packageName
 
@@ -640,12 +639,13 @@ class ToolProvider(private val context: Context) {
     }
 
     private fun getSystemTime(arguments: Map<String, Any>): CallToolResult {
-        val input = try {
-            arguments.toDataClass<SystemTimeInput>()
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to parse system_time arguments, using defaults", e)
-            SystemTimeInput()
-        }
+        val input =
+            try {
+                arguments.toDataClass<SystemTimeInput>()
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to parse system_time arguments, using defaults", e)
+                SystemTimeInput()
+            }
 
         val currentTime = System.currentTimeMillis()
         val timeInfo = buildString {
@@ -702,12 +702,13 @@ class ToolProvider(private val context: Context) {
     }
 
     private fun getMemoryInfo(arguments: Map<String, Any>): CallToolResult {
-        val input = try {
-            arguments.toDataClass<MemoryInfoInput>()
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to parse memory_info arguments, using defaults", e)
-            MemoryInfoInput()
-        }
+        val input =
+            try {
+                arguments.toDataClass<MemoryInfoInput>()
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to parse memory_info arguments, using defaults", e)
+                MemoryInfoInput()
+            }
 
         val activityManager =
             context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
@@ -740,12 +741,13 @@ class ToolProvider(private val context: Context) {
     }
 
     private fun getBatteryInfo(arguments: Map<String, Any>): CallToolResult {
-        val input = try {
-            arguments.toDataClass<BatteryInfoInput>()
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to parse battery_info arguments, using defaults", e)
-            BatteryInfoInput()
-        }
+        val input =
+            try {
+                arguments.toDataClass<BatteryInfoInput>()
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to parse battery_info arguments, using defaults", e)
+                BatteryInfoInput()
+            }
 
         val batteryManager =
             context.getSystemService(Context.BATTERY_SERVICE) as android.os.BatteryManager
