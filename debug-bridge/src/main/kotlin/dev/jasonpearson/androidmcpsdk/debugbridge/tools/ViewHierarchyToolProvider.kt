@@ -11,11 +11,14 @@ import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
-
 import dev.jasonpearson.androidmcpsdk.core.features.tools.ToolRegistry
 import io.modelcontextprotocol.kotlin.sdk.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.TextContent
 import io.modelcontextprotocol.kotlin.sdk.Tool
+import java.lang.reflect.Field
+import java.lang.reflect.Method
+import java.util.WeakHashMap
+import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -27,10 +30,6 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
-import java.lang.reflect.Field
-import java.lang.reflect.Method
-import java.util.WeakHashMap
-import java.util.concurrent.atomic.AtomicLong
 
 /** Provides UI view hierarchy inspection tools for the debug bridge. */
 class ViewHierarchyToolProvider(private val context: Context) {
@@ -48,27 +47,21 @@ class ViewHierarchyToolProvider(private val context: Context) {
         val includeInvisible: Boolean = false,
         val maxDepth: Int? = null,
         val trackRecompositions: Boolean = false,
-        val includePackageInfo: Boolean = true
+        val includePackageInfo: Boolean = true,
     )
 
     @Serializable
     data class ViewSearchInput(
         val text: String,
         val exactMatch: Boolean = false,
-        val includePackageInfo: Boolean = true
+        val includePackageInfo: Boolean = true,
     )
 
     @Serializable
-    data class ViewIdSearchInput(
-        val id: String,
-        val includePackageInfo: Boolean = true
-    )
+    data class ViewIdSearchInput(val id: String, val includePackageInfo: Boolean = true)
 
     @Serializable
-    data class ViewClassSearchInput(
-        val className: String,
-        val includePackageInfo: Boolean = true
-    )
+    data class ViewClassSearchInput(val className: String, val includePackageInfo: Boolean = true)
 
     @Serializable
     data class StreamingConfigInput(
@@ -76,7 +69,7 @@ class ViewHierarchyToolProvider(private val context: Context) {
         val intervalMs: Long = DEFAULT_POLLING_INTERVAL_MS,
         val includeInvisible: Boolean = false,
         val maxDepth: Int? = null,
-        val trackRecompositions: Boolean = true
+        val trackRecompositions: Boolean = true,
     )
 
     @Serializable
@@ -96,7 +89,7 @@ class ViewHierarchyToolProvider(private val context: Context) {
         val viewType: ViewType,
         val frameworkInfo: FrameworkInfo? = null,
         val recompositionCount: Long? = null,
-        val children: List<ViewNode> = emptyList()
+        val children: List<ViewNode> = emptyList(),
     )
 
     @Serializable
@@ -107,7 +100,7 @@ class ViewHierarchyToolProvider(private val context: Context) {
         CIRCUIT_SCREEN,
         WORKFLOW_RENDERING,
         CUSTOM_VIEW,
-        UNKNOWN
+        UNKNOWN,
     }
 
     @Serializable
@@ -115,7 +108,7 @@ class ViewHierarchyToolProvider(private val context: Context) {
         val framework: String,
         val componentType: String? = null,
         val screenName: String? = null,
-        val stateInfo: Map<String, String> = emptyMap()
+        val stateInfo: Map<String, String> = emptyMap(),
     )
 
     private var currentActivity: Activity? = null
@@ -132,7 +125,9 @@ class ViewHierarchyToolProvider(private val context: Context) {
         (context.applicationContext as? Application)?.registerActivityLifecycleCallbacks(
             object : Application.ActivityLifecycleCallbacks {
                 override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
+
                 override fun onActivityStarted(activity: Activity) {}
+
                 override fun onActivityResumed(activity: Activity) {
                     currentActivity = activity
                     setupViewTreeObserver(activity)
@@ -146,8 +141,11 @@ class ViewHierarchyToolProvider(private val context: Context) {
                         cleanupViewTreeObserver(activity)
                     }
                 }
+
                 override fun onActivityStopped(activity: Activity) {}
+
                 override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+
                 override fun onActivityDestroyed(activity: Activity) {
                     if (currentActivity == activity) {
                         currentActivity = null
@@ -168,19 +166,13 @@ class ViewHierarchyToolProvider(private val context: Context) {
         }
 
         // Find views by text tool
-        registry.addTool(createViewFindByTextTool()) { arguments ->
-            findViewsByText(arguments)
-        }
+        registry.addTool(createViewFindByTextTool()) { arguments -> findViewsByText(arguments) }
 
         // Find views by ID tool
-        registry.addTool(createViewFindByIdTool()) { arguments ->
-            findViewsById(arguments)
-        }
+        registry.addTool(createViewFindByIdTool()) { arguments -> findViewsById(arguments) }
 
         // Find views by class tool
-        registry.addTool(createViewFindByClassTool()) { arguments ->
-            findViewsByClass(arguments)
-        }
+        registry.addTool(createViewFindByClassTool()) { arguments -> findViewsByClass(arguments) }
 
         // Configure streaming tool
         registry.addTool(createConfigureStreamingTool()) { arguments ->
@@ -198,44 +190,71 @@ class ViewHierarchyToolProvider(private val context: Context) {
     private fun createViewHierarchyCaptureTool(): Tool {
         return Tool(
             name = "view_hierarchy_capture",
-            description = "Capture current view hierarchy of the active activity with modern framework support",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {
-                    put("type", JsonPrimitive("object"))
-                    put("properties", buildJsonObject {
-                        put("includeInvisible", buildJsonObject {
-                            put("type", JsonPrimitive("boolean"))
+            description =
+                "Capture current view hierarchy of the active activity with modern framework support",
+            inputSchema =
+                Tool.Input(
+                    properties =
+                        buildJsonObject {
+                            put("type", JsonPrimitive("object"))
                             put(
-                                "description",
-                                JsonPrimitive("Include invisible views in the hierarchy")
+                                "properties",
+                                buildJsonObject {
+                                    put(
+                                        "includeInvisible",
+                                        buildJsonObject {
+                                            put("type", JsonPrimitive("boolean"))
+                                            put(
+                                                "description",
+                                                JsonPrimitive(
+                                                    "Include invisible views in the hierarchy"
+                                                ),
+                                            )
+                                            put("default", JsonPrimitive(false))
+                                        },
+                                    )
+                                    put(
+                                        "maxDepth",
+                                        buildJsonObject {
+                                            put("type", JsonPrimitive("integer"))
+                                            put(
+                                                "description",
+                                                JsonPrimitive(
+                                                    "Maximum depth to traverse (optional)"
+                                                ),
+                                            )
+                                            put("minimum", JsonPrimitive(1))
+                                        },
+                                    )
+                                    put(
+                                        "trackRecompositions",
+                                        buildJsonObject {
+                                            put("type", JsonPrimitive("boolean"))
+                                            put(
+                                                "description",
+                                                JsonPrimitive("Track Compose recomposition counts"),
+                                            )
+                                            put("default", JsonPrimitive(false))
+                                        },
+                                    )
+                                    put(
+                                        "includePackageInfo",
+                                        buildJsonObject {
+                                            put("type", JsonPrimitive("boolean"))
+                                            put(
+                                                "description",
+                                                JsonPrimitive(
+                                                    "Include detailed package information for custom views"
+                                                ),
+                                            )
+                                            put("default", JsonPrimitive(true))
+                                        },
+                                    )
+                                },
                             )
-                            put("default", JsonPrimitive(false))
-                        })
-                        put("maxDepth", buildJsonObject {
-                            put("type", JsonPrimitive("integer"))
-                            put(
-                                "description",
-                                JsonPrimitive("Maximum depth to traverse (optional)")
-                            )
-                            put("minimum", JsonPrimitive(1))
-                        })
-                        put("trackRecompositions", buildJsonObject {
-                            put("type", JsonPrimitive("boolean"))
-                            put("description", JsonPrimitive("Track Compose recomposition counts"))
-                            put("default", JsonPrimitive(false))
-                        })
-                        put("includePackageInfo", buildJsonObject {
-                            put("type", JsonPrimitive("boolean"))
-                            put(
-                                "description",
-                                JsonPrimitive("Include detailed package information for custom views")
-                            )
-                            put("default", JsonPrimitive(true))
-                        })
-                    })
-                },
-                required = emptyList()
-            )
+                        },
+                    required = emptyList(),
+                ),
         )
     }
 
@@ -243,34 +262,55 @@ class ViewHierarchyToolProvider(private val context: Context) {
         return Tool(
             name = "view_find_by_text",
             description = "Find views containing specific text with framework detection",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {
-                    put("type", JsonPrimitive("object"))
-                    put("properties", buildJsonObject {
-                        put("text", buildJsonObject {
-                            put("type", JsonPrimitive("string"))
-                            put("description", JsonPrimitive("Text to search for in views"))
-                        })
-                        put("exactMatch", buildJsonObject {
-                            put("type", JsonPrimitive("boolean"))
+            inputSchema =
+                Tool.Input(
+                    properties =
+                        buildJsonObject {
+                            put("type", JsonPrimitive("object"))
                             put(
-                                "description",
-                                JsonPrimitive("Whether to match text exactly or use contains")
+                                "properties",
+                                buildJsonObject {
+                                    put(
+                                        "text",
+                                        buildJsonObject {
+                                            put("type", JsonPrimitive("string"))
+                                            put(
+                                                "description",
+                                                JsonPrimitive("Text to search for in views"),
+                                            )
+                                        },
+                                    )
+                                    put(
+                                        "exactMatch",
+                                        buildJsonObject {
+                                            put("type", JsonPrimitive("boolean"))
+                                            put(
+                                                "description",
+                                                JsonPrimitive(
+                                                    "Whether to match text exactly or use contains"
+                                                ),
+                                            )
+                                            put("default", JsonPrimitive(false))
+                                        },
+                                    )
+                                    put(
+                                        "includePackageInfo",
+                                        buildJsonObject {
+                                            put("type", JsonPrimitive("boolean"))
+                                            put(
+                                                "description",
+                                                JsonPrimitive(
+                                                    "Include detailed package information"
+                                                ),
+                                            )
+                                            put("default", JsonPrimitive(true))
+                                        },
+                                    )
+                                },
                             )
-                            put("default", JsonPrimitive(false))
-                        })
-                        put("includePackageInfo", buildJsonObject {
-                            put("type", JsonPrimitive("boolean"))
-                            put(
-                                "description",
-                                JsonPrimitive("Include detailed package information")
-                            )
-                            put("default", JsonPrimitive(true))
-                        })
-                    })
-                },
-                required = listOf("text")
-            )
+                        },
+                    required = listOf("text"),
+                ),
         )
     }
 
@@ -278,26 +318,42 @@ class ViewHierarchyToolProvider(private val context: Context) {
         return Tool(
             name = "view_find_by_id",
             description = "Find views by resource ID with framework detection",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {
-                    put("type", JsonPrimitive("object"))
-                    put("properties", buildJsonObject {
-                        put("id", buildJsonObject {
-                            put("type", JsonPrimitive("string"))
-                            put("description", JsonPrimitive("Resource ID to search for"))
-                        })
-                        put("includePackageInfo", buildJsonObject {
-                            put("type", JsonPrimitive("boolean"))
+            inputSchema =
+                Tool.Input(
+                    properties =
+                        buildJsonObject {
+                            put("type", JsonPrimitive("object"))
                             put(
-                                "description",
-                                JsonPrimitive("Include detailed package information")
+                                "properties",
+                                buildJsonObject {
+                                    put(
+                                        "id",
+                                        buildJsonObject {
+                                            put("type", JsonPrimitive("string"))
+                                            put(
+                                                "description",
+                                                JsonPrimitive("Resource ID to search for"),
+                                            )
+                                        },
+                                    )
+                                    put(
+                                        "includePackageInfo",
+                                        buildJsonObject {
+                                            put("type", JsonPrimitive("boolean"))
+                                            put(
+                                                "description",
+                                                JsonPrimitive(
+                                                    "Include detailed package information"
+                                                ),
+                                            )
+                                            put("default", JsonPrimitive(true))
+                                        },
+                                    )
+                                },
                             )
-                            put("default", JsonPrimitive(true))
-                        })
-                    })
-                },
-                required = listOf("id")
-            )
+                        },
+                    required = listOf("id"),
+                ),
         )
     }
 
@@ -305,26 +361,42 @@ class ViewHierarchyToolProvider(private val context: Context) {
         return Tool(
             name = "view_find_by_class",
             description = "Find views by class name with framework detection",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {
-                    put("type", JsonPrimitive("object"))
-                    put("properties", buildJsonObject {
-                        put("className", buildJsonObject {
-                            put("type", JsonPrimitive("string"))
-                            put("description", JsonPrimitive("Class name to search for"))
-                        })
-                        put("includePackageInfo", buildJsonObject {
-                            put("type", JsonPrimitive("boolean"))
+            inputSchema =
+                Tool.Input(
+                    properties =
+                        buildJsonObject {
+                            put("type", JsonPrimitive("object"))
                             put(
-                                "description",
-                                JsonPrimitive("Include detailed package information")
+                                "properties",
+                                buildJsonObject {
+                                    put(
+                                        "className",
+                                        buildJsonObject {
+                                            put("type", JsonPrimitive("string"))
+                                            put(
+                                                "description",
+                                                JsonPrimitive("Class name to search for"),
+                                            )
+                                        },
+                                    )
+                                    put(
+                                        "includePackageInfo",
+                                        buildJsonObject {
+                                            put("type", JsonPrimitive("boolean"))
+                                            put(
+                                                "description",
+                                                JsonPrimitive(
+                                                    "Include detailed package information"
+                                                ),
+                                            )
+                                            put("default", JsonPrimitive(true))
+                                        },
+                                    )
+                                },
                             )
-                            put("default", JsonPrimitive(true))
-                        })
-                    })
-                },
-                required = listOf("className")
-            )
+                        },
+                    required = listOf("className"),
+                ),
         )
     }
 
@@ -332,39 +404,77 @@ class ViewHierarchyToolProvider(private val context: Context) {
         return Tool(
             name = "view_hierarchy_configure_streaming",
             description = "Configure real-time streaming of view hierarchy changes over SSE",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {
-                    put("type", JsonPrimitive("object"))
-                    put("properties", buildJsonObject {
-                        put("enabled", buildJsonObject {
-                            put("type", JsonPrimitive("boolean"))
-                            put("description", JsonPrimitive("Enable or disable streaming"))
-                        })
-                        put("intervalMs", buildJsonObject {
-                            put("type", JsonPrimitive("integer"))
-                            put("description", JsonPrimitive("Polling interval in milliseconds"))
-                            put("default", JsonPrimitive(DEFAULT_POLLING_INTERVAL_MS))
-                            put("minimum", JsonPrimitive(100))
-                        })
-                        put("includeInvisible", buildJsonObject {
-                            put("type", JsonPrimitive("boolean"))
-                            put("description", JsonPrimitive("Include invisible views"))
-                            put("default", JsonPrimitive(false))
-                        })
-                        put("maxDepth", buildJsonObject {
-                            put("type", JsonPrimitive("integer"))
-                            put("description", JsonPrimitive("Maximum depth to traverse"))
-                            put("minimum", JsonPrimitive(1))
-                        })
-                        put("trackRecompositions", buildJsonObject {
-                            put("type", JsonPrimitive("boolean"))
-                            put("description", JsonPrimitive("Track Compose recompositions"))
-                            put("default", JsonPrimitive(true))
-                        })
-                    })
-                },
-                required = listOf("enabled")
-            )
+            inputSchema =
+                Tool.Input(
+                    properties =
+                        buildJsonObject {
+                            put("type", JsonPrimitive("object"))
+                            put(
+                                "properties",
+                                buildJsonObject {
+                                    put(
+                                        "enabled",
+                                        buildJsonObject {
+                                            put("type", JsonPrimitive("boolean"))
+                                            put(
+                                                "description",
+                                                JsonPrimitive("Enable or disable streaming"),
+                                            )
+                                        },
+                                    )
+                                    put(
+                                        "intervalMs",
+                                        buildJsonObject {
+                                            put("type", JsonPrimitive("integer"))
+                                            put(
+                                                "description",
+                                                JsonPrimitive("Polling interval in milliseconds"),
+                                            )
+                                            put(
+                                                "default",
+                                                JsonPrimitive(DEFAULT_POLLING_INTERVAL_MS),
+                                            )
+                                            put("minimum", JsonPrimitive(100))
+                                        },
+                                    )
+                                    put(
+                                        "includeInvisible",
+                                        buildJsonObject {
+                                            put("type", JsonPrimitive("boolean"))
+                                            put(
+                                                "description",
+                                                JsonPrimitive("Include invisible views"),
+                                            )
+                                            put("default", JsonPrimitive(false))
+                                        },
+                                    )
+                                    put(
+                                        "maxDepth",
+                                        buildJsonObject {
+                                            put("type", JsonPrimitive("integer"))
+                                            put(
+                                                "description",
+                                                JsonPrimitive("Maximum depth to traverse"),
+                                            )
+                                            put("minimum", JsonPrimitive(1))
+                                        },
+                                    )
+                                    put(
+                                        "trackRecompositions",
+                                        buildJsonObject {
+                                            put("type", JsonPrimitive("boolean"))
+                                            put(
+                                                "description",
+                                                JsonPrimitive("Track Compose recompositions"),
+                                            )
+                                            put("default", JsonPrimitive(true))
+                                        },
+                                    )
+                                },
+                            )
+                        },
+                    required = listOf("enabled"),
+                ),
         )
     }
 
@@ -372,12 +482,11 @@ class ViewHierarchyToolProvider(private val context: Context) {
         return Tool(
             name = "view_hierarchy_get_recomposition_stats",
             description = "Get Compose recomposition statistics and performance metrics",
-            inputSchema = Tool.Input(
-                properties = buildJsonObject {
-                    put("type", JsonPrimitive("object"))
-                },
-                required = emptyList()
-            )
+            inputSchema =
+                Tool.Input(
+                    properties = buildJsonObject { put("type", JsonPrimitive("object")) },
+                    required = emptyList(),
+                ),
         )
     }
 
@@ -390,21 +499,28 @@ class ViewHierarchyToolProvider(private val context: Context) {
         val activity = currentActivity
         if (activity == null) {
             return CallToolResult(
-                content = listOf(TextContent(text = "No active activity found. Make sure the app is in the foreground.")),
-                isError = true
+                content =
+                    listOf(
+                        TextContent(
+                            text =
+                                "No active activity found. Make sure the app is in the foreground."
+                        )
+                    ),
+                isError = true,
             )
         }
 
         try {
             val rootView = activity.findViewById<View>(android.R.id.content)
-            val hierarchy = captureViewNode(
-                rootView,
-                includeInvisible,
-                maxDepth,
-                0,
-                trackRecompositions,
-                includePackageInfo
-            )
+            val hierarchy =
+                captureViewNode(
+                    rootView,
+                    includeInvisible,
+                    maxDepth,
+                    0,
+                    trackRecompositions,
+                    includePackageInfo,
+                )
 
             val result = buildString {
                 appendLine("View Hierarchy:")
@@ -414,15 +530,13 @@ class ViewHierarchyToolProvider(private val context: Context) {
                 appendViewNode(hierarchy, 0)
             }
 
-            return CallToolResult(
-                content = listOf(TextContent(text = result)),
-                isError = false
-            )
+            return CallToolResult(content = listOf(TextContent(text = result)), isError = false)
         } catch (e: Exception) {
             Log.e(TAG, "Error capturing view hierarchy", e)
             return CallToolResult(
-                content = listOf(TextContent(text = "Error capturing view hierarchy: ${e.message}")),
-                isError = true
+                content =
+                    listOf(TextContent(text = "Error capturing view hierarchy: ${e.message}")),
+                isError = true,
             )
         }
     }
@@ -435,13 +549,14 @@ class ViewHierarchyToolProvider(private val context: Context) {
         val maxDepth = (arguments["maxDepth"] as? Number)?.toInt()
         val trackRecompositions = arguments["trackRecompositions"] as? Boolean ?: true
 
-        streamingConfig = StreamingConfigInput(
-            enabled = enabled,
-            intervalMs = intervalMs,
-            includeInvisible = includeInvisible,
-            maxDepth = maxDepth,
-            trackRecompositions = trackRecompositions
-        )
+        streamingConfig =
+            StreamingConfigInput(
+                enabled = enabled,
+                intervalMs = intervalMs,
+                includeInvisible = includeInvisible,
+                maxDepth = maxDepth,
+                trackRecompositions = trackRecompositions,
+            )
 
         isStreamingEnabled = enabled
 
@@ -462,10 +577,7 @@ class ViewHierarchyToolProvider(private val context: Context) {
             }
         }
 
-        return CallToolResult(
-            content = listOf(TextContent(text = result)),
-            isError = false
-        )
+        return CallToolResult(content = listOf(TextContent(text = result)), isError = false)
     }
 
     private suspend fun getRecompositionStats(arguments: Map<String, Any>): CallToolResult {
@@ -486,36 +598,35 @@ class ViewHierarchyToolProvider(private val context: Context) {
             }
         }
 
-        return CallToolResult(
-            content = listOf(TextContent(text = result)),
-            isError = false
-        )
+        return CallToolResult(content = listOf(TextContent(text = result)), isError = false)
     }
 
     private fun startStreaming() {
         stopStreaming() // Stop any existing streaming
 
-        streamingJob = CoroutineScope(Dispatchers.Main).launch {
-            while (isActive && isStreamingEnabled) {
-                currentActivity?.let { activity ->
-                    try {
-                        val rootView = activity.findViewById<View>(android.R.id.content)
-                        val hierarchy = captureViewNode(
-                            rootView,
-                            streamingConfig.includeInvisible,
-                            streamingConfig.maxDepth,
-                            0,
-                            streamingConfig.trackRecompositions,
-                            true
-                        )
-                        hierarchyStream.emit(hierarchy)
-                    } catch (e: Exception) {
-                        Log.w(TAG, "Error during streaming capture", e)
+        streamingJob =
+            CoroutineScope(Dispatchers.Main).launch {
+                while (isActive && isStreamingEnabled) {
+                    currentActivity?.let { activity ->
+                        try {
+                            val rootView = activity.findViewById<View>(android.R.id.content)
+                            val hierarchy =
+                                captureViewNode(
+                                    rootView,
+                                    streamingConfig.includeInvisible,
+                                    streamingConfig.maxDepth,
+                                    0,
+                                    streamingConfig.trackRecompositions,
+                                    true,
+                                )
+                            hierarchyStream.emit(hierarchy)
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Error during streaming capture", e)
+                        }
                     }
+                    delay(streamingConfig.intervalMs)
                 }
-                delay(streamingConfig.intervalMs)
             }
-        }
     }
 
     private fun stopStreaming() {
@@ -527,9 +638,8 @@ class ViewHierarchyToolProvider(private val context: Context) {
         if (!streamingConfig.trackRecompositions) return
 
         val rootView = activity.findViewById<View>(android.R.id.content) ?: return
-        val listener = ViewTreeObserver.OnGlobalLayoutListener {
-            recompositionTracker.onLayoutChange()
-        }
+        val listener =
+            ViewTreeObserver.OnGlobalLayoutListener { recompositionTracker.onLayoutChange() }
 
         rootView.viewTreeObserver.addOnGlobalLayoutListener(listener)
         viewTreeObservers[activity] = listener
@@ -548,7 +658,7 @@ class ViewHierarchyToolProvider(private val context: Context) {
         maxDepth: Int?,
         currentDepth: Int,
         trackRecompositions: Boolean,
-        includePackageInfo: Boolean
+        includePackageInfo: Boolean,
     ): ViewNode {
         val bounds = Rect()
         view.getGlobalVisibleRect(bounds)
@@ -568,7 +678,7 @@ class ViewHierarchyToolProvider(private val context: Context) {
                                 maxDepth,
                                 currentDepth + 1,
                                 trackRecompositions,
-                                includePackageInfo
+                                includePackageInfo,
                             )
                         )
                     }
@@ -579,9 +689,10 @@ class ViewHierarchyToolProvider(private val context: Context) {
         val fullClassName = view.javaClass.name
         val viewType = determineViewType(view, fullClassName)
         val frameworkInfo = extractFrameworkInfo(view, viewType)
-        val recompositionCount = if (trackRecompositions) {
-            recompositionTracker.getRecompositionCount(view)
-        } else null
+        val recompositionCount =
+            if (trackRecompositions) {
+                recompositionTracker.getRecompositionCount(view)
+            } else null
 
         return ViewNode(
             id = getViewIdName(view),
@@ -599,7 +710,7 @@ class ViewHierarchyToolProvider(private val context: Context) {
             viewType = viewType,
             frameworkInfo = frameworkInfo,
             recompositionCount = recompositionCount,
-            children = children
+            children = children,
         )
     }
 
@@ -617,37 +728,33 @@ class ViewHierarchyToolProvider(private val context: Context) {
 
     private fun isComposeView(view: View, fullClassName: String): Boolean {
         return fullClassName == COMPOSE_VIEW_CLASS ||
-                fullClassName.contains("compose", ignoreCase = true)
+            fullClassName.contains("compose", ignoreCase = true)
     }
 
     private fun isCircuitScreen(view: View, fullClassName: String): Boolean {
         return fullClassName.contains("circuit", ignoreCase = true) ||
-                fullClassName.contains("slack", ignoreCase = true) ||
-                hasCircuitAnnotations(view.javaClass)
+            fullClassName.contains("slack", ignoreCase = true) ||
+            hasCircuitAnnotations(view.javaClass)
     }
 
     private fun isWorkflowRendering(view: View, fullClassName: String): Boolean {
         return fullClassName.contains("workflow", ignoreCase = true) ||
-                fullClassName.contains("square", ignoreCase = true) ||
-                hasWorkflowInterfaces(view.javaClass)
+            fullClassName.contains("square", ignoreCase = true) ||
+            hasWorkflowInterfaces(view.javaClass)
     }
 
     private fun isCustomView(fullClassName: String): Boolean {
         return !fullClassName.startsWith(ANDROID_PACKAGE_PREFIX) &&
-                !fullClassName.startsWith(ANDROIDX_PACKAGE_PREFIX) &&
-                !fullClassName.startsWith("java.") &&
-                !fullClassName.startsWith("kotlin.")
+            !fullClassName.startsWith(ANDROIDX_PACKAGE_PREFIX) &&
+            !fullClassName.startsWith("java.") &&
+            !fullClassName.startsWith("kotlin.")
     }
 
     private fun hasCircuitAnnotations(clazz: Class<*>): Boolean {
         return try {
             clazz.annotations.any {
-                it.annotationClass.qualifiedName?.contains(
-                    "circuit",
-                    true
-                ) == true
-            } ||
-                    clazz.interfaces.any { it.name.contains("circuit", true) }
+                it.annotationClass.qualifiedName?.contains("circuit", true) == true
+            } || clazz.interfaces.any { it.name.contains("circuit", true) }
         } catch (e: Exception) {
             false
         }
@@ -656,10 +763,7 @@ class ViewHierarchyToolProvider(private val context: Context) {
     private fun hasWorkflowInterfaces(clazz: Class<*>): Boolean {
         return try {
             clazz.interfaces.any {
-                it.name.contains(
-                    "workflow",
-                    true
-                ) || it.name.contains("rendering", true)
+                it.name.contains("workflow", true) || it.name.contains("rendering", true)
             }
         } catch (e: Exception) {
             false
@@ -698,7 +802,7 @@ class ViewHierarchyToolProvider(private val context: Context) {
                 framework = "Circuit",
                 componentType = "Screen",
                 screenName = view.javaClass.simpleName,
-                stateInfo = stateInfo
+                stateInfo = stateInfo,
             )
         } catch (e: Exception) {
             Log.w(TAG, "Failed to extract Circuit info", e)
@@ -712,14 +816,12 @@ class ViewHierarchyToolProvider(private val context: Context) {
 
             // Try to extract Workflow-specific information
             val renderingMethod = findMethodByName(view.javaClass, "render")
-            renderingMethod?.let {
-                stateInfo["hasRenderMethod"] = "true"
-            }
+            renderingMethod?.let { stateInfo["hasRenderMethod"] = "true" }
 
             FrameworkInfo(
                 framework = "Workflow",
                 componentType = "Rendering",
-                stateInfo = stateInfo
+                stateInfo = stateInfo,
             )
         } catch (e: Exception) {
             Log.w(TAG, "Failed to extract Workflow info", e)
@@ -742,7 +844,7 @@ class ViewHierarchyToolProvider(private val context: Context) {
             FrameworkInfo(
                 framework = "Compose",
                 componentType = "ComposeView",
-                stateInfo = stateInfo
+                stateInfo = stateInfo,
             )
         } catch (e: Exception) {
             Log.w(TAG, "Failed to extract Compose info", e)
@@ -762,9 +864,7 @@ class ViewHierarchyToolProvider(private val context: Context) {
 
     private fun findMethodByName(clazz: Class<*>, methodName: String): Method? {
         return try {
-            clazz.methods.find { method ->
-                method.name.equals(methodName, ignoreCase = true)
-            }
+            clazz.methods.find { method -> method.name.equals(methodName, ignoreCase = true) }
         } catch (e: Exception) {
             null
         }
@@ -779,7 +879,7 @@ class ViewHierarchyToolProvider(private val context: Context) {
         if (searchText.isNullOrBlank()) {
             return CallToolResult(
                 content = listOf(TextContent(text = "Search text cannot be empty")),
-                isError = true
+                isError = true,
             )
         }
 
@@ -787,7 +887,7 @@ class ViewHierarchyToolProvider(private val context: Context) {
         if (activity == null) {
             return CallToolResult(
                 content = listOf(TextContent(text = "No active activity found")),
-                isError = true
+                isError = true,
             )
         }
 
@@ -800,7 +900,7 @@ class ViewHierarchyToolProvider(private val context: Context) {
                 exactMatch,
                 matchingViews,
                 0,
-                includePackageInfo
+                includePackageInfo,
             )
 
             val result = buildString {
@@ -823,15 +923,12 @@ class ViewHierarchyToolProvider(private val context: Context) {
                 }
             }
 
-            return CallToolResult(
-                content = listOf(TextContent(text = result)),
-                isError = false
-            )
+            return CallToolResult(content = listOf(TextContent(text = result)), isError = false)
         } catch (e: Exception) {
             Log.e(TAG, "Error finding views by text", e)
             return CallToolResult(
                 content = listOf(TextContent(text = "Error finding views: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }
@@ -843,7 +940,7 @@ class ViewHierarchyToolProvider(private val context: Context) {
         if (searchId.isNullOrBlank()) {
             return CallToolResult(
                 content = listOf(TextContent(text = "Search ID cannot be empty")),
-                isError = true
+                isError = true,
             )
         }
 
@@ -851,7 +948,7 @@ class ViewHierarchyToolProvider(private val context: Context) {
         if (activity == null) {
             return CallToolResult(
                 content = listOf(TextContent(text = "No active activity found")),
-                isError = true
+                isError = true,
             )
         }
 
@@ -880,15 +977,12 @@ class ViewHierarchyToolProvider(private val context: Context) {
                 }
             }
 
-            return CallToolResult(
-                content = listOf(TextContent(text = result)),
-                isError = false
-            )
+            return CallToolResult(content = listOf(TextContent(text = result)), isError = false)
         } catch (e: Exception) {
             Log.e(TAG, "Error finding views by ID", e)
             return CallToolResult(
                 content = listOf(TextContent(text = "Error finding views: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }
@@ -900,7 +994,7 @@ class ViewHierarchyToolProvider(private val context: Context) {
         if (searchClass.isNullOrBlank()) {
             return CallToolResult(
                 content = listOf(TextContent(text = "Search class name cannot be empty")),
-                isError = true
+                isError = true,
             )
         }
 
@@ -908,7 +1002,7 @@ class ViewHierarchyToolProvider(private val context: Context) {
         if (activity == null) {
             return CallToolResult(
                 content = listOf(TextContent(text = "No active activity found")),
-                isError = true
+                isError = true,
             )
         }
 
@@ -938,15 +1032,12 @@ class ViewHierarchyToolProvider(private val context: Context) {
                 }
             }
 
-            return CallToolResult(
-                content = listOf(TextContent(text = result)),
-                isError = false
-            )
+            return CallToolResult(content = listOf(TextContent(text = result)), isError = false)
         } catch (e: Exception) {
             Log.e(TAG, "Error finding views by class", e)
             return CallToolResult(
                 content = listOf(TextContent(text = "Error finding views: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }
@@ -957,17 +1048,18 @@ class ViewHierarchyToolProvider(private val context: Context) {
         exactMatch: Boolean,
         matches: MutableList<ViewNode>,
         depth: Int,
-        includePackageInfo: Boolean
+        includePackageInfo: Boolean,
     ) {
         val viewText = getViewText(view)
         val contentDesc = view.contentDescription?.toString()
 
-        val textMatches = if (exactMatch) {
-            viewText == searchText || contentDesc == searchText
-        } else {
-            viewText?.contains(searchText, ignoreCase = true) == true ||
+        val textMatches =
+            if (exactMatch) {
+                viewText == searchText || contentDesc == searchText
+            } else {
+                viewText?.contains(searchText, ignoreCase = true) == true ||
                     contentDesc?.contains(searchText, ignoreCase = true) == true
-        }
+            }
 
         if (textMatches) {
             matches.add(captureViewNode(view, false, 0, depth, false, includePackageInfo))
@@ -981,7 +1073,7 @@ class ViewHierarchyToolProvider(private val context: Context) {
                     exactMatch,
                     matches,
                     depth + 1,
-                    includePackageInfo
+                    includePackageInfo,
                 )
             }
         }
@@ -992,12 +1084,14 @@ class ViewHierarchyToolProvider(private val context: Context) {
         searchId: String,
         matches: MutableList<ViewNode>,
         depth: Int,
-        includePackageInfo: Boolean
+        includePackageInfo: Boolean,
     ) {
         val viewId = getViewIdName(view)
-        if (viewId != null && (viewId == searchId || viewId.endsWith(":id/$searchId") || viewId.endsWith(
-                "/$searchId"
-            ))
+        if (
+            viewId != null &&
+                (viewId == searchId ||
+                    viewId.endsWith(":id/$searchId") ||
+                    viewId.endsWith("/$searchId"))
         ) {
             matches.add(captureViewNode(view, false, 0, depth, false, includePackageInfo))
         }
@@ -1009,7 +1103,7 @@ class ViewHierarchyToolProvider(private val context: Context) {
                     searchId,
                     matches,
                     depth + 1,
-                    includePackageInfo
+                    includePackageInfo,
                 )
             }
         }
@@ -1020,12 +1114,16 @@ class ViewHierarchyToolProvider(private val context: Context) {
         searchClass: String,
         matches: MutableList<ViewNode>,
         depth: Int,
-        includePackageInfo: Boolean
+        includePackageInfo: Boolean,
     ) {
         val className = view.javaClass.simpleName
         val fullClassName = view.javaClass.name
 
-        if (className == searchClass || fullClassName == searchClass || fullClassName.endsWith(".$searchClass")) {
+        if (
+            className == searchClass ||
+                fullClassName == searchClass ||
+                fullClassName.endsWith(".$searchClass")
+        ) {
             matches.add(captureViewNode(view, false, 0, depth, false, includePackageInfo))
         }
 
@@ -1036,7 +1134,7 @@ class ViewHierarchyToolProvider(private val context: Context) {
                     searchClass,
                     matches,
                     depth + 1,
-                    includePackageInfo
+                    includePackageInfo,
                 )
             }
         }
@@ -1058,11 +1156,12 @@ class ViewHierarchyToolProvider(private val context: Context) {
         return when (view) {
             is android.widget.TextView -> view.text?.toString()
             is android.widget.Button -> view.text?.toString()
-            is android.widget.EditText -> if (view.inputType and android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD != 0) {
-                "[PASSWORD FIELD]"
-            } else {
-                view.text?.toString()
-            }
+            is android.widget.EditText ->
+                if (view.inputType and android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD != 0) {
+                    "[PASSWORD FIELD]"
+                } else {
+                    view.text?.toString()
+                }
             else -> null
         }
     }
@@ -1073,9 +1172,12 @@ class ViewHierarchyToolProvider(private val context: Context) {
         if (node.packageName != null) appendLine("$indent  Package: ${node.packageName}")
         if (node.id != null) appendLine("$indent  ID: ${node.id}")
         if (node.text != null) appendLine("$indent  Text: ${node.text}")
-        if (node.contentDescription != null) appendLine("$indent  Description: ${node.contentDescription}")
+        if (node.contentDescription != null)
+            appendLine("$indent  Description: ${node.contentDescription}")
         appendLine("$indent  Bounds: ${node.bounds}")
-        appendLine("$indent  Visible: ${node.isVisible}, Clickable: ${node.isClickable}, Focusable: ${node.isFocusable}, Enabled: ${node.isEnabled}")
+        appendLine(
+            "$indent  Visible: ${node.isVisible}, Clickable: ${node.isClickable}, Focusable: ${node.isFocusable}, Enabled: ${node.isEnabled}"
+        )
 
         node.frameworkInfo?.let { info ->
             appendLine("$indent  Framework: ${info.framework} (${info.componentType})")
@@ -1084,15 +1186,11 @@ class ViewHierarchyToolProvider(private val context: Context) {
             }
         }
 
-        node.recompositionCount?.let { count ->
-            appendLine("$indent  Recompositions: $count")
-        }
+        node.recompositionCount?.let { count -> appendLine("$indent  Recompositions: $count") }
 
         if (node.children.isNotEmpty()) {
             appendLine("$indent  Children:")
-            node.children.forEach { child ->
-                appendViewNode(child, indentLevel + 2)
-            }
+            node.children.forEach { child -> appendViewNode(child, indentLevel + 2) }
         }
     }
 
@@ -1100,9 +1198,7 @@ class ViewHierarchyToolProvider(private val context: Context) {
     fun getHierarchyStream(): SharedFlow<ViewNode> = hierarchyStream
 }
 
-/**
- * Tracks Compose recomposition counts and performance metrics
- */
+/** Tracks Compose recomposition counts and performance metrics */
 private class RecompositionTracker {
     private val recompositionCounts = WeakHashMap<View, AtomicLong>()
     private val totalRecompositions = AtomicLong(0)
@@ -1126,7 +1222,7 @@ private class RecompositionTracker {
         val totalRecompositions: Long,
         val activeComposables: Int,
         val averageRecompositions: Double,
-        val topRecomposingViews: List<Pair<String, Long>>
+        val topRecomposingViews: List<Pair<String, Long>>,
     )
 
     fun getStats(): RecompositionStats {
@@ -1134,19 +1230,20 @@ private class RecompositionTracker {
         val active = recompositionCounts.size
         val average = if (active > 0) total.toDouble() / active else 0.0
 
-        val topViews = recompositionCounts.entries
-            .map { (view, count) ->
-                val viewId = view.javaClass.simpleName to count.get()
-                viewId
-            }
-            .sortedByDescending { it.second }
-            .take(10)
+        val topViews =
+            recompositionCounts.entries
+                .map { (view, count) ->
+                    val viewId = view.javaClass.simpleName to count.get()
+                    viewId
+                }
+                .sortedByDescending { it.second }
+                .take(10)
 
         return RecompositionStats(
             totalRecompositions = total,
             activeComposables = active,
             averageRecompositions = average,
-            topRecomposingViews = topViews
+            topRecomposingViews = topViews,
         )
     }
 }

@@ -34,9 +34,7 @@ class ViewHierarchyToolProviderTest {
         viewHierarchyProvider.registerTools(toolRegistry)
 
         // Then - verify that exactly 6 tools are registered
-        verify(exactly = 6) {
-            toolRegistry.addTool(any(), any())
-        }
+        verify(exactly = 6) { toolRegistry.addTool(any(), any()) }
     }
 
     @Test
@@ -45,12 +43,7 @@ class ViewHierarchyToolProviderTest {
         viewHierarchyProvider.registerTools(toolRegistry)
 
         // Then
-        verify {
-            toolRegistry.addTool(
-                match { it.name == "view_hierarchy_capture" },
-                any()
-            )
-        }
+        verify { toolRegistry.addTool(match { it.name == "view_hierarchy_capture" }, any()) }
     }
 
     @Test
@@ -59,12 +52,7 @@ class ViewHierarchyToolProviderTest {
         viewHierarchyProvider.registerTools(toolRegistry)
 
         // Then
-        verify {
-            toolRegistry.addTool(
-                match { it.name == "view_find_by_text" },
-                any()
-            )
-        }
+        verify { toolRegistry.addTool(match { it.name == "view_find_by_text" }, any()) }
     }
 
     @Test
@@ -73,12 +61,7 @@ class ViewHierarchyToolProviderTest {
         viewHierarchyProvider.registerTools(toolRegistry)
 
         // Then
-        verify {
-            toolRegistry.addTool(
-                match { it.name == "view_find_by_id" },
-                any()
-            )
-        }
+        verify { toolRegistry.addTool(match { it.name == "view_find_by_id" }, any()) }
     }
 
     @Test
@@ -87,12 +70,7 @@ class ViewHierarchyToolProviderTest {
         viewHierarchyProvider.registerTools(toolRegistry)
 
         // Then
-        verify {
-            toolRegistry.addTool(
-                match { it.name == "view_find_by_class" },
-                any()
-            )
-        }
+        verify { toolRegistry.addTool(match { it.name == "view_find_by_class" }, any()) }
     }
 
     @Test
@@ -102,10 +80,7 @@ class ViewHierarchyToolProviderTest {
 
         // Then
         verify {
-            toolRegistry.addTool(
-                match { it.name == "view_hierarchy_configure_streaming" },
-                any()
-            )
+            toolRegistry.addTool(match { it.name == "view_hierarchy_configure_streaming" }, any())
         }
     }
 
@@ -118,7 +93,7 @@ class ViewHierarchyToolProviderTest {
         verify {
             toolRegistry.addTool(
                 match { it.name == "view_hierarchy_get_recomposition_stats" },
-                any()
+                any(),
             )
         }
     }
