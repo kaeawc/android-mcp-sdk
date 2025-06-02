@@ -12,6 +12,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import androidx.core.net.toUri
 
 /** Tool provider for file permission management and storage access debugging. */
 class FilePermissionToolProvider(private val context: Context) {
@@ -404,7 +405,7 @@ class FilePermissionToolProvider(private val context: Context) {
 
             val uri =
                 try {
-                    Uri.parse(uriString)
+                    uriString.toUri()
                 } catch (e: Exception) {
                     return CallToolResult(
                         content = listOf(TextContent(text = "Invalid URI format: $uriString")),

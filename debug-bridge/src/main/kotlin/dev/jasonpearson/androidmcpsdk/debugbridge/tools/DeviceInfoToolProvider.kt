@@ -126,9 +126,7 @@ class DeviceInfoToolProvider(private val context: Context) {
             appendLine("Fingerprint: ${Build.FINGERPRINT}")
             appendLine("Incremental: ${Build.VERSION.INCREMENTAL}")
             appendLine("Codename: ${Build.VERSION.CODENAME}")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                appendLine("Security Patch: ${Build.VERSION.SECURITY_PATCH}")
-            }
+            appendLine("Security Patch: ${Build.VERSION.SECURITY_PATCH}")
         }
 
         return CallToolResult(content = listOf(TextContent(text = systemInfo)), isError = false)

@@ -130,15 +130,7 @@ class AndroidSystemToolProvider(private val context: Context) {
 
             when (format.lowercase()) {
                 "iso" -> {
-                    val isoTime =
-                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                            java.time.Instant.ofEpochMilli(currentTime).toString()
-                        } else {
-                            java.text
-                                .SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
-                                .apply { timeZone = java.util.TimeZone.getTimeZone("UTC") }
-                                .format(java.util.Date(currentTime))
-                        }
+                    val isoTime = java.time.Instant.ofEpochMilli(currentTime).toString()
                     appendLine("- ISO Format: $isoTime")
                 }
 
@@ -155,15 +147,7 @@ class AndroidSystemToolProvider(private val context: Context) {
                 }
 
                 else -> {
-                    val isoTime =
-                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                            java.time.Instant.ofEpochMilli(currentTime).toString()
-                        } else {
-                            java.text
-                                .SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
-                                .apply { timeZone = java.util.TimeZone.getTimeZone("UTC") }
-                                .format(java.util.Date(currentTime))
-                        }
+                    val isoTime = java.time.Instant.ofEpochMilli(currentTime).toString()
                     appendLine("- ISO Format: $isoTime")
                     appendLine("- Timestamp: $currentTime")
                     appendLine(
@@ -238,10 +222,8 @@ class AndroidSystemToolProvider(private val context: Context) {
                 batteryManager.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY)
             appendLine("- Battery Level: $level%")
 
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-                val isCharging = batteryManager.isCharging
-                appendLine("- Charging: $isCharging")
-            }
+            val isCharging = batteryManager.isCharging
+            appendLine("- Charging: $isCharging")
 
             val chargeCounter =
                 batteryManager.getIntProperty(

@@ -9,6 +9,9 @@ import io.modelcontextprotocol.kotlin.sdk.Tool
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * Provides network tools for the debug bridge. Includes network inspection, monitoring, and
@@ -419,14 +422,14 @@ class NetworkToolProvider(private val context: Context) {
                         appendLine("   Method: ${request.method}")
                         appendLine("   Status: ${request.responseCode ?: "N/A"}")
                         appendLine("   Duration: ${request.duration ?: "N/A"}ms")
-                        appendLine("   Size: ${formatBytes(request.size)}")
+                        appendLine("   Size: ${formatFileSize(request.size)}")
                         if (request.error != null) {
                             appendLine("   ❌ Error: ${request.error}")
                         }
                         appendLine(
                             "   Time: ${
-                                java.text.SimpleDateFormat("HH:mm:ss.SSS")
-                                    .format(java.util.Date(request.startTime))
+                                SimpleDateFormat("HH:mm:ss.SSS", Locale.US)
+                                    .format(Date(request.startTime))
                             }"
                         )
                         appendLine()
@@ -487,11 +490,12 @@ class NetworkToolProvider(private val context: Context) {
 
                 appendLine("⚡ Performance Metrics:")
                 appendLine("   Total Time: ${analysis.performance.totalTime}ms")
-                appendLine("   Response Size: ${formatBytes(analysis.performance.responseSize)}")
+                appendLine("   Response Size: ${formatFileSize(analysis.performance.responseSize)}")
                 if (analysis.performance.bandwidth > 0) {
                     appendLine(
                         "   Bandwidth: ${
                             String.format(
+                                Locale.US,
                                 "%.2f",
                                 analysis.performance.bandwidth,
                             )
@@ -557,16 +561,12 @@ class NetworkToolProvider(private val context: Context) {
         }
     }
 
-    private fun formatBytes(bytes: Long): String {
-        val units = arrayOf("B", "KB", "MB", "GB", "TB")
-        var size = bytes.toDouble()
-        var unitIndex = 0
-
-        while (size >= 1024 && unitIndex < units.size - 1) {
-            size /= 1024
-            unitIndex++
-        }
-
-        return String.format("%.2f %s", size, units[unitIndex])
+    private fun formatFileSize(sizeInBytes: Long): String {
+        if (sizeInBytes <= 0) return "0 B"
+        val units = arrayOf("B", "KB", "MB", "GB")
+        val digitGroups = (Math.log10(sizeInBytes.toDouble()) / Math.log10(1024.0)).toInt()
+        val unitIndex = minOf(digitGroups, units.size - 1)
+        val size = sizeInBytes / Math.pow(1024.0, unitIndex.toDouble())
+        return String.format(Locale.US, "%.2f %s", size, units[unitIndex])
     }
 }

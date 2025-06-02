@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import dev.jasonpearson.androidmcpsdk.core.features.tools.ToolContributor
 import dev.jasonpearson.androidmcpsdk.core.features.tools.ToolRegistry
+import dev.jasonpearson.androidmcpsdk.debugbridge.tools.AccessibilityInspectionToolProvider
 import dev.jasonpearson.androidmcpsdk.debugbridge.tools.AndroidSystemToolProvider
 import dev.jasonpearson.androidmcpsdk.debugbridge.tools.ApplicationInfoToolProvider
 import dev.jasonpearson.androidmcpsdk.debugbridge.tools.DeviceInfoToolProvider
@@ -35,6 +36,7 @@ class DebugBridgeToolContributor(private val context: Context) : ToolContributor
         val storageProvider = StorageToolProvider(context)
         val filePermissionProvider = FilePermissionToolProvider(context)
         val viewHierarchyProvider = ViewHierarchyToolProvider(context)
+        val accessibilityProvider = AccessibilityInspectionToolProvider(context)
 
         // Register all tools from each provider
         deviceInfoProvider.registerTools(registry)
@@ -44,6 +46,7 @@ class DebugBridgeToolContributor(private val context: Context) : ToolContributor
         storageProvider.registerTools(registry)
         filePermissionProvider.registerTools(registry)
         viewHierarchyProvider.registerTools(registry)
+        accessibilityProvider.registerTools(registry)
 
         Log.i(TAG, "Debug-bridge tools registered successfully")
     }

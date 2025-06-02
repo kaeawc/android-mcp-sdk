@@ -11,6 +11,7 @@ import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
+import androidx.core.view.isVisible
 import dev.jasonpearson.androidmcpsdk.core.features.tools.ToolRegistry
 import io.modelcontextprotocol.kotlin.sdk.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.TextContent
@@ -670,7 +671,7 @@ class ViewHierarchyToolProvider(private val context: Context) {
             if (view is ViewGroup) {
                 for (i in 0 until view.childCount) {
                     val child = view.getChildAt(i)
-                    if (includeInvisible || child.visibility == View.VISIBLE) {
+                    if (includeInvisible || child.isVisible) {
                         children.add(
                             captureViewNode(
                                 child,
@@ -702,7 +703,7 @@ class ViewHierarchyToolProvider(private val context: Context) {
             bounds = "${bounds.left},${bounds.top},${bounds.right},${bounds.bottom}",
             text = getViewText(view),
             contentDescription = view.contentDescription?.toString(),
-            isVisible = view.visibility == View.VISIBLE,
+            isVisible = view.isVisible,
             isClickable = view.isClickable,
             isFocusable = view.isFocusable,
             isEnabled = view.isEnabled,

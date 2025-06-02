@@ -77,18 +77,11 @@ class ApplicationInfoToolProvider(private val context: Context) {
                 appendLine("- Package Name: $packageName")
                 appendLine("- Version Name: ${packageInfo.versionName}")
 
-                val versionCode =
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-                        packageInfo.longVersionCode
-                    } else {
-                        @Suppress("DEPRECATION") packageInfo.versionCode.toLong()
-                    }
+                val versionCode = packageInfo.longVersionCode
                 appendLine("- Version Code: $versionCode")
 
                 appendLine("- Target SDK: ${appInfo.targetSdkVersion}")
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                    appendLine("- Min SDK: ${appInfo.minSdkVersion}")
-                }
+                appendLine("- Min SDK: ${appInfo.minSdkVersion}")
                 appendLine(
                     "- Install Time: ${
                         java.text.SimpleDateFormat(
