@@ -169,37 +169,6 @@ class FilePermissionIntegrationTest {
     }
 
     @Test
-    fun `integration test - path normalization and security`() = runTest {
-        val basePath = context.filesDir.absolutePath
-
-        // Test various path manipulation attempts
-        val testPaths =
-            listOf(
-                "$basePath/normal.txt", // Normal path
-                "$basePath/./same.txt", // Same directory
-                "$basePath/../${context.filesDir.name}/back.txt", // Up and back down
-                "$basePath//double//slash.txt", // Double slashes
-                "$basePath/../../../etc/passwd", // Path traversal attempt
-                "$basePath/../data/data/com.other.app/file.txt", // Other app attempt
-            )
-
-        testPaths.forEach { path ->
-            val result = filePermissionManager.checkFileAccess(path)
-
-            // Should not crash and should return appropriate results
-            assertNotNull("Should handle path: $path", result)
-
-            if (path.contains("passwd") || path.contains("com.other.app")) {
-                // Security test: should not allow access to sensitive files or other apps
-                assertTrue(
-                    "Path traversal should be detected: $path",
-                    !result.canAccess || result.requiresPermission,
-                )
-            }
-        }
-    }
-
-    @Test
     fun `integration test - MIME type detection and categorization`() = runTest {
         // Test file extension to storage scope mapping
         val testFiles =

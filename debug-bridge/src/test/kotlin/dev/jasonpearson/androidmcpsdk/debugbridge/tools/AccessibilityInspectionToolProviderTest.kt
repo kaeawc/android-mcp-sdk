@@ -14,7 +14,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import dev.jasonpearson.androidmcpsdk.core.features.tools.ToolRegistry
+import dev.jasonpearson.androidmcpsdk.core.features.tools.McpToolProvider
 import io.mockk.*
 import io.modelcontextprotocol.kotlin.sdk.TextContent
 import kotlinx.coroutines.test.runTest
@@ -30,7 +30,7 @@ import org.robolectric.annotation.Config
 class AccessibilityInspectionToolProviderTest {
 
     private lateinit var context: Context
-    private lateinit var toolRegistry: ToolRegistry
+    private lateinit var toolProvider: McpToolProvider
     private lateinit var accessibilityManager: AccessibilityManager
     private lateinit var resources: Resources
     private lateinit var displayMetrics: DisplayMetrics
@@ -39,7 +39,7 @@ class AccessibilityInspectionToolProviderTest {
     @Before
     fun setup() {
         context = mockk(relaxed = true)
-        toolRegistry = mockk(relaxed = true)
+        toolProvider = mockk(relaxed = true)
         accessibilityManager = mockk(relaxed = true)
         resources = mockk(relaxed = true)
         displayMetrics = mockk(relaxed = true)
@@ -65,7 +65,7 @@ class AccessibilityInspectionToolProviderTest {
     @Test
     fun `registerTools should add exactly 3 accessibility tools to registry`() {
         // When
-        provider.registerTools(toolRegistry)
+        provider.registerTools(toolProvider)
 
         // Then
         verify(exactly = 3) { toolRegistry.addTool(any(), any()) }
@@ -74,7 +74,7 @@ class AccessibilityInspectionToolProviderTest {
     @Test
     fun `should register accessibility_capture tool`() {
         // When
-        provider.registerTools(toolRegistry)
+        provider.registerTools(toolProvider)
 
         // Then
         verify { toolRegistry.addTool(match { it.name == "accessibility_capture" }, any()) }
@@ -83,7 +83,7 @@ class AccessibilityInspectionToolProviderTest {
     @Test
     fun `should register accessibility_validate tool`() {
         // When
-        provider.registerTools(toolRegistry)
+        provider.registerTools(toolProvider)
 
         // Then
         verify { toolRegistry.addTool(match { it.name == "accessibility_validate" }, any()) }
@@ -92,7 +92,7 @@ class AccessibilityInspectionToolProviderTest {
     @Test
     fun `should register accessibility_service_status tool`() {
         // When
-        provider.registerTools(toolRegistry)
+        provider.registerTools(toolProvider)
 
         // Then
         verify { toolRegistry.addTool(match { it.name == "accessibility_service_status" }, any()) }
@@ -104,7 +104,7 @@ class AccessibilityInspectionToolProviderTest {
         provider.currentActivity = null
 
         // When
-        val result = provider.captureAccessibilityTree(emptyMap())
+        val result = provider.captureAccessibilityTree()
 
         // Then
         assertTrue(result.isError ?: false)
@@ -117,7 +117,7 @@ class AccessibilityInspectionToolProviderTest {
         provider.currentActivity = null
 
         // When
-        val result = provider.validateAccessibility(emptyMap())
+        val result = provider.validateAccessibility()
 
         // Then
         assertTrue(result.isError ?: false)
@@ -134,7 +134,7 @@ class AccessibilityInspectionToolProviderTest {
             enabledServices
 
         // When
-        val result = provider.getAccessibilityServiceStatus(emptyMap())
+        val result = provider.getAccessibilityServiceStatus()
 
         // Then
         assertFalse(result.isError ?: false)

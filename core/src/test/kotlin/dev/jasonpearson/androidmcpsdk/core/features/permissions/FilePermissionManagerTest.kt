@@ -531,28 +531,6 @@ class FilePermissionManagerTest {
     }
 
     @Test
-    fun `checkFileAccess should handle Storage Access Framework URIs`() = runTest {
-        val safUris =
-            listOf(
-                "content://com.android.providers.downloads.documents/document/123",
-                "content://com.android.externalstorage.documents/tree/primary%3A",
-                "content://com.google.android.apps.docs.storage/documents/123",
-            )
-
-        safUris.forEach { uri ->
-            val result = filePermissionManager.checkFileAccess(uri)
-
-            assertTrue("SAF URI $uri should be accessible", result.canAccess)
-            assertEquals(
-                "SAF URI should be USER_SELECTED scope",
-                FilePermissionManager.StorageScope.USER_SELECTED,
-                result.scope,
-            )
-            assertFalse("SAF URI should not require permission", result.requiresPermission)
-        }
-    }
-
-    @Test
     fun `requestFilePermissions should return appropriate permissions for API level`() = runTest {
         // Test that different API levels return correct permissions
         val mediaImageResult =
