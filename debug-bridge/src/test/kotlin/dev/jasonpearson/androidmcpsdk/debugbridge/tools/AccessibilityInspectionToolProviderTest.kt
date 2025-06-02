@@ -1,27 +1,21 @@
 package dev.jasonpearson.androidmcpsdk.debugbridge.tools
 
 import android.accessibilityservice.AccessibilityServiceInfo
-import android.app.Activity
 import android.content.Context
 import android.content.res.Resources
-import android.graphics.Rect
 import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
 import android.util.DisplayMetrics
 import android.view.View
-import android.view.ViewGroup
 import android.view.accessibility.AccessibilityManager
 import android.widget.Button
-import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
-import androidx.core.view.isVisible
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.jasonpearson.androidmcpsdk.core.features.tools.ToolRegistry
 import io.mockk.*
-import io.modelcontextprotocol.kotlin.sdk.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.TextContent
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -54,10 +48,11 @@ class AccessibilityInspectionToolProviderTest {
         every { context.applicationContext } returns null
 
         // Setup basic context services
-        every { context.getSystemService(Context.ACCESSIBILITY_SERVICE) } returns accessibilityManager
+        every { context.getSystemService(Context.ACCESSIBILITY_SERVICE) } returns
+            accessibilityManager
         every { context.resources } returns resources
         every { resources.displayMetrics } returns displayMetrics
-//        every { displayMetrics.density } returns 2.0f
+        //        every { displayMetrics.density } returns 2.0f
 
         provider = AccessibilityInspectionToolProvider(context)
     }
@@ -135,7 +130,8 @@ class AccessibilityInspectionToolProviderTest {
         val enabledServices = listOf<AccessibilityServiceInfo>()
         every { accessibilityManager.isEnabled } returns true
         every { accessibilityManager.isTouchExplorationEnabled } returns false
-        every { accessibilityManager.getEnabledAccessibilityServiceList(any()) } returns enabledServices
+        every { accessibilityManager.getEnabledAccessibilityServiceList(any()) } returns
+            enabledServices
 
         // When
         val result = provider.getAccessibilityServiceStatus(emptyMap())
@@ -154,7 +150,7 @@ class AccessibilityInspectionToolProviderTest {
         // Given
         val view = mockk<Button>(relaxed = true)
         every { view.isClickable } returns true
-        every { view.visibility } returns View.VISIBLE  // Fix: mock visibility as Int
+        every { view.visibility } returns View.VISIBLE // Fix: mock visibility as Int
         every { view.isEnabled } returns true
         every { view.isFocusable } returns false
         every { view.contentDescription } returns null
@@ -171,7 +167,7 @@ class AccessibilityInspectionToolProviderTest {
         // Given
         val view = mockk<Button>(relaxed = true)
         every { view.isClickable } returns true
-        every { view.visibility } returns View.VISIBLE  // Fix: mock visibility as Int
+        every { view.visibility } returns View.VISIBLE // Fix: mock visibility as Int
         every { view.isEnabled } returns false
 
         // When
@@ -294,8 +290,6 @@ class AccessibilityInspectionToolProviderTest {
         assertTrue(result)
     }
 
-
-
     @Test
     fun `collectFocusableElements should collect focusable views`() {
         // Given
@@ -309,14 +303,14 @@ class AccessibilityInspectionToolProviderTest {
 
         // Mock button as focusable - fix visibility mocking
         every { button.isClickable } returns true
-        every { button.visibility } returns View.VISIBLE  // Mock visibility as Int, not Boolean
+        every { button.visibility } returns View.VISIBLE // Mock visibility as Int, not Boolean
         every { button.isEnabled } returns true
         every { button.isFocusable } returns false
         every { button.contentDescription } returns null
 
         // Root view not focusable - fix visibility mocking
         every { rootView.isClickable } returns false
-        every { rootView.visibility } returns View.VISIBLE  // Mock visibility as Int, not Boolean
+        every { rootView.visibility } returns View.VISIBLE // Mock visibility as Int, not Boolean
         every { rootView.isEnabled } returns true
         every { rootView.isFocusable } returns false
         every { rootView.contentDescription } returns null

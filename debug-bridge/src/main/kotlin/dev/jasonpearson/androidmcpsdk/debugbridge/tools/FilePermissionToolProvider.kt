@@ -1,8 +1,8 @@
 package dev.jasonpearson.androidmcpsdk.debugbridge.tools
 
 import android.content.Context
-import android.net.Uri
 import android.util.Log
+import androidx.core.net.toUri
 import dev.jasonpearson.androidmcpsdk.core.features.permissions.FilePermissionManager
 import dev.jasonpearson.androidmcpsdk.core.features.tools.ToolRegistry
 import io.modelcontextprotocol.kotlin.sdk.CallToolResult
@@ -12,7 +12,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
-import androidx.core.net.toUri
 
 /** Tool provider for file permission management and storage access debugging. */
 class FilePermissionToolProvider(private val context: Context) {

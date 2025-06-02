@@ -6,12 +6,12 @@ import dev.jasonpearson.androidmcpsdk.core.features.tools.ToolRegistry
 import io.modelcontextprotocol.kotlin.sdk.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.TextContent
 import io.modelcontextprotocol.kotlin.sdk.Tool
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 
 /**
  * Provides network tools for the debug bridge. Includes network inspection, monitoring, and
