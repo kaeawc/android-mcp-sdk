@@ -14,7 +14,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import dev.jasonpearson.androidmcpsdk.core.features.tools.McpToolProvider
+import dev.jasonpearson.androidmcpsdk.core.features.tools.ToolProvider
 import io.mockk.*
 import io.modelcontextprotocol.kotlin.sdk.TextContent
 import kotlinx.coroutines.test.runTest
@@ -30,7 +30,7 @@ import org.robolectric.annotation.Config
 class AccessibilityInspectionToolProviderTest {
 
     private lateinit var context: Context
-    private lateinit var toolProvider: McpToolProvider
+    private lateinit var toolProvider: ToolProvider
     private lateinit var accessibilityManager: AccessibilityManager
     private lateinit var resources: Resources
     private lateinit var displayMetrics: DisplayMetrics
@@ -39,7 +39,6 @@ class AccessibilityInspectionToolProviderTest {
     @Before
     fun setup() {
         context = mockk(relaxed = true)
-        toolProvider = mockk(relaxed = true)
         accessibilityManager = mockk(relaxed = true)
         resources = mockk(relaxed = true)
         displayMetrics = mockk(relaxed = true)
@@ -52,8 +51,9 @@ class AccessibilityInspectionToolProviderTest {
             accessibilityManager
         every { context.resources } returns resources
         every { resources.displayMetrics } returns displayMetrics
-        //        every { displayMetrics.density } returns 2.0f
 
+        // Create a real ToolProvider to test actual registration
+        toolProvider = ToolProvider(context)
         provider = AccessibilityInspectionToolProvider(context)
     }
 
@@ -64,11 +64,15 @@ class AccessibilityInspectionToolProviderTest {
 
     @Test
     fun `registerTools should add exactly 3 accessibility tools to registry`() {
+        // Get initial tool count
+        val initialToolCount = toolProvider.getAllTools().size
+
         // When
         provider.registerTools(toolProvider)
 
-        // Then
-        verify(exactly = 3) { toolRegistry.addTool(any(), any()) }
+        // Then - verify that 3 tools were added
+        val finalToolCount = toolProvider.getAllTools().size
+        assertEquals("Should add exactly 3 tools", 3, finalToolCount - initialToolCount)
     }
 
     @Test
@@ -77,7 +81,11 @@ class AccessibilityInspectionToolProviderTest {
         provider.registerTools(toolProvider)
 
         // Then
-        verify { toolRegistry.addTool(match { it.name == "accessibility_capture" }, any()) }
+        val tools = toolProvider.getAllTools()
+        assertTrue(
+            "Should register accessibility_capture tool",
+            tools.any { it.name == "accessibility_capture" },
+        )
     }
 
     @Test
@@ -86,7 +94,11 @@ class AccessibilityInspectionToolProviderTest {
         provider.registerTools(toolProvider)
 
         // Then
-        verify { toolRegistry.addTool(match { it.name == "accessibility_validate" }, any()) }
+        val tools = toolProvider.getAllTools()
+        assertTrue(
+            "Should register accessibility_validate tool",
+            tools.any { it.name == "accessibility_validate" },
+        )
     }
 
     @Test
@@ -95,7 +107,11 @@ class AccessibilityInspectionToolProviderTest {
         provider.registerTools(toolProvider)
 
         // Then
-        verify { toolRegistry.addTool(match { it.name == "accessibility_service_status" }, any()) }
+        val tools = toolProvider.getAllTools()
+        assertTrue(
+            "Should register accessibility_service_status tool",
+            tools.any { it.name == "accessibility_service_status" },
+        )
     }
 
     @Test

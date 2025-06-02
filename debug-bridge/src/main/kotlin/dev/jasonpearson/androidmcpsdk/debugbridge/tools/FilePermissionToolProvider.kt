@@ -1,5 +1,6 @@
 package dev.jasonpearson.androidmcpsdk.debugbridge.tools
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import androidx.core.net.toUri
@@ -246,8 +247,9 @@ class FilePermissionToolProvider(private val context: Context) {
         return try {
             val uri =
                 try {
-                    input.uri.toUri()
-                } catch (e: Exception) {
+                    // We suppress this because the extension is way more permissive of errors
+                    @SuppressLint("UseKtx") input.uri.toUri()
+                } catch (_: Exception) {
                     return CallToolResult(
                         content = listOf(TextContent(text = "Invalid URI format: ${input.uri}")),
                         isError = true,
