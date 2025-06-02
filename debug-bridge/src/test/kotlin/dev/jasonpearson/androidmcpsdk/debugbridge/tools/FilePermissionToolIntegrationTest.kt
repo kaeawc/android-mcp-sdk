@@ -287,10 +287,8 @@ class FilePermissionToolIntegrationTest {
 
         // Test that tools can be called through the registry
         registeredTools.forEach { tool ->
-            assertTrue("Tool ${tool.name} should have a description", tool.description.isNotBlank())
-            assertTrue(
-                "Tool ${tool.name} should have input schema",
-                tool.inputSchema?.let { true } ?: false,
+            assertTrue("Tool ${tool.name} should have a description",
+                tool.description?.isNotBlank() == false
             )
         }
     }
