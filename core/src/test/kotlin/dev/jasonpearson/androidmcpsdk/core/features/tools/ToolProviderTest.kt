@@ -286,7 +286,7 @@ class ToolProviderTest {
             name = "optional_complex",
             description = "Complex tool with optional nested fields",
             optional =
-                ToolProvider.OptionalFields(listOf("settings.theme", "config.port", "active")),
+                McpToolProvider.OptionalFields(listOf("settings.theme", "config.port", "active")),
         ) { input ->
             receivedInput = input
             CallToolResult(content = listOf(TextContent(text = "OK")))
@@ -431,5 +431,5 @@ class ToolProviderTest {
     }
 
     // Extension function for creating OptionalFields in tests
-    private fun List<String>.asOptional() = ToolProvider.OptionalFields(this)
+    private fun List<String>.asOptional() = McpToolProvider.OptionalFields(this)
 }

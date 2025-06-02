@@ -64,14 +64,15 @@ class DefaultToolRegistry : ToolRegistry {
     }
 
     /** Register a tool contributor with this registry */
-    fun registerContributor(contributor: ToolContributor) {
+    override fun registerContributor(contributor: ToolContributor) {
         val providerName = contributor.getProviderName()
         Log.i(TAG, "Registering tool contributor: $providerName")
 
-        contributor.registerTools(this)
+        // The contributor needs access to the ToolProvider, not the registry directly
+        // This will be handled by ToolProvider.registerContributor
         contributors.add(providerName)
 
-        Log.i(TAG, "Registered tool contributor: $providerName, total tools: ${tools.size}")
+        Log.i(TAG, "Registered tool contributor: $providerName")
     }
 
     /** Get the names of all registered contributors */

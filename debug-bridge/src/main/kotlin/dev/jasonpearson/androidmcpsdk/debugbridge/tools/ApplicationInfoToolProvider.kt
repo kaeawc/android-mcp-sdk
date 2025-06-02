@@ -3,14 +3,12 @@ package dev.jasonpearson.androidmcpsdk.debugbridge.tools
 import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
-import dev.jasonpearson.androidmcpsdk.core.features.tools.ToolRegistry
+import dev.jasonpearson.androidmcpsdk.core.features.tools.McpToolProvider
+import dev.jasonpearson.androidmcpsdk.core.features.tools.addTool
 import io.modelcontextprotocol.kotlin.sdk.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.TextContent
-import io.modelcontextprotocol.kotlin.sdk.Tool
 import java.util.Locale
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
 
 /** Provides application information tools for the debug bridge. */
 class ApplicationInfoToolProvider(private val context: Context) {
@@ -21,49 +19,22 @@ class ApplicationInfoToolProvider(private val context: Context) {
 
     @Serializable data class AppInfoInput(val package_name: String? = null)
 
-    fun registerTools(registry: ToolRegistry) {
+    fun registerTools(toolProvider: McpToolProvider) {
         Log.d(TAG, "Registering application info tools")
 
         // App info tool
-        registry.addTool(createAppInfoTool()) { arguments -> getAppInfo(arguments) }
+        toolProvider.addTool<AppInfoInput>(
+            name = "app_info",
+            description = "Get information about installed applications",
+        ) { input ->
+            getAppInfo(input)
+        }
 
         Log.d(TAG, "Application info tools registered")
     }
 
-    private fun createAppInfoTool(): Tool {
-        return Tool(
-            name = "app_info",
-            description = "Get information about installed applications",
-            inputSchema =
-                Tool.Input(
-                    properties =
-                        buildJsonObject {
-                            put("type", JsonPrimitive("object"))
-                            put(
-                                "properties",
-                                buildJsonObject {
-                                    put(
-                                        "package_name",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("string"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive(
-                                                    "Package name of the app (optional, if not provided returns current app info)"
-                                                ),
-                                            )
-                                        },
-                                    )
-                                },
-                            )
-                        },
-                    required = emptyList(),
-                ),
-        )
-    }
-
-    private suspend fun getAppInfo(arguments: Map<String, Any>): CallToolResult {
-        val packageName = arguments["package_name"] as? String ?: context.packageName
+    private suspend fun getAppInfo(input: AppInfoInput): CallToolResult {
+        val packageName = input.package_name ?: context.packageName
 
         return try {
             val packageManager = context.packageManager

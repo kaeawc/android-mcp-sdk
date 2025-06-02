@@ -3,13 +3,11 @@ package dev.jasonpearson.androidmcpsdk.debugbridge.tools
 import android.content.Context
 import android.os.Build
 import android.util.Log
-import dev.jasonpearson.androidmcpsdk.core.features.tools.ToolRegistry
+import dev.jasonpearson.androidmcpsdk.core.features.tools.McpToolProvider
+import dev.jasonpearson.androidmcpsdk.core.features.tools.addTool
 import io.modelcontextprotocol.kotlin.sdk.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.TextContent
-import io.modelcontextprotocol.kotlin.sdk.Tool
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
 
 /** Provides device information tools for the debug bridge. */
 class DeviceInfoToolProvider(private val context: Context) {
@@ -19,63 +17,41 @@ class DeviceInfoToolProvider(private val context: Context) {
     }
 
     @Serializable
-    data class DeviceInfoInput(
-        val placeholder: String? = null // Empty input schema
+    data class EmptyInput(
+        val placeholder: String? = null // Empty input schema for tools that need no parameters
     )
 
-    fun registerTools(registry: ToolRegistry) {
+    fun registerTools(toolProvider: McpToolProvider) {
         Log.d(TAG, "Registering device info tools")
 
         // Device info tool
-        registry.addTool(createDeviceInfoTool()) { arguments -> getDeviceInfo(arguments) }
+        toolProvider.addTool<EmptyInput>(
+            name = "device_info",
+            description = "Get information about the Android device",
+        ) { _ ->
+            getDeviceInfo()
+        }
 
         // Hardware info tool
-        registry.addTool(createHardwareInfoTool()) { arguments -> getHardwareInfo(arguments) }
+        toolProvider.addTool<EmptyInput>(
+            name = "hardware_info",
+            description = "Get hardware information including CPU, display, and sensor details",
+        ) { _ ->
+            getHardwareInfo()
+        }
 
         // System info tool
-        registry.addTool(createSystemInfoTool()) { arguments -> getSystemInfo(arguments) }
+        toolProvider.addTool<EmptyInput>(
+            name = "system_info",
+            description = "Get detailed system information including build details and SDK versions",
+        ) { _ ->
+            getSystemInfo()
+        }
 
         Log.d(TAG, "Device info tools registered")
     }
 
-    private fun createDeviceInfoTool(): Tool {
-        return Tool(
-            name = "device_info",
-            description = "Get information about the Android device",
-            inputSchema =
-                Tool.Input(
-                    properties = buildJsonObject { put("type", JsonPrimitive("object")) },
-                    required = emptyList(),
-                ),
-        )
-    }
-
-    private fun createHardwareInfoTool(): Tool {
-        return Tool(
-            name = "hardware_info",
-            description = "Get hardware information including CPU, display, and sensor details",
-            inputSchema =
-                Tool.Input(
-                    properties = buildJsonObject { put("type", JsonPrimitive("object")) },
-                    required = emptyList(),
-                ),
-        )
-    }
-
-    private fun createSystemInfoTool(): Tool {
-        return Tool(
-            name = "system_info",
-            description =
-                "Get detailed system information including build details and SDK versions",
-            inputSchema =
-                Tool.Input(
-                    properties = buildJsonObject { put("type", JsonPrimitive("object")) },
-                    required = emptyList(),
-                ),
-        )
-    }
-
-    private suspend fun getDeviceInfo(arguments: Map<String, Any>): CallToolResult {
+    private suspend fun getDeviceInfo(): CallToolResult {
         val deviceInfo = buildString {
             appendLine("=== DEVICE INFORMATION ===")
             appendLine("Model: ${Build.MODEL}")
@@ -92,7 +68,7 @@ class DeviceInfoToolProvider(private val context: Context) {
         return CallToolResult(content = listOf(TextContent(text = deviceInfo)), isError = false)
     }
 
-    private suspend fun getHardwareInfo(arguments: Map<String, Any>): CallToolResult {
+    private suspend fun getHardwareInfo(): CallToolResult {
         val hardwareInfo = buildString {
             appendLine("=== HARDWARE INFORMATION ===")
             appendLine("CPU ABI: ${Build.CPU_ABI}")
@@ -115,7 +91,7 @@ class DeviceInfoToolProvider(private val context: Context) {
         return CallToolResult(content = listOf(TextContent(text = hardwareInfo)), isError = false)
     }
 
-    private suspend fun getSystemInfo(arguments: Map<String, Any>): CallToolResult {
+    private suspend fun getSystemInfo(): CallToolResult {
         val systemInfo = buildString {
             appendLine("=== SYSTEM INFORMATION ===")
             appendLine("Android Version: ${Build.VERSION.RELEASE}")

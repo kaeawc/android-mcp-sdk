@@ -2,15 +2,12 @@ package dev.jasonpearson.androidmcpsdk.debugbridge.tools
 
 import android.content.Context
 import android.util.Log
-import dev.jasonpearson.androidmcpsdk.core.features.tools.ToolRegistry
+import dev.jasonpearson.androidmcpsdk.core.features.tools.McpToolProvider
+import dev.jasonpearson.androidmcpsdk.core.features.tools.addTool
 import io.modelcontextprotocol.kotlin.sdk.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.TextContent
-import io.modelcontextprotocol.kotlin.sdk.Tool
 import java.util.Locale
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonArray
-import kotlinx.serialization.json.buildJsonObject
 
 /** Provides Android system tools for the debug bridge. */
 class AndroidSystemToolProvider(private val context: Context) {
@@ -22,107 +19,41 @@ class AndroidSystemToolProvider(private val context: Context) {
     @Serializable
     data class SystemTimeInput(val format: String = "iso", val timezone: String? = null)
 
-    @Serializable data class MemoryInfoInput(val placeholder: String? = null)
+    @Serializable data class EmptyInput(val placeholder: String? = null)
 
-    @Serializable data class BatteryInfoInput(val placeholder: String? = null)
-
-    fun registerTools(registry: ToolRegistry) {
+    fun registerTools(toolProvider: McpToolProvider) {
         Log.d(TAG, "Registering system tools")
 
         // System time tool
-        registry.addTool(createSystemTimeTool()) { arguments -> getSystemTime(arguments) }
+        toolProvider.addTool<SystemTimeInput>(
+            name = "system_time",
+            description = "Get current system time in various formats",
+        ) { input ->
+            getSystemTime(input)
+        }
 
         // Memory info tool
-        registry.addTool(createMemoryInfoTool()) { arguments -> getMemoryInfo(arguments) }
+        toolProvider.addTool<EmptyInput>(
+            name = "memory_info",
+            description = "Get current memory usage information",
+        ) { _ ->
+            getMemoryInfo()
+        }
 
         // Battery info tool
-        registry.addTool(createBatteryInfoTool()) { arguments -> getBatteryInfo(arguments) }
+        toolProvider.addTool<EmptyInput>(
+            name = "battery_info",
+            description = "Get current battery status and information",
+        ) { _ ->
+            getBatteryInfo()
+        }
 
         Log.d(TAG, "System tools registered")
     }
 
-    private fun createSystemTimeTool(): Tool {
-        return Tool(
-            name = "system_time",
-            description = "Get current system time in various formats",
-            inputSchema =
-                Tool.Input(
-                    properties =
-                        buildJsonObject {
-                            put("type", JsonPrimitive("object"))
-                            put(
-                                "properties",
-                                buildJsonObject {
-                                    put(
-                                        "format",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("string"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive(
-                                                    "Time format (iso, timestamp, readable)"
-                                                ),
-                                            )
-                                            put(
-                                                "enum",
-                                                buildJsonArray {
-                                                    add(JsonPrimitive("iso"))
-                                                    add(JsonPrimitive("timestamp"))
-                                                    add(JsonPrimitive("readable"))
-                                                },
-                                            )
-                                            put("default", JsonPrimitive("iso"))
-                                        },
-                                    )
-                                    put(
-                                        "timezone",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("string"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive(
-                                                    "Timezone (optional, defaults to system timezone)"
-                                                ),
-                                            )
-                                        },
-                                    )
-                                },
-                            )
-                        },
-                    required = emptyList(),
-                ),
-        )
-    }
-
-    private fun createMemoryInfoTool(): Tool {
-        return Tool(
-            name = "memory_info",
-            description = "Get current memory usage information",
-            inputSchema =
-                Tool.Input(
-                    properties = buildJsonObject { put("type", JsonPrimitive("object")) },
-                    required = emptyList(),
-                ),
-        )
-    }
-
-    private fun createBatteryInfoTool(): Tool {
-        return Tool(
-            name = "battery_info",
-            description = "Get current battery status and information",
-            inputSchema =
-                Tool.Input(
-                    properties = buildJsonObject { put("type", JsonPrimitive("object")) },
-                    required = emptyList(),
-                ),
-        )
-    }
-
-    private suspend fun getSystemTime(arguments: Map<String, Any>): CallToolResult {
-        // For simplicity, let's parse manually since we don't have the full type-safe
-        // infrastructure yet
-        val format = arguments["format"] as? String ?: "iso"
-        val timezone = arguments["timezone"] as? String
+    private suspend fun getSystemTime(input: SystemTimeInput): CallToolResult {
+        val format = input.format
+        val timezone = input.timezone
 
         val currentTime = System.currentTimeMillis()
         val timeInfo = buildString {
@@ -180,7 +111,7 @@ class AndroidSystemToolProvider(private val context: Context) {
         return CallToolResult(content = listOf(TextContent(text = timeInfo)), isError = false)
     }
 
-    private suspend fun getMemoryInfo(arguments: Map<String, Any>): CallToolResult {
+    private suspend fun getMemoryInfo(): CallToolResult {
         val activityManager =
             context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
         val memoryInfo = android.app.ActivityManager.MemoryInfo()
@@ -211,7 +142,7 @@ class AndroidSystemToolProvider(private val context: Context) {
         return CallToolResult(content = listOf(TextContent(text = info)), isError = false)
     }
 
-    private suspend fun getBatteryInfo(arguments: Map<String, Any>): CallToolResult {
+    private suspend fun getBatteryInfo(): CallToolResult {
         val batteryManager =
             context.getSystemService(Context.BATTERY_SERVICE) as android.os.BatteryManager
 

@@ -20,6 +20,68 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.serializer
 
 /**
+ * Public interface for type-safe MCP tool registration.
+ *
+ * This interface provides type-safe methods for adding custom tools using Kotlin @Serializable data
+ * classes. External modules (like debug-bridge) should use this interface to register their tools.
+ */
+interface McpToolProvider {
+
+    /** Wrapper class to distinguish optional fields specification from required fields. */
+    @JvmInline value class OptionalFields(val fields: List<String>)
+
+    /** Remove a custom tool */
+    fun removeTool(name: String): Boolean
+
+    // Utility functions for serialization
+    fun convertMapToJsonElement(map: Map<*, *>): JsonElement
+}
+
+/** Convenience extension to create OptionalFields from a list. */
+fun List<String>.asOptional() = McpToolProvider.OptionalFields(this)
+
+/**
+ * Type-safe tool registration methods. These are provided as extension functions to work around
+ * Kotlin's reified type parameter constraints in interfaces.
+ */
+
+/**
+ * Add a custom tool with type-safe input handling using optional field specification.
+ *
+ * This automatically calculates required fields by taking all fields and excluding the optional
+ * ones.
+ */
+inline fun <reified T> McpToolProvider.addTool(
+    name: String,
+    description: String,
+    optional: McpToolProvider.OptionalFields,
+    noinline handler: suspend (T) -> CallToolResult,
+) {
+    (this as ToolProvider).addToolImpl<T>(name, description, optional, handler)
+}
+
+/** Add a custom tool with type-safe input handling. */
+inline fun <reified T> McpToolProvider.addTool(
+    name: String,
+    description: String,
+    required: List<String> = emptyList(),
+    noinline handler: suspend (T) -> CallToolResult,
+) {
+    (this as ToolProvider).addToolImpl<T>(name, description, required, handler)
+}
+
+// Utility extensions for serialization
+inline fun <reified T> McpToolProvider.toJsonObject(value: T): JsonObject {
+    val jsonString = Json.encodeToString(value)
+    return Json.parseToJsonElement(jsonString).jsonObject
+}
+
+inline fun <reified T> McpToolProvider.toDataClass(map: Map<String, Any>): T {
+    val jsonElement = convertMapToJsonElement(map)
+    return Json.decodeFromJsonElement(jsonElement)
+}
+
+/**
  * Main tool provider for the MCP server that manages tool registration and provides type-safe tool
  * creation utilities.
  *
@@ -52,7 +114,7 @@ import kotlinx.serialization.serializer
  * ) { input -> ... }
  * ```
  */
-class ToolProvider(private val context: Context) {
+class ToolProvider(private val context: Context) : McpToolProvider {
 
     companion object {
         const val TAG = "ToolProvider"
@@ -60,14 +122,8 @@ class ToolProvider(private val context: Context) {
 
     private val registry = DefaultToolRegistry()
 
-    // Utility functions for serialization
-    inline fun <reified T> T.toJsonObject(): JsonObject {
-        val jsonString = Json.encodeToString(this)
-        return Json.parseToJsonElement(jsonString).jsonObject
-    }
-
     // Helper function to convert Map to JsonElement recursively
-    fun convertMapToJsonElement(map: Map<*, *>): JsonElement {
+    override fun convertMapToJsonElement(map: Map<*, *>): JsonElement {
         return buildJsonObject {
             map.forEach { (key, value) ->
                 when (value) {
@@ -97,11 +153,6 @@ class ToolProvider(private val context: Context) {
                 }
             }
         }
-    }
-
-    inline fun <reified T> Map<String, Any>.toDataClass(): T {
-        val jsonElement = convertMapToJsonElement(this)
-        return Json.decodeFromJsonElement(jsonElement)
     }
 
     /**
@@ -277,7 +328,19 @@ class ToolProvider(private val context: Context) {
 
     /** Register a tool contributor with this provider */
     fun registerContributor(contributor: ToolContributor) {
+        val providerName = contributor.getProviderName()
+        Log.i(TAG, "Registering tool contributor: $providerName")
+
+        // Let the contributor register its tools using the type-safe interface
+        contributor.registerTools(this)
+
+        // Track the contributor in the registry
         registry.registerContributor(contributor)
+
+        Log.i(
+            TAG,
+            "Registered tool contributor: $providerName, total tools: ${registry.getAllTools().size}",
+        )
     }
 
     /** Wrapper class to distinguish optional fields specification from required fields. */
@@ -333,10 +396,10 @@ class ToolProvider(private val context: Context) {
      * @param optional Wrapper containing list of optional field names (all others become required)
      * @param handler The tool handler that receives typed input
      */
-    inline fun <reified T> addTool(
+    inline fun <reified T> addToolImpl(
         name: String,
         description: String,
-        optional: OptionalFields,
+        optional: McpToolProvider.OptionalFields,
         noinline handler: suspend (T) -> CallToolResult,
     ) {
         // Validate optional field paths
@@ -349,7 +412,7 @@ class ToolProvider(private val context: Context) {
         val required = allFields.filterNot { it in validatedOptional }
 
         // Delegate to the existing required-based implementation
-        addTool(name = name, description = description, required = required, handler = handler)
+        addToolImpl(name = name, description = description, required = required, handler = handler)
     }
 
     /**
@@ -396,7 +459,7 @@ class ToolProvider(private val context: Context) {
      * @param required List of required field names (optional)
      * @param handler The tool handler that receives typed input
      */
-    inline fun <reified T> addTool(
+    inline fun <reified T> addToolImpl(
         name: String,
         description: String,
         required: List<String> = emptyList(),
@@ -424,7 +487,7 @@ class ToolProvider(private val context: Context) {
         // Wrapper handler that converts Map to typed input
         val typedHandler: suspend (Map<String, Any>) -> CallToolResult = { arguments ->
             try {
-                val typedInput = arguments.toDataClass<T>()
+                val typedInput = toDataClass<T>(arguments)
                 handler(typedInput)
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to parse tool arguments for $name", e)
@@ -444,5 +507,5 @@ class ToolProvider(private val context: Context) {
     }
 
     /** Remove a custom tool */
-    fun removeTool(name: String): Boolean = registry.removeTool(name)
+    override fun removeTool(name: String): Boolean = registry.removeTool(name)
 }

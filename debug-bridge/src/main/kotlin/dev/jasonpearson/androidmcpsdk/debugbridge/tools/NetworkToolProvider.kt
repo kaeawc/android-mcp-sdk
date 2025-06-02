@@ -2,16 +2,14 @@ package dev.jasonpearson.androidmcpsdk.debugbridge.tools
 
 import android.content.Context
 import android.util.Log
-import dev.jasonpearson.androidmcpsdk.core.features.tools.ToolRegistry
+import dev.jasonpearson.androidmcpsdk.core.features.tools.McpToolProvider
+import dev.jasonpearson.androidmcpsdk.core.features.tools.addTool
 import io.modelcontextprotocol.kotlin.sdk.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.TextContent
-import io.modelcontextprotocol.kotlin.sdk.Tool
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
 
 /**
  * Provides network tools for the debug bridge. Includes network inspection, monitoring, and
@@ -34,6 +32,8 @@ class NetworkToolProvider(private val context: Context) {
         val methods: List<String> = emptyList(),
     )
 
+    @Serializable data class EmptyInput(val placeholder: String? = null)
+
     @Serializable
     data class GetRequestsInput(
         val domain: String? = null,
@@ -46,270 +46,53 @@ class NetworkToolProvider(private val context: Context) {
 
     @Serializable data class AnalyzeRequestInput(val requestId: String)
 
-    fun registerTools(registry: ToolRegistry) {
+    fun registerTools(toolProvider: McpToolProvider) {
         Log.d(TAG, "Registering network tools")
 
         // Network monitoring control
-        registry.addTool(createStartMonitoringTool()) { arguments ->
-            startNetworkMonitoring(arguments)
+        toolProvider.addTool<StartMonitoringInput>(
+            name = "network_start_monitoring",
+            description = "Start monitoring network requests with configurable options",
+        ) { input ->
+            startNetworkMonitoring(input)
         }
-        registry.addTool(createStopMonitoringTool()) { arguments ->
-            stopNetworkMonitoring(arguments)
+
+        toolProvider.addTool<EmptyInput>(
+            name = "network_stop_monitoring",
+            description = "Stop network request monitoring",
+        ) { _ ->
+            stopNetworkMonitoring()
         }
 
         // Request inspection
-        registry.addTool(createGetRequestsTool()) { arguments -> getNetworkRequests(arguments) }
-        registry.addTool(createAnalyzeRequestTool()) { arguments ->
-            analyzeNetworkRequest(arguments)
+        toolProvider.addTool<GetRequestsInput>(
+            name = "network_get_requests",
+            description = "Get captured network requests with optional filtering",
+        ) { input ->
+            getNetworkRequests(input)
+        }
+
+        toolProvider.addTool<AnalyzeRequestInput>(
+            name = "network_analyze_request",
+            description =
+                "Analyze a specific network request for performance and security insights",
+            required = listOf("requestId"),
+        ) { input ->
+            analyzeNetworkRequest(input)
         }
 
         Log.d(TAG, "Network tools registered")
     }
 
-    private fun createStartMonitoringTool(): Tool {
-        return Tool(
-            name = "network_start_monitoring",
-            description = "Start monitoring network requests with configurable options",
-            inputSchema =
-                Tool.Input(
-                    properties =
-                        buildJsonObject {
-                            put("type", JsonPrimitive("object"))
-                            put(
-                                "properties",
-                                buildJsonObject {
-                                    put(
-                                        "maxRequests",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("integer"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive(
-                                                    "Maximum number of requests to store (default: 1000)"
-                                                ),
-                                            )
-                                            put("default", JsonPrimitive(1000))
-                                        },
-                                    )
-                                    put(
-                                        "captureRequestBody",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("boolean"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive(
-                                                    "Whether to capture request body content"
-                                                ),
-                                            )
-                                            put("default", JsonPrimitive(false))
-                                        },
-                                    )
-                                    put(
-                                        "captureResponseBody",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("boolean"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive(
-                                                    "Whether to capture response body content"
-                                                ),
-                                            )
-                                            put("default", JsonPrimitive(false))
-                                        },
-                                    )
-                                    put(
-                                        "domains",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("array"))
-                                            put(
-                                                "items",
-                                                buildJsonObject {
-                                                    put("type", JsonPrimitive("string"))
-                                                },
-                                            )
-                                            put(
-                                                "description",
-                                                JsonPrimitive(
-                                                    "Filter requests by domains (empty = all domains)"
-                                                ),
-                                            )
-                                        },
-                                    )
-                                    put(
-                                        "methods",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("array"))
-                                            put(
-                                                "items",
-                                                buildJsonObject {
-                                                    put("type", JsonPrimitive("string"))
-                                                },
-                                            )
-                                            put(
-                                                "description",
-                                                JsonPrimitive(
-                                                    "Filter requests by HTTP methods (empty = all methods)"
-                                                ),
-                                            )
-                                        },
-                                    )
-                                },
-                            )
-                        },
-                    required = emptyList(),
-                ),
-        )
-    }
-
-    private fun createStopMonitoringTool(): Tool {
-        return Tool(
-            name = "network_stop_monitoring",
-            description = "Stop network request monitoring",
-            inputSchema =
-                Tool.Input(
-                    properties = buildJsonObject { put("type", JsonPrimitive("object")) },
-                    required = emptyList(),
-                ),
-        )
-    }
-
-    private fun createGetRequestsTool(): Tool {
-        return Tool(
-            name = "network_get_requests",
-            description = "Get captured network requests with optional filtering",
-            inputSchema =
-                Tool.Input(
-                    properties =
-                        buildJsonObject {
-                            put("type", JsonPrimitive("object"))
-                            put(
-                                "properties",
-                                buildJsonObject {
-                                    put(
-                                        "domain",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("string"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive("Filter by domain name"),
-                                            )
-                                        },
-                                    )
-                                    put(
-                                        "method",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("string"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive(
-                                                    "Filter by HTTP method (GET, POST, etc.)"
-                                                ),
-                                            )
-                                        },
-                                    )
-                                    put(
-                                        "statusCode",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("integer"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive("Filter by HTTP status code"),
-                                            )
-                                        },
-                                    )
-                                    put(
-                                        "minDuration",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("integer"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive(
-                                                    "Minimum request duration in milliseconds"
-                                                ),
-                                            )
-                                        },
-                                    )
-                                    put(
-                                        "maxDuration",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("integer"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive(
-                                                    "Maximum request duration in milliseconds"
-                                                ),
-                                            )
-                                        },
-                                    )
-                                    put(
-                                        "limit",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("integer"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive(
-                                                    "Maximum number of requests to return (default: 100)"
-                                                ),
-                                            )
-                                            put("default", JsonPrimitive(100))
-                                        },
-                                    )
-                                },
-                            )
-                        },
-                    required = emptyList(),
-                ),
-        )
-    }
-
-    private fun createAnalyzeRequestTool(): Tool {
-        return Tool(
-            name = "network_analyze_request",
-            description =
-                "Analyze a specific network request for performance and security insights",
-            inputSchema =
-                Tool.Input(
-                    properties =
-                        buildJsonObject {
-                            put("type", JsonPrimitive("object"))
-                            put(
-                                "properties",
-                                buildJsonObject {
-                                    put(
-                                        "requestId",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("string"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive("ID of the request to analyze"),
-                                            )
-                                        },
-                                    )
-                                },
-                            )
-                        },
-                    required = listOf("requestId"),
-                ),
-        )
-    }
-
-    private suspend fun startNetworkMonitoring(arguments: Map<String, Any>): CallToolResult {
+    private suspend fun startNetworkMonitoring(input: StartMonitoringInput): CallToolResult {
         try {
-            val maxRequests = (arguments["maxRequests"] as? Number)?.toInt() ?: 1000
-            val captureRequestBody = arguments["captureRequestBody"] as? Boolean ?: false
-            val captureResponseBody = arguments["captureResponseBody"] as? Boolean ?: false
-            val domains =
-                (arguments["domains"] as? List<*>)?.mapNotNull { it as? String } ?: emptyList()
-            val methods =
-                (arguments["methods"] as? List<*>)?.mapNotNull { it as? String } ?: emptyList()
-
             val config =
                 NetworkInspector.MonitoringConfig(
-                    maxRequests = maxRequests,
-                    captureRequestBody = captureRequestBody,
-                    captureResponseBody = captureResponseBody,
-                    domains = domains,
-                    methods = methods,
+                    maxRequests = input.maxRequests,
+                    captureRequestBody = input.captureRequestBody,
+                    captureResponseBody = input.captureResponseBody,
+                    domains = input.domains,
+                    methods = input.methods,
                 )
 
             val result = networkInspector.startMonitoring(config)
@@ -320,14 +103,14 @@ class NetworkToolProvider(private val context: Context) {
                         appendLine("✅ Network monitoring started successfully")
                         appendLine()
                         appendLine("Configuration:")
-                        appendLine("- Max requests: $maxRequests")
-                        appendLine("- Capture request body: $captureRequestBody")
-                        appendLine("- Capture response body: $captureResponseBody")
-                        if (domains.isNotEmpty()) {
-                            appendLine("- Filtered domains: ${domains.joinToString(", ")}")
+                        appendLine("- Max requests: ${input.maxRequests}")
+                        appendLine("- Capture request body: ${input.captureRequestBody}")
+                        appendLine("- Capture response body: ${input.captureResponseBody}")
+                        if (input.domains.isNotEmpty()) {
+                            appendLine("- Filtered domains: ${input.domains.joinToString(", ")}")
                         }
-                        if (methods.isNotEmpty()) {
-                            appendLine("- Filtered methods: ${methods.joinToString(", ")}")
+                        if (input.methods.isNotEmpty()) {
+                            appendLine("- Filtered methods: ${input.methods.joinToString(", ")}")
                         }
                         appendLine()
                         appendLine("🔗 To use the interceptor, add it to your OkHttpClient:")
@@ -355,7 +138,7 @@ class NetworkToolProvider(private val context: Context) {
         }
     }
 
-    private suspend fun stopNetworkMonitoring(arguments: Map<String, Any>): CallToolResult {
+    private suspend fun stopNetworkMonitoring(): CallToolResult {
         try {
             val result = networkInspector.stopMonitoring()
 
@@ -380,23 +163,16 @@ class NetworkToolProvider(private val context: Context) {
         }
     }
 
-    private suspend fun getNetworkRequests(arguments: Map<String, Any>): CallToolResult {
+    private suspend fun getNetworkRequests(input: GetRequestsInput): CallToolResult {
         try {
-            val domain = arguments["domain"] as? String
-            val method = arguments["method"] as? String
-            val statusCode = (arguments["statusCode"] as? Number)?.toInt()
-            val minDuration = (arguments["minDuration"] as? Number)?.toLong()
-            val maxDuration = (arguments["maxDuration"] as? Number)?.toLong()
-            val limit = (arguments["limit"] as? Number)?.toInt() ?: 100
-
             val filter =
                 NetworkInspector.RequestFilter(
-                    domain = domain,
-                    method = method,
-                    statusCode = statusCode,
-                    minDuration = minDuration,
-                    maxDuration = maxDuration,
-                    limit = limit,
+                    domain = input.domain,
+                    method = input.method,
+                    statusCode = input.statusCode,
+                    minDuration = input.minDuration,
+                    maxDuration = input.maxDuration,
+                    limit = input.limit,
                 )
 
             val requests = networkInspector.getNetworkRequests(filter)
@@ -437,12 +213,12 @@ class NetworkToolProvider(private val context: Context) {
                 }
 
                 appendLine("Filter applied:")
-                domain?.let { appendLine("- Domain: $it") }
-                method?.let { appendLine("- Method: $it") }
-                statusCode?.let { appendLine("- Status Code: $it") }
-                minDuration?.let { appendLine("- Min Duration: ${it}ms") }
-                maxDuration?.let { appendLine("- Max Duration: ${it}ms") }
-                appendLine("- Limit: $limit")
+                input.domain?.let { appendLine("- Domain: $it") }
+                input.method?.let { appendLine("- Method: $it") }
+                input.statusCode?.let { appendLine("- Status Code: $it") }
+                input.minDuration?.let { appendLine("- Min Duration: ${it}ms") }
+                input.maxDuration?.let { appendLine("- Max Duration: ${it}ms") }
+                appendLine("- Limit: ${input.limit}")
             }
 
             return CallToolResult(
@@ -459,20 +235,13 @@ class NetworkToolProvider(private val context: Context) {
         }
     }
 
-    private suspend fun analyzeNetworkRequest(arguments: Map<String, Any>): CallToolResult {
+    private suspend fun analyzeNetworkRequest(input: AnalyzeRequestInput): CallToolResult {
         try {
-            val requestId =
-                arguments["requestId"] as? String
+            val analysis =
+                networkInspector.analyzeRequest(input.requestId)
                     ?: return CallToolResult(
                         content =
-                            listOf(TextContent(text = "❌ Missing required parameter: requestId")),
-                        isError = true,
-                    )
-
-            val analysis =
-                networkInspector.analyzeRequest(requestId)
-                    ?: return CallToolResult(
-                        content = listOf(TextContent(text = "❌ Request not found: $requestId")),
+                            listOf(TextContent(text = "❌ Request not found: ${input.requestId}")),
                         isError = true,
                     )
 

@@ -23,21 +23,22 @@ import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import androidx.core.view.children
 import androidx.core.view.isEmpty
 import androidx.core.view.isVisible
-import dev.jasonpearson.androidmcpsdk.core.features.tools.ToolRegistry
+import dev.jasonpearson.androidmcpsdk.core.features.tools.McpToolProvider
+import dev.jasonpearson.androidmcpsdk.core.features.tools.addTool
 import io.modelcontextprotocol.kotlin.sdk.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.TextContent
-import io.modelcontextprotocol.kotlin.sdk.Tool
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.sqrt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.Serializable
 
 /** Provides accessibility inspection tools for Android apps. */
 class AccessibilityInspectionToolProvider(internal val context: Context) {
+
+    @Serializable data class EmptyInput(val placeholder: String? = null)
 
     companion object {
         internal const val TAG = "AccessibilityInspection"
@@ -92,64 +93,36 @@ class AccessibilityInspectionToolProvider(internal val context: Context) {
         )
     }
 
-    fun registerTools(registry: ToolRegistry) {
+    fun registerTools(toolProvider: McpToolProvider) {
         Log.d(TAG, "Registering accessibility inspection tools")
 
-        registry.addTool(createAccessibilityCaptureTool()) { arguments ->
-            captureAccessibilityTree(arguments)
+        toolProvider.addTool<EmptyInput>(
+            name = "accessibility_capture",
+            description =
+                "Capture accessibility tree of the current activity, including detailed properties.",
+        ) { _ ->
+            captureAccessibilityTree()
         }
 
-        registry.addTool(createAccessibilityValidateTool()) { arguments ->
-            validateAccessibility(arguments)
+        toolProvider.addTool<EmptyInput>(
+            name = "accessibility_validate",
+            description =
+                "Validate accessibility compliance, including contrast, text size, and element usage.",
+        ) { _ ->
+            validateAccessibility()
         }
 
-        registry.addTool(createAccessibilityServiceStatusTool()) { arguments ->
-            getAccessibilityServiceStatus(arguments)
+        toolProvider.addTool<EmptyInput>(
+            name = "accessibility_service_status",
+            description = "Get accessibility service status and running services.",
+        ) { _ ->
+            getAccessibilityServiceStatus()
         }
 
         Log.d(TAG, "Accessibility inspection tools registered")
     }
 
-    internal fun createAccessibilityCaptureTool(): Tool {
-        return Tool(
-            name = "accessibility_capture",
-            description =
-                "Capture accessibility tree of the current activity, including detailed properties.",
-            inputSchema =
-                Tool.Input(
-                    properties = buildJsonObject { put("type", JsonPrimitive("object")) },
-                    required = emptyList(),
-                ),
-        )
-    }
-
-    internal fun createAccessibilityValidateTool(): Tool {
-        return Tool(
-            name = "accessibility_validate",
-            description =
-                "Validate accessibility compliance, including contrast, text size, and element usage.",
-            inputSchema =
-                Tool.Input(
-                    properties = buildJsonObject { put("type", JsonPrimitive("object")) },
-                    required = emptyList(),
-                ),
-        )
-    }
-
-    internal fun createAccessibilityServiceStatusTool(): Tool {
-        return Tool(
-            name = "accessibility_service_status",
-            description = "Get accessibility service status and running services.",
-            inputSchema =
-                Tool.Input(
-                    properties = buildJsonObject { put("type", JsonPrimitive("object")) },
-                    required = emptyList(),
-                ),
-        )
-    }
-
-    @Suppress("UNUSED_PARAMETER")
-    internal suspend fun captureAccessibilityTree(arguments: Map<String, Any>): CallToolResult {
+    internal suspend fun captureAccessibilityTree(): CallToolResult {
         val activity = currentActivity
         if (activity == null) {
             return CallToolResult(
@@ -179,8 +152,7 @@ class AccessibilityInspectionToolProvider(internal val context: Context) {
         }
     }
 
-    @Suppress("UNUSED_PARAMETER")
-    internal suspend fun validateAccessibility(arguments: Map<String, Any>): CallToolResult {
+    internal suspend fun validateAccessibility(): CallToolResult {
         val activity = currentActivity
         if (activity == null) {
             return CallToolResult(
@@ -219,10 +191,7 @@ class AccessibilityInspectionToolProvider(internal val context: Context) {
         }
     }
 
-    @Suppress("UNUSED_PARAMETER")
-    internal suspend fun getAccessibilityServiceStatus(
-        arguments: Map<String, Any>
-    ): CallToolResult {
+    internal suspend fun getAccessibilityServiceStatus(): CallToolResult {
         return withContext(Dispatchers.IO) {
             try {
                 val accessibilityManager =

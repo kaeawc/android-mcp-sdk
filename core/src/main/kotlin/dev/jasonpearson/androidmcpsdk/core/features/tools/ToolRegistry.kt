@@ -9,7 +9,7 @@ import io.modelcontextprotocol.kotlin.sdk.Tool
  * This interface allows the core module to manage tools without knowing about specific
  * implementations, enabling the debug-bridge module to provide its own tool implementations.
  */
-interface ToolRegistry {
+internal interface ToolRegistry {
     /** Get all available tools */
     fun getAllTools(): List<Tool>
 
@@ -21,15 +21,21 @@ interface ToolRegistry {
 
     /** Remove a tool by name */
     fun removeTool(name: String): Boolean
+
+    /** Register a tool contributor with this registry */
+    fun registerContributor(contributor: ToolContributor)
 }
 
 /**
- * Contributes tools to the registry. This is implemented by modules that want to contribute tools
+ * Contributes tools to the MCP server. This is implemented by modules that want to contribute tools
  * to the MCP server.
+ *
+ * Tool contributors should use the provided McpToolProvider interface to register type-safe tools
+ * rather than dealing with low-level tool registration.
  */
 interface ToolContributor {
     /** Register all tools provided by this module */
-    fun registerTools(registry: ToolRegistry)
+    fun registerTools(toolProvider: McpToolProvider)
 
     /** Get the name of this tool provider */
     fun getProviderName(): String

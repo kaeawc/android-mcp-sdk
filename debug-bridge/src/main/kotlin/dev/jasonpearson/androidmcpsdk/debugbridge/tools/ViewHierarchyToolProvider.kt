@@ -12,10 +12,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import androidx.core.view.isVisible
-import dev.jasonpearson.androidmcpsdk.core.features.tools.ToolRegistry
+import dev.jasonpearson.androidmcpsdk.core.features.tools.McpToolProvider
+import dev.jasonpearson.androidmcpsdk.core.features.tools.addTool
 import io.modelcontextprotocol.kotlin.sdk.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.TextContent
-import io.modelcontextprotocol.kotlin.sdk.Tool
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.util.WeakHashMap
@@ -29,8 +29,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
 
 /** Provides UI view hierarchy inspection tools for the debug bridge. */
 class ViewHierarchyToolProvider(private val context: Context) {
@@ -158,344 +156,72 @@ class ViewHierarchyToolProvider(private val context: Context) {
         )
     }
 
-    fun registerTools(registry: ToolRegistry) {
+    fun registerTools(toolProvider: McpToolProvider) {
         Log.d(TAG, "Registering view hierarchy tools")
 
         // View hierarchy capture tool
-        registry.addTool(createViewHierarchyCaptureTool()) { arguments ->
-            captureViewHierarchy(arguments)
+        toolProvider.addTool<ViewHierarchyCaptureInput>(
+            name = "view_hierarchy_capture",
+            description =
+                "Capture current view hierarchy of the active activity with modern framework support",
+        ) { input ->
+            captureViewHierarchy(input)
         }
 
         // Find views by text tool
-        registry.addTool(createViewFindByTextTool()) { arguments -> findViewsByText(arguments) }
+        toolProvider.addTool<ViewSearchInput>(
+            name = "view_find_by_text",
+            description = "Find views containing specific text with framework detection",
+            required = listOf("text"),
+        ) { input ->
+            findViewsByText(input)
+        }
 
         // Find views by ID tool
-        registry.addTool(createViewFindByIdTool()) { arguments -> findViewsById(arguments) }
+        toolProvider.addTool<ViewIdSearchInput>(
+            name = "view_find_by_id",
+            description = "Find views by resource ID with framework detection",
+            required = listOf("id"),
+        ) { input ->
+            findViewsById(input)
+        }
 
         // Find views by class tool
-        registry.addTool(createViewFindByClassTool()) { arguments -> findViewsByClass(arguments) }
+        toolProvider.addTool<ViewClassSearchInput>(
+            name = "view_find_by_class",
+            description = "Find views by class name with framework detection",
+            required = listOf("className"),
+        ) { input ->
+            findViewsByClass(input)
+        }
 
         // Configure streaming tool
-        registry.addTool(createConfigureStreamingTool()) { arguments ->
-            configureStreaming(arguments)
+        toolProvider.addTool<StreamingConfigInput>(
+            name = "view_hierarchy_configure_streaming",
+            description = "Configure real-time streaming of view hierarchy changes over SSE",
+            required = listOf("enabled"),
+        ) { input ->
+            configureStreaming(input)
         }
 
         // Get recomposition stats tool
-        registry.addTool(createGetRecompositionStatsTool()) { arguments ->
-            getRecompositionStats(arguments)
+        toolProvider.addTool<EmptyInput>(
+            name = "view_hierarchy_get_recomposition_stats",
+            description = "Get Compose recomposition statistics and performance metrics",
+        ) { _ ->
+            getRecompositionStats()
         }
 
         Log.d(TAG, "View hierarchy tools registered")
     }
 
-    private fun createViewHierarchyCaptureTool(): Tool {
-        return Tool(
-            name = "view_hierarchy_capture",
-            description =
-                "Capture current view hierarchy of the active activity with modern framework support",
-            inputSchema =
-                Tool.Input(
-                    properties =
-                        buildJsonObject {
-                            put("type", JsonPrimitive("object"))
-                            put(
-                                "properties",
-                                buildJsonObject {
-                                    put(
-                                        "includeInvisible",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("boolean"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive(
-                                                    "Include invisible views in the hierarchy"
-                                                ),
-                                            )
-                                            put("default", JsonPrimitive(false))
-                                        },
-                                    )
-                                    put(
-                                        "maxDepth",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("integer"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive(
-                                                    "Maximum depth to traverse (optional)"
-                                                ),
-                                            )
-                                            put("minimum", JsonPrimitive(1))
-                                        },
-                                    )
-                                    put(
-                                        "trackRecompositions",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("boolean"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive("Track Compose recomposition counts"),
-                                            )
-                                            put("default", JsonPrimitive(false))
-                                        },
-                                    )
-                                    put(
-                                        "includePackageInfo",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("boolean"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive(
-                                                    "Include detailed package information for custom views"
-                                                ),
-                                            )
-                                            put("default", JsonPrimitive(true))
-                                        },
-                                    )
-                                },
-                            )
-                        },
-                    required = emptyList(),
-                ),
-        )
-    }
+    @Serializable data class EmptyInput(val placeholder: String? = null)
 
-    private fun createViewFindByTextTool(): Tool {
-        return Tool(
-            name = "view_find_by_text",
-            description = "Find views containing specific text with framework detection",
-            inputSchema =
-                Tool.Input(
-                    properties =
-                        buildJsonObject {
-                            put("type", JsonPrimitive("object"))
-                            put(
-                                "properties",
-                                buildJsonObject {
-                                    put(
-                                        "text",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("string"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive("Text to search for in views"),
-                                            )
-                                        },
-                                    )
-                                    put(
-                                        "exactMatch",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("boolean"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive(
-                                                    "Whether to match text exactly or use contains"
-                                                ),
-                                            )
-                                            put("default", JsonPrimitive(false))
-                                        },
-                                    )
-                                    put(
-                                        "includePackageInfo",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("boolean"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive(
-                                                    "Include detailed package information"
-                                                ),
-                                            )
-                                            put("default", JsonPrimitive(true))
-                                        },
-                                    )
-                                },
-                            )
-                        },
-                    required = listOf("text"),
-                ),
-        )
-    }
-
-    private fun createViewFindByIdTool(): Tool {
-        return Tool(
-            name = "view_find_by_id",
-            description = "Find views by resource ID with framework detection",
-            inputSchema =
-                Tool.Input(
-                    properties =
-                        buildJsonObject {
-                            put("type", JsonPrimitive("object"))
-                            put(
-                                "properties",
-                                buildJsonObject {
-                                    put(
-                                        "id",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("string"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive("Resource ID to search for"),
-                                            )
-                                        },
-                                    )
-                                    put(
-                                        "includePackageInfo",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("boolean"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive(
-                                                    "Include detailed package information"
-                                                ),
-                                            )
-                                            put("default", JsonPrimitive(true))
-                                        },
-                                    )
-                                },
-                            )
-                        },
-                    required = listOf("id"),
-                ),
-        )
-    }
-
-    private fun createViewFindByClassTool(): Tool {
-        return Tool(
-            name = "view_find_by_class",
-            description = "Find views by class name with framework detection",
-            inputSchema =
-                Tool.Input(
-                    properties =
-                        buildJsonObject {
-                            put("type", JsonPrimitive("object"))
-                            put(
-                                "properties",
-                                buildJsonObject {
-                                    put(
-                                        "className",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("string"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive("Class name to search for"),
-                                            )
-                                        },
-                                    )
-                                    put(
-                                        "includePackageInfo",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("boolean"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive(
-                                                    "Include detailed package information"
-                                                ),
-                                            )
-                                            put("default", JsonPrimitive(true))
-                                        },
-                                    )
-                                },
-                            )
-                        },
-                    required = listOf("className"),
-                ),
-        )
-    }
-
-    private fun createConfigureStreamingTool(): Tool {
-        return Tool(
-            name = "view_hierarchy_configure_streaming",
-            description = "Configure real-time streaming of view hierarchy changes over SSE",
-            inputSchema =
-                Tool.Input(
-                    properties =
-                        buildJsonObject {
-                            put("type", JsonPrimitive("object"))
-                            put(
-                                "properties",
-                                buildJsonObject {
-                                    put(
-                                        "enabled",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("boolean"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive("Enable or disable streaming"),
-                                            )
-                                        },
-                                    )
-                                    put(
-                                        "intervalMs",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("integer"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive("Polling interval in milliseconds"),
-                                            )
-                                            put(
-                                                "default",
-                                                JsonPrimitive(DEFAULT_POLLING_INTERVAL_MS),
-                                            )
-                                            put("minimum", JsonPrimitive(100))
-                                        },
-                                    )
-                                    put(
-                                        "includeInvisible",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("boolean"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive("Include invisible views"),
-                                            )
-                                            put("default", JsonPrimitive(false))
-                                        },
-                                    )
-                                    put(
-                                        "maxDepth",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("integer"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive("Maximum depth to traverse"),
-                                            )
-                                            put("minimum", JsonPrimitive(1))
-                                        },
-                                    )
-                                    put(
-                                        "trackRecompositions",
-                                        buildJsonObject {
-                                            put("type", JsonPrimitive("boolean"))
-                                            put(
-                                                "description",
-                                                JsonPrimitive("Track Compose recompositions"),
-                                            )
-                                            put("default", JsonPrimitive(true))
-                                        },
-                                    )
-                                },
-                            )
-                        },
-                    required = listOf("enabled"),
-                ),
-        )
-    }
-
-    private fun createGetRecompositionStatsTool(): Tool {
-        return Tool(
-            name = "view_hierarchy_get_recomposition_stats",
-            description = "Get Compose recomposition statistics and performance metrics",
-            inputSchema =
-                Tool.Input(
-                    properties = buildJsonObject { put("type", JsonPrimitive("object")) },
-                    required = emptyList(),
-                ),
-        )
-    }
-
-    private suspend fun captureViewHierarchy(arguments: Map<String, Any>): CallToolResult {
-        val includeInvisible = arguments["includeInvisible"] as? Boolean ?: false
-        val maxDepth = (arguments["maxDepth"] as? Number)?.toInt()
-        val trackRecompositions = arguments["trackRecompositions"] as? Boolean ?: false
-        val includePackageInfo = arguments["includePackageInfo"] as? Boolean ?: true
+    private suspend fun captureViewHierarchy(input: ViewHierarchyCaptureInput): CallToolResult {
+        val includeInvisible = input.includeInvisible
+        val maxDepth = input.maxDepth
+        val trackRecompositions = input.trackRecompositions
+        val includePackageInfo = input.includePackageInfo
 
         val activity = currentActivity
         if (activity == null) {
@@ -542,22 +268,14 @@ class ViewHierarchyToolProvider(private val context: Context) {
         }
     }
 
-    private suspend fun configureStreaming(arguments: Map<String, Any>): CallToolResult {
-        val enabled = arguments["enabled"] as? Boolean ?: false
-        val intervalMs =
-            (arguments["intervalMs"] as? Number)?.toLong() ?: DEFAULT_POLLING_INTERVAL_MS
-        val includeInvisible = arguments["includeInvisible"] as? Boolean ?: false
-        val maxDepth = (arguments["maxDepth"] as? Number)?.toInt()
-        val trackRecompositions = arguments["trackRecompositions"] as? Boolean ?: true
+    private suspend fun configureStreaming(input: StreamingConfigInput): CallToolResult {
+        val enabled = input.enabled
+        val intervalMs = input.intervalMs
+        val includeInvisible = input.includeInvisible
+        val maxDepth = input.maxDepth
+        val trackRecompositions = input.trackRecompositions
 
-        streamingConfig =
-            StreamingConfigInput(
-                enabled = enabled,
-                intervalMs = intervalMs,
-                includeInvisible = includeInvisible,
-                maxDepth = maxDepth,
-                trackRecompositions = trackRecompositions,
-            )
+        streamingConfig = input
 
         isStreamingEnabled = enabled
 
@@ -581,7 +299,7 @@ class ViewHierarchyToolProvider(private val context: Context) {
         return CallToolResult(content = listOf(TextContent(text = result)), isError = false)
     }
 
-    private suspend fun getRecompositionStats(arguments: Map<String, Any>): CallToolResult {
+    private suspend fun getRecompositionStats(input: EmptyInput? = null): CallToolResult {
         val stats = recompositionTracker.getStats()
 
         val result = buildString {
@@ -872,10 +590,10 @@ class ViewHierarchyToolProvider(private val context: Context) {
     }
 
     // Existing methods remain the same but now call the enhanced captureViewNode
-    private suspend fun findViewsByText(arguments: Map<String, Any>): CallToolResult {
-        val searchText = arguments["text"] as? String
-        val exactMatch = arguments["exactMatch"] as? Boolean ?: false
-        val includePackageInfo = arguments["includePackageInfo"] as? Boolean ?: true
+    private suspend fun findViewsByText(input: ViewSearchInput): CallToolResult {
+        val searchText = input.text
+        val exactMatch = input.exactMatch
+        val includePackageInfo = input.includePackageInfo
 
         if (searchText.isNullOrBlank()) {
             return CallToolResult(
@@ -934,9 +652,9 @@ class ViewHierarchyToolProvider(private val context: Context) {
         }
     }
 
-    private suspend fun findViewsById(arguments: Map<String, Any>): CallToolResult {
-        val searchId = arguments["id"] as? String
-        val includePackageInfo = arguments["includePackageInfo"] as? Boolean ?: true
+    private suspend fun findViewsById(input: ViewIdSearchInput): CallToolResult {
+        val searchId = input.id
+        val includePackageInfo = input.includePackageInfo
 
         if (searchId.isNullOrBlank()) {
             return CallToolResult(
@@ -988,9 +706,9 @@ class ViewHierarchyToolProvider(private val context: Context) {
         }
     }
 
-    private suspend fun findViewsByClass(arguments: Map<String, Any>): CallToolResult {
-        val searchClass = arguments["className"] as? String
-        val includePackageInfo = arguments["includePackageInfo"] as? Boolean ?: true
+    private suspend fun findViewsByClass(input: ViewClassSearchInput): CallToolResult {
+        val searchClass = input.className
+        val includePackageInfo = input.includePackageInfo
 
         if (searchClass.isNullOrBlank()) {
             return CallToolResult(

@@ -2,7 +2,7 @@ package dev.jasonpearson.androidmcpsdk.debugbridge.tools
 
 import android.content.Context
 import android.util.Log
-import dev.jasonpearson.androidmcpsdk.core.features.tools.ToolRegistry
+import dev.jasonpearson.androidmcpsdk.core.features.tools.McpToolProvider
 
 /**
  * Provides storage tools for the debug bridge.
@@ -16,7 +16,7 @@ class StorageToolProvider(private val context: Context) {
         private const val TAG = "StorageToolProvider"
     }
 
-    fun registerTools(registry: ToolRegistry) {
+    fun registerTools(toolProvider: McpToolProvider) {
         Log.d(TAG, "Storage tools provider registered (no tools implemented yet)")
 
         // TODO: Add storage tools

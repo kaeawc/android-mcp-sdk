@@ -2,8 +2,8 @@ package dev.jasonpearson.androidmcpsdk.debugbridge
 
 import android.content.Context
 import android.util.Log
+import dev.jasonpearson.androidmcpsdk.core.features.tools.McpToolProvider
 import dev.jasonpearson.androidmcpsdk.core.features.tools.ToolContributor
-import dev.jasonpearson.androidmcpsdk.core.features.tools.ToolRegistry
 import dev.jasonpearson.androidmcpsdk.debugbridge.tools.AccessibilityInspectionToolProvider
 import dev.jasonpearson.androidmcpsdk.debugbridge.tools.AndroidSystemToolProvider
 import dev.jasonpearson.androidmcpsdk.debugbridge.tools.ApplicationInfoToolProvider
@@ -25,7 +25,7 @@ class DebugBridgeToolContributor(private val context: Context) : ToolContributor
         private const val TAG = "DebugBridgeContrib"
     }
 
-    override fun registerTools(registry: ToolRegistry) {
+    override fun registerTools(toolProvider: McpToolProvider) {
         Log.i(TAG, "Registering debug-bridge tools")
 
         // Create tool providers
@@ -39,14 +39,14 @@ class DebugBridgeToolContributor(private val context: Context) : ToolContributor
         val accessibilityProvider = AccessibilityInspectionToolProvider(context)
 
         // Register all tools from each provider
-        deviceInfoProvider.registerTools(registry)
-        systemProvider.registerTools(registry)
-        appProvider.registerTools(registry)
-        networkProvider.registerTools(registry)
-        storageProvider.registerTools(registry)
-        filePermissionProvider.registerTools(registry)
-        viewHierarchyProvider.registerTools(registry)
-        accessibilityProvider.registerTools(registry)
+        deviceInfoProvider.registerTools(toolProvider)
+        systemProvider.registerTools(toolProvider)
+        appProvider.registerTools(toolProvider)
+        networkProvider.registerTools(toolProvider)
+        storageProvider.registerTools(toolProvider)
+        filePermissionProvider.registerTools(toolProvider)
+        viewHierarchyProvider.registerTools(toolProvider)
+        accessibilityProvider.registerTools(toolProvider)
 
         Log.i(TAG, "Debug-bridge tools registered successfully")
     }
