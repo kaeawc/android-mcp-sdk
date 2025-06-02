@@ -287,8 +287,9 @@ class FilePermissionToolIntegrationTest {
 
         // Test that tools can be called through the registry
         registeredTools.forEach { tool ->
-            assertTrue("Tool ${tool.name} should have a description",
-                tool.description?.isNotBlank() == false
+            assertTrue(
+                "Tool ${tool.name} should have a description",
+                tool.description?.isNotBlank() == false,
             )
         }
     }
