@@ -144,9 +144,10 @@ class FilePermissionToolIntegrationTest {
     @Test
     fun `integration test - Storage Access Framework workflow`() = runTest {
         // Step 1: Create document picker intent for specific file types
-        val mimeArgs = FilePermissionToolProvider.CreateDocumentPickerIntentInput(
-            mimeTypes = listOf("image/*", "application/pdf")
-        )
+        val mimeArgs =
+            FilePermissionToolProvider.CreateDocumentPickerIntentInput(
+                mimeTypes = listOf("image/*", "application/pdf")
+            )
         val intentResult = toolProvider.handleCreateDocumentPickerIntent(mimeArgs)
 
         assertFalse("Should successfully create picker intent", intentResult.isError ?: false)
@@ -205,11 +206,13 @@ class FilePermissionToolIntegrationTest {
             invalidUriResult.content.first().toString().contains("Invalid URI format"),
         )
 
-        // Test 4: Missing required parameters - This would be caught at compile time with data classes
+        // Test 4: Missing required parameters - This would be caught at compile time with data
+        // classes
         // so we test with empty string instead
-        val emptyUriResult = toolProvider.handleCheckFileAccess(
-            FilePermissionToolProvider.CheckFileAccessRequest(uri = "")
-        )
+        val emptyUriResult =
+            toolProvider.handleCheckFileAccess(
+                FilePermissionToolProvider.CheckFileAccessRequest(uri = "")
+            )
         // Should handle empty URI gracefully
         assertFalse("Should handle empty URI", emptyUriResult.isError ?: false)
     }
@@ -343,13 +346,16 @@ class FilePermissionToolIntegrationTest {
                             0 ->
                                 toolProvider.handleCheckFileAccess(
                                     FilePermissionToolProvider.CheckFileAccessRequest(
-                                        uri = "${context.filesDir.absolutePath}/concurrent_$index.txt"
+                                        uri =
+                                            "${context.filesDir.absolutePath}/concurrent_$index.txt"
                                     )
                                 )
 
                             1 ->
                                 toolProvider.handleRequestPermissions(
-                                    FilePermissionToolProvider.RequestPermissionsRequest(scope = "APP_INTERNAL")
+                                    FilePermissionToolProvider.RequestPermissionsRequest(
+                                        scope = "APP_INTERNAL"
+                                    )
                                 )
 
                             else -> toolProvider.handleGetScopedDirectories()
