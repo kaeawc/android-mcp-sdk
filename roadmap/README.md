@@ -73,6 +73,21 @@ This directory contains detailed task specifications for completing the Android 
 - ✅ `create_document_picker_intent` - Create Storage Access Framework document picker intent
 - ✅ `validate_document_uri` - Validate document URI from Storage Access Framework
 
+**ViewHierarchyToolProvider** (6/6 tools complete):
+
+- ✅ `view_hierarchy_capture` - Capture complete view hierarchy of active activity with modern
+  framework support
+- ✅ `view_find_by_text` - Find views containing specific text (exact or partial match) with
+  framework detection
+- ✅ `view_find_by_id` - Find views by resource ID (supports partial matching) with framework
+  detection
+- ✅ `view_find_by_class` - Find views by class name (simple or fully qualified) with framework
+  detection
+- ✅ `view_hierarchy_configure_streaming` - Configure real-time streaming of view hierarchy changes
+  over SSE
+- ✅ `view_hierarchy_get_recomposition_stats` - Get Compose recomposition statistics and performance
+  metrics
+
 ### ⚠️ Partially Implemented Tool Providers
 
 **StorageToolProvider** (0/4 planned tools implemented):
@@ -82,7 +97,7 @@ This directory contains detailed task specifications for completing the Android 
 - `[ ]` `file_info` - File metadata and details
 - `[ ]` `disk_usage` - Storage usage analysis
 
-### Summary: 16/20 Debug-Bridge Tools Complete (80%)
+### Summary: 22/24 Debug-Bridge Tools Complete (92%)
 
 ## Task Categories & Status
 
@@ -124,8 +139,8 @@ This directory contains detailed task specifications for completing the Android 
 
 ### 🔵 Documentation & Polish
 
-- `[ ]` [21-view-hierarchy-querying.md](21-view-hierarchy-querying.md) - UI view hierarchy
-  inspection
+- `[C]` [21-view-hierarchy-querying.md](21-view-hierarchy-querying.md) - UI view hierarchy
+  inspection **[COMPLETED]**
 - `[ ]` [22-accessibility-inspection.md](22-accessibility-inspection.md) - Accessibility service
   integration
 - `[C]` [23-network-request-inspection.md](23-network-request-inspection.md) - Network traffic
@@ -212,6 +227,12 @@ This task will:
 
 ## Recent Updates (Latest Session)
 
+- ✅ **Task 21 Complete**: View Hierarchy Querying fully implemented
+  - ✅ ViewHierarchyToolProvider with 6 MCP tools
+  - ✅ Activity lifecycle tracking for real-time updates
+  - ✅ Complete view traversal with search capabilities
+  - ✅ Security features (password masking)
+  - ✅ Integration with DebugBridgeToolContributor
 - ✅ **Transport Layer Cleanup**: Removed custom transport implementations in favor of official MCP
   Kotlin SDK
   - ✅ Deleted `McpTransport.kt`, `WebSocketTransport.kt`, `HttpSseTransport.kt`,
@@ -231,6 +252,7 @@ This task will:
   implementations
 - **05-http-sse-transport-implementation.md**: **OBSOLETE** - Official MCP SDK provides SSE
   transport via Ktor
+- **21-view-hierarchy-querying.md**: **COMPLETED** - Full UI inspection and search capabilities
 - **Transport Layer Architecture**: Simplified by leveraging official MCP Kotlin SDK instead of
   custom implementations
 - **Priority ordering**: Reorganized to focus on blocking TODOs first
@@ -287,3 +309,4 @@ grep -r "TODO" core/src/main/kotlin/ --include="*.kt"
 ```
 
 Update this README.md with status as tasks are completed.
+

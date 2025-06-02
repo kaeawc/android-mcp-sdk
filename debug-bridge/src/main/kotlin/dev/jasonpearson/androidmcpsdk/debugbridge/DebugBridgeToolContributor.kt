@@ -10,6 +10,7 @@ import dev.jasonpearson.androidmcpsdk.debugbridge.tools.DeviceInfoToolProvider
 import dev.jasonpearson.androidmcpsdk.debugbridge.tools.FilePermissionToolProvider
 import dev.jasonpearson.androidmcpsdk.debugbridge.tools.NetworkToolProvider
 import dev.jasonpearson.androidmcpsdk.debugbridge.tools.StorageToolProvider
+import dev.jasonpearson.androidmcpsdk.debugbridge.tools.ViewHierarchyToolProvider
 
 /**
  * Main tool contributor for the debug-bridge module.
@@ -33,6 +34,7 @@ class DebugBridgeToolContributor(private val context: Context) : ToolContributor
         val networkProvider = NetworkToolProvider(context)
         val storageProvider = StorageToolProvider(context)
         val filePermissionProvider = FilePermissionToolProvider(context)
+        val viewHierarchyProvider = ViewHierarchyToolProvider(context)
 
         // Register all tools from each provider
         deviceInfoProvider.registerTools(registry)
@@ -41,6 +43,7 @@ class DebugBridgeToolContributor(private val context: Context) : ToolContributor
         networkProvider.registerTools(registry)
         storageProvider.registerTools(registry)
         filePermissionProvider.registerTools(registry)
+        viewHierarchyProvider.registerTools(registry)
 
         Log.i(TAG, "Debug-bridge tools registered successfully")
     }
