@@ -1,43 +1,71 @@
 # Task 17: Database Editing Implementation
 
-## Status: `[ ]` Not Started
+## Status: `[P]` In Progress - Enhanced Schema Intelligence Integration Required
 
 ## Objective
 
-Implement secure database modification capabilities for Android applications, providing safe INSERT,
-UPDATE, DELETE operations with comprehensive validation, transaction support, and audit logging for
+Implement secure database modification capabilities for Android applications with intelligent schema
+validation, Room/SQLDelight integration, and comprehensive safety mechanisms. Provide safe INSERT,
+UPDATE, DELETE operations with schema-aware validation, transaction support, and audit logging for
 Room databases, SQLite, and Content Providers.
 
-## Requirements
+## Enhanced Requirements
+
+### Schema Intelligence Integration
+
+- **Schema-Aware Validation**: Use cached table schemas from Task 16 to validate all edit operations
+  before execution
+- **Room Entity Integration**: Leverage Room entity information for type-safe edit operations and
+  constraint validation
+- **SQLDelight Integration**: Use SQLDelight schema information for compile-time validated edit
+  operations
+- **Automatic Schema Dependency**: Automatically refresh schema cache if edit operations fail due to
+  schema mismatches
+- **Source Code Correlation**: Use Room/SQLDelight source mappings to provide intelligent error
+  messages and validation
+
+### Enhanced Safety Requirements
+
+- **Pre-execution Validation**: Validate all edit operations against cached schema before database
+  interaction
+- **Constraint Checking**: Comprehensive foreign key, check constraint, and unique constraint
+  validation
+- **Type Safety**: Leverage Room entity type information for safe data conversion and validation
+- **Transaction Intelligence**: Smart transaction boundaries based on schema relationships and
+  dependencies
+- **Backup Integration**: Automatic backups with schema-aware restoration capabilities
 
 ### Technical Requirements
 
-- **Safe Write Operations**: Parameterized INSERT, UPDATE, DELETE with validation
-- **Transaction Support**: ACID transactions with rollback capabilities
-- **Batch Operations**: Efficient bulk data modifications
-- **Schema Validation**: Ensure data integrity and constraint compliance
-- **Backup and Recovery**: Automatic backups before destructive operations
-- **Change Tracking**: Detailed audit logs of all database modifications
-- **Permission Control**: Granular write permissions per table/operation
+- **Safe Write Operations**: Schema-validated INSERT, UPDATE, DELETE with comprehensive constraint
+  checking
+- **Transaction Support**: ACID transactions with schema-aware rollback capabilities
+- **Batch Operations**: Efficient bulk data modifications with constraint validation
+- **Schema Validation**: Real-time constraint compliance using cached schema information
+- **Backup and Recovery**: Automatic backups with schema-aware recovery mechanisms
+- **Change Tracking**: Detailed audit logs with schema context and relationship awareness
+- **Permission Control**: Granular write permissions per table/operation based on schema metadata
 
 ### Security Requirements
 
-- **SQL Injection Prevention**: Comprehensive input validation for all write operations
-- **Data Validation**: Type checking and constraint enforcement
-- **Access Control**: Role-based permissions for database modifications
-- **Audit Logging**: Complete trail of all database changes with user context
-- **Backup Integration**: Automatic backup before potentially destructive operations
-- **Rollback Capabilities**: Transaction rollback on validation failures
+- **SQL Injection Prevention**: Enhanced parameterization with schema-aware type checking and
+  validation
+- **Data Validation**: Comprehensive type checking using Room/SQLDelight type information
+- **Access Control**: Schema-based permissions for database modifications with entity-level controls
+- **Audit Logging**: Complete trail of changes with schema context and relationship impact analysis
+- **Backup Integration**: Schema-aware backup creation before potentially destructive operations
+- **Rollback Capabilities**: Intelligent transaction rollback with constraint dependency awareness
 
 ## Implementation Steps
 
-### Step 1: Create Database Editor Framework
+### Step 1: Enhanced Database Editor Framework with Schema Integration
 
-Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/DatabaseEditor.kt`:
+Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/SchemaAwareDatabaseEditor.kt`:
 
 ```kotlin
-class DatabaseEditor(
-    private val context: Context
+class SchemaAwareDatabaseEditor(
+    private val context: Context,
+    private val schemaCache: DatabaseSchemaCache
 ) {
     
     data class EditConfig(
@@ -46,7 +74,9 @@ class DatabaseEditor(
         val validateConstraints: Boolean = true,
         val auditChanges: Boolean = true,
         val maxBatchSize: Int = 1000,
-        val dryRun: Boolean = false
+        val dryRun: Boolean = false,
+        val useSchemaValidation: Boolean = true,
+        val refreshSchemaOnFailure: Boolean = true
     )
     
     data class EditRequest(
@@ -75,70 +105,139 @@ class DatabaseEditor(
         val executionTimeMs: Long,
         val backupPath: String? = null,
         val validationErrors: List<String> = emptyList(),
+        val schemaWarnings: List<String> = emptyList(),
+        val constraintViolations: List<ConstraintViolation> = emptyList(),
         val auditId: String? = null
     )
     
-    suspend fun executeEdit(request: EditRequest): EditResult
+    suspend fun executeSchemaAwareEdit(request: EditRequest): EditResult {
+        // Step 1: Validate schema availability
+        val schema = schemaCache.getOrLoadSchema(request.databaseUri)
+            ?: return EditResult(
+                success = false,
+                rowsAffected = 0,
+                executionTimeMs = 0,
+                validationErrors = listOf("Schema unavailable for database: ${request.databaseUri}")
+            )
+        
+        // Step 2: Validate table exists and get schema
+        val tableSchema = schema.tables[request.tableName]
+            ?: return EditResult(
+                success = false,
+                rowsAffected = 0,
+                executionTimeMs = 0,
+                validationErrors = listOf("Table '${request.tableName}' not found in schema")
+            )
+        
+        // Step 3: Validate operation against schema
+        val validation = validateOperationAgainstSchema(request, tableSchema, schema)
+        if (!validation.isValid) {
+            return EditResult(
+                success = false,
+                rowsAffected = 0,
+                executionTimeMs = 0,
+                validationErrors = validation.errors,
+                constraintViolations = validation.constraintViolations
+            )
+        }
+        
+        // Step 4: Execute with schema-aware safety
+        return executeWithSchemaValidation(request, tableSchema, schema)
+    }
+    
     suspend fun executeTransaction(requests: List<EditRequest>): TransactionResult
     suspend fun rollbackTransaction(transactionId: String): EditResult
+    
+    private suspend fun validateOperationAgainstSchema(
+        request: EditRequest,
+        tableSchema: TableSchema,
+        databaseSchema: CachedDatabaseSchema
+    ): SchemaValidationResult
+    
+    private suspend fun executeWithSchemaValidation(
+        request: EditRequest,
+        tableSchema: TableSchema,
+        databaseSchema: CachedDatabaseSchema
+    ): EditResult
 }
 ```
 
-### Step 2: Room Database Editing Support
+### Step 2: Room-Aware Database Editor
 
-Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/RoomDatabaseEditor.kt`:
+Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/RoomAwareDatabaseEditor.kt`:
 
 ```kotlin
-class RoomDatabaseEditor(
-    private val context: Context
+class RoomAwareDatabaseEditor(
+    private val context: Context,
+    private val schemaCache: DatabaseSchemaCache
 ) {
     
     data class RoomEditConfig(
         val database: RoomDatabase,
         val validateEntities: Boolean = true,
         val useDAOs: Boolean = true,
-        val enableForeignKeyConstraints: Boolean = true
+        val enableForeignKeyConstraints: Boolean = true,
+        val validateRelationships: Boolean = true
     )
     
-    suspend fun insertEntity(
+    suspend fun insertEntityWithSchemaValidation(
         database: RoomDatabase,
         entity: Any,
         config: RoomEditConfig
     ): EditResult {
+        val databaseUri = getDatabaseUri(database)
+        val schema = schemaCache.getOrLoadSchema(databaseUri)
+            ?: return EditResult.schemaUnavailable()
+        
         return database.withTransaction {
             try {
-                val dao = findDaoForEntity(database, entity::class)
-                val result = if (config.useDAOs && dao != null) {
-                    insertViaDao(dao, entity)
-                } else {
-                    insertViaRawQuery(database, entity)
-                }
+                // Get Room entity information from schema
+                val entityClass = entity::class
+                val roomEntityInfo = findRoomEntityInfo(schema, entityClass)
                 
-                EditResult(
-                    success = true,
-                    rowsAffected = 1,
-                    lastInsertId = result,
-                    executionTimeMs = measureTimeMillis { /* operation */ }
-                )
+                if (roomEntityInfo != null) {
+                    // Use Room-aware validation
+                    val validation = validateRoomEntity(entity, roomEntityInfo, schema)
+                    if (!validation.isValid) {
+                        return@withTransaction EditResult.validationFailed(validation.errors)
+                    }
+                    
+                    // Execute using Room DAO if available
+                    val result = if (config.useDAOs) {
+                        insertViaRoomDao(database, entity, roomEntityInfo)
+                    } else {
+                        insertViaRawQueryWithSchemaValidation(database, entity, roomEntityInfo, schema)
+                    }
+                    
+                    EditResult(
+                        success = true,
+                        rowsAffected = 1,
+                        lastInsertId = result,
+                        executionTimeMs = measureTimeMillis { /* operation */ }
+                    )
+                } else {
+                    // Fallback to generic schema validation
+                    executeGenericInsertWithSchemaValidation(database, entity, schema)
+                }
             } catch (e: Exception) {
                 EditResult(
                     success = false,
                     rowsAffected = 0,
                     executionTimeMs = 0,
-                    validationErrors = listOf(e.message ?: "Unknown error")
+                    validationErrors = listOf("Room entity insert failed: ${e.message}")
                 )
             }
         }
     }
     
-    suspend fun updateEntity(
+    suspend fun updateEntityWithSchemaValidation(
         database: RoomDatabase,
         entity: Any,
         whereClause: String = "",
         config: RoomEditConfig
     ): EditResult
     
-    suspend fun deleteEntity(
+    suspend fun deleteEntityWithSchemaValidation(
         database: RoomDatabase,
         entityClass: KClass<*>,
         whereClause: String,
@@ -146,369 +245,165 @@ class RoomDatabaseEditor(
         config: RoomEditConfig
     ): EditResult
     
-    suspend fun batchInsertEntities(
-        database: RoomDatabase,
-        entities: List<Any>,
-        config: RoomEditConfig
-    ): EditResult
-    
-    private fun validateEntityConstraints(entity: Any, database: RoomDatabase): List<String>
-    private fun findDaoForEntity(database: RoomDatabase, entityClass: KClass<*>): Any?
+    private fun validateRoomEntity(entity: Any, roomEntityInfo: RoomEntityInfo, schema: CachedDatabaseSchema): RoomValidationResult
+    private fun findRoomEntityInfo(schema: CachedDatabaseSchema, entityClass: KClass<*>): RoomEntityInfo?
+    private suspend fun insertViaRoomDao(database: RoomDatabase, entity: Any, roomEntityInfo: RoomEntityInfo): Long
 }
 ```
 
-### Step 3: SQLite Direct Editing Support
+### Step 3: Schema-Aware Data Validation Framework
 
-Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/SqliteDatabaseEditor.kt`:
+Create
+`core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/validation/SchemaAwareDataValidator.kt`:
 
 ```kotlin
-class SqliteDatabaseEditor(
-    private val context: Context
+class SchemaAwareDataValidator(
+    private val schemaCache: DatabaseSchemaCache
 ) {
     
-    data class SqliteEditConfig(
-        val databasePath: String,
-        val enableWAL: Boolean = true,
-        val validateSchema: Boolean = true,
-        val foreignKeysEnabled: Boolean = true
-    )
-    
-    suspend fun insertRecord(
-        config: SqliteEditConfig,
-        tableName: String,
-        values: ContentValues
-    ): EditResult {
-        return withContext(Dispatchers.IO) {
-            val database = openDatabase(config)
-            
-            try {
-                database.beginTransaction()
-                
-                val validation = validateInsert(database, tableName, values)
-                if (validation.isNotEmpty()) {
-                    return@withContext EditResult(
-                        success = false,
-                        rowsAffected = 0,
-                        executionTimeMs = 0,
-                        validationErrors = validation
-                    )
-                }
-                
-                val startTime = System.currentTimeMillis()
-                val insertId = database.insert(tableName, null, values)
-                val executionTime = System.currentTimeMillis() - startTime
-                
-                database.setTransactionSuccessful()
-                
-                EditResult(
-                    success = insertId != -1L,
-                    rowsAffected = if (insertId != -1L) 1 else 0,
-                    lastInsertId = insertId,
-                    executionTimeMs = executionTime
-                )
-            } catch (e: Exception) {
-                EditResult(
-                    success = false,
-                    rowsAffected = 0,
-                    executionTimeMs = 0,
-                    validationErrors = listOf(e.message ?: "Database error")
-                )
-            } finally {
-                database.endTransaction()
-                database.close()
-            }
-        }
-    }
-    
-    suspend fun updateRecord(
-        config: SqliteEditConfig,
-        tableName: String,
-        values: ContentValues,
-        whereClause: String,
-        whereArgs: Array<String>
-    ): EditResult
-    
-    suspend fun deleteRecords(
-        config: SqliteEditConfig,
-        tableName: String,
-        whereClause: String,
-        whereArgs: Array<String>
-    ): EditResult
-    
-    suspend fun executeBulkInsert(
-        config: SqliteEditConfig,
-        tableName: String,
-        records: List<ContentValues>
-    ): EditResult
-    
-    private fun validateInsert(database: SQLiteDatabase, tableName: String, values: ContentValues): List<String>
-    private fun validateUpdate(database: SQLiteDatabase, tableName: String, values: ContentValues): List<String>
-    private fun createBackup(databasePath: String): String
-}
-```
-
-### Step 4: Content Provider Editing Support
-
-Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/ContentProviderEditor.kt`:
-
-```kotlin
-class ContentProviderEditor(
-    private val context: Context
-) {
-    
-    data class ContentProviderEditConfig(
-        val authority: String,
-        val requirePermissions: Set<String> = emptySet(),
-        val validateWriteAccess: Boolean = true
-    )
-    
-    suspend fun insertContent(
-        config: ContentProviderEditConfig,
-        path: String,
-        values: ContentValues
-    ): EditResult {
-        return withContext(Dispatchers.IO) {
-            try {
-                checkPermissions(config.requirePermissions)
-                
-                val uri = Uri.parse("content://${config.authority}/$path")
-                val resultUri = context.contentResolver.insert(uri, values)
-                
-                EditResult(
-                    success = resultUri != null,
-                    rowsAffected = if (resultUri != null) 1 else 0,
-                    lastInsertId = resultUri?.lastPathSegment?.toLongOrNull(),
-                    executionTimeMs = 0 // Content providers don't provide timing
-                )
-            } catch (e: SecurityException) {
-                EditResult(
-                    success = false,
-                    rowsAffected = 0,
-                    executionTimeMs = 0,
-                    validationErrors = listOf("Permission denied: ${e.message}")
-                )
-            } catch (e: Exception) {
-                EditResult(
-                    success = false,
-                    rowsAffected = 0,
-                    executionTimeMs = 0,
-                    validationErrors = listOf(e.message ?: "Content provider error")
-                )
-            }
-        }
-    }
-    
-    suspend fun updateContent(
-        config: ContentProviderEditConfig,
-        path: String,
-        values: ContentValues,
-        selection: String?,
-        selectionArgs: Array<String>?
-    ): EditResult
-    
-    suspend fun deleteContent(
-        config: ContentProviderEditConfig,
-        path: String,
-        selection: String?,
-        selectionArgs: Array<String>?
-    ): EditResult
-    
-    suspend fun bulkInsertContent(
-        config: ContentProviderEditConfig,
-        path: String,
-        valuesArray: Array<ContentValues>
-    ): EditResult
-    
-    // Built-in provider editing helpers
-    suspend fun insertContact(contactData: ContactData): EditResult
-    suspend fun updateContact(contactId: Long, contactData: ContactData): EditResult
-    suspend fun deleteContact(contactId: Long): EditResult
-    
-    private fun checkPermissions(permissions: Set<String>)
-}
-```
-
-### Step 5: Transaction Management
-
-Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/TransactionManager.kt`:
-
-```kotlin
-class TransactionManager(
-    private val context: Context
-) {
-    
-    data class Transaction(
-        val id: String = UUID.randomUUID().toString(),
-        val operations: List<EditRequest>,
-        val startTime: Long = System.currentTimeMillis(),
-        val status: TransactionStatus = TransactionStatus.PENDING
-    )
-    
-    enum class TransactionStatus {
-        PENDING, EXECUTING, COMMITTED, ROLLED_BACK, FAILED
-    }
-    
-    data class TransactionResult(
-        val transactionId: String,
-        val success: Boolean,
-        val results: List<EditResult>,
-        val totalRowsAffected: Int,
-        val executionTimeMs: Long,
-        val rollbackPoint: String? = null
-    )
-    
-    suspend fun executeTransaction(operations: List<EditRequest>): TransactionResult {
-        val transaction = Transaction(operations = operations)
-        val startTime = System.currentTimeMillis()
-        
-        return try {
-            val rollbackPoint = createRollbackPoint(operations)
-            val results = mutableListOf<EditResult>()
-            var totalRowsAffected = 0
-            
-            for (operation in operations) {
-                val result = executeEditOperation(operation)
-                results.add(result)
-                
-                if (!result.success) {
-                    rollbackToPoint(rollbackPoint)
-                    return TransactionResult(
-                        transactionId = transaction.id,
-                        success = false,
-                        results = results,
-                        totalRowsAffected = 0,
-                        executionTimeMs = System.currentTimeMillis() - startTime,
-                        rollbackPoint = rollbackPoint
-                    )
-                }
-                
-                totalRowsAffected += result.rowsAffected
-            }
-            
-            TransactionResult(
-                transactionId = transaction.id,
-                success = true,
-                results = results,
-                totalRowsAffected = totalRowsAffected,
-                executionTimeMs = System.currentTimeMillis() - startTime
-            )
-        } catch (e: Exception) {
-            TransactionResult(
-                transactionId = transaction.id,
-                success = false,
-                results = emptyList(),
-                totalRowsAffected = 0,
-                executionTimeMs = System.currentTimeMillis() - startTime
-            )
-        }
-    }
-    
-    private suspend fun createRollbackPoint(operations: List<EditRequest>): String
-    private suspend fun rollbackToPoint(rollbackPoint: String)
-    private suspend fun executeEditOperation(operation: EditRequest): EditResult
-}
-```
-
-### Step 6: Data Validation Framework
-
-Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/DataValidator.kt`:
-
-```kotlin
-class DataValidator {
-    
-    data class ValidationRule(
-        val columnName: String,
-        val type: DataType,
-        val required: Boolean = false,
-        val maxLength: Int? = null,
-        val pattern: Regex? = null,
-        val customValidator: ((Any?) -> String?)? = null
-    )
-    
-    enum class DataType {
-        INTEGER, REAL, TEXT, BLOB, BOOLEAN, DATE, TIMESTAMP
-    }
-    
-    data class ValidationResult(
+    data class SchemaValidationResult(
         val isValid: Boolean,
         val errors: List<String> = emptyList(),
-        val warnings: List<String> = emptyList()
+        val warnings: List<String> = emptyList(),
+        val constraintViolations: List<ConstraintViolation> = emptyList(),
+        val typeConversions: List<TypeConversion> = emptyList(),
+        val relationshipImpacts: List<RelationshipImpact> = emptyList()
     )
     
-    fun validateRecord(
-        data: Map<String, Any?>,
-        rules: List<ValidationRule>
-    ): ValidationResult {
+    data class ConstraintViolation(
+        val constraintType: ConstraintType,
+        val columnName: String,
+        val violationDescription: String,
+        val suggestedFix: String? = null
+    )
+    
+    enum class ConstraintType {
+        PRIMARY_KEY, FOREIGN_KEY, UNIQUE, CHECK, NOT_NULL, DATA_TYPE, ROOM_RELATION
+    }
+    
+    suspend fun validateInsert(
+        databaseUri: String,
+        tableName: String,
+        data: Map<String, Any>
+    ): SchemaValidationResult {
+        val schema = schemaCache.getOrLoadSchema(databaseUri)
+            ?: return SchemaValidationResult(
+                isValid = false,
+                errors = listOf("Schema not available for validation")
+            )
+        
+        val tableSchema = schema.tables[tableName]
+            ?: return SchemaValidationResult(
+                isValid = false,
+                errors = listOf("Table '$tableName' not found in schema")
+            )
+        
         val errors = mutableListOf<String>()
         val warnings = mutableListOf<String>()
+        val violations = mutableListOf<ConstraintViolation>()
+        val conversions = mutableListOf<TypeConversion>()
+        val impacts = mutableListOf<RelationshipImpact>()
         
-        for (rule in rules) {
-            val value = data[rule.columnName]
-            
-            // Check required fields
-            if (rule.required && (value == null || value.toString().isBlank())) {
-                errors.add("Column '${rule.columnName}' is required")
+        // Validate column existence and types
+        for ((columnName, value) in data) {
+            val columnSchema = tableSchema.columns.find { it.name == columnName }
+            if (columnSchema == null) {
+                warnings.add("Column '$columnName' not found in schema - may be ignored")
                 continue
             }
             
-            if (value != null) {
-                // Type validation
-                val typeError = validateType(value, rule.type)
-                if (typeError != null) {
-                    errors.add("Column '${rule.columnName}': $typeError")
-                }
-                
-                // Length validation
-                if (rule.maxLength != null && value.toString().length > rule.maxLength) {
-                    errors.add("Column '${rule.columnName}' exceeds maximum length of ${rule.maxLength}")
-                }
-                
-                // Pattern validation
-                if (rule.pattern != null && !rule.pattern.matches(value.toString())) {
-                    errors.add("Column '${rule.columnName}' does not match required pattern")
-                }
-                
-                // Custom validation
-                rule.customValidator?.invoke(value)?.let { error ->
-                    errors.add("Column '${rule.columnName}': $error")
-                }
+            // Type validation with Room integration
+            val typeValidation = validateColumnType(value, columnSchema)
+            if (!typeValidation.isValid) {
+                violations.add(ConstraintViolation(
+                    constraintType = ConstraintType.DATA_TYPE,
+                    columnName = columnName,
+                    violationDescription = typeValidation.error,
+                    suggestedFix = typeValidation.suggestedFix
+                ))
+            }
+            
+            if (typeValidation.requiresConversion) {
+                conversions.add(typeValidation.conversion)
+            }
+            
+            // Null constraint validation
+            if (!columnSchema.isNullable && (value == null || value.toString().isBlank())) {
+                violations.add(ConstraintViolation(
+                    constraintType = ConstraintType.NOT_NULL,
+                    columnName = columnName,
+                    violationDescription = "Column '$columnName' cannot be null"
+                ))
             }
         }
         
-        return ValidationResult(
-            isValid = errors.isEmpty(),
+        // Required column validation
+        for (column in tableSchema.columns.filter { !it.isNullable && it.defaultValue == null && !it.isAutoIncrement }) {
+            if (!data.containsKey(column.name)) {
+                violations.add(ConstraintViolation(
+                    constraintType = ConstraintType.NOT_NULL,
+                    columnName = column.name,
+                    violationDescription = "Required column '${column.name}' is missing"
+                ))
+            }
+        }
+        
+        // Foreign key validation
+        for (foreignKey in tableSchema.foreignKeys) {
+            val fkValidation = validateForeignKeyConstraint(foreignKey, data, schema)
+            if (!fkValidation.isValid) {
+                violations.addAll(fkValidation.violations)
+            }
+        }
+        
+        // Room relationship validation
+        if (tableSchema.roomEntityInfo != null) {
+            val roomValidation = validateRoomRelationships(tableSchema.roomEntityInfo, data, schema)
+            violations.addAll(roomValidation.violations)
+            impacts.addAll(roomValidation.relationshipImpacts)
+        }
+        
+        return SchemaValidationResult(
+            isValid = violations.isEmpty(),
             errors = errors,
-            warnings = warnings
+            warnings = warnings,
+            constraintViolations = violations,
+            typeConversions = conversions,
+            relationshipImpacts = impacts
         )
     }
     
-    private fun validateType(value: Any, expectedType: DataType): String? {
-        return when (expectedType) {
-            DataType.INTEGER -> if (value !is Number) "Expected integer" else null
-            DataType.REAL -> if (value !is Number) "Expected real number" else null
-            DataType.TEXT -> if (value !is String) "Expected text" else null
-            DataType.BOOLEAN -> if (value !is Boolean) "Expected boolean" else null
-            DataType.DATE -> validateDate(value.toString())
-            DataType.TIMESTAMP -> validateTimestamp(value.toString())
-            DataType.BLOB -> null // Accept any type for blob
-        }
-    }
+    suspend fun validateUpdate(
+        databaseUri: String,
+        tableName: String,
+        data: Map<String, Any>,
+        whereClause: String,
+        whereArgs: Array<String>
+    ): SchemaValidationResult
     
-    private fun validateDate(value: String): String?
-    private fun validateTimestamp(value: String): String?
+    suspend fun validateDelete(
+        databaseUri: String,
+        tableName: String,
+        whereClause: String,
+        whereArgs: Array<String>
+    ): SchemaValidationResult
+    
+    private fun validateColumnType(value: Any?, columnSchema: ColumnSchema): TypeValidationResult
+    private fun validateForeignKeyConstraint(foreignKey: ForeignKeyConstraint, data: Map<String, Any>, schema: CachedDatabaseSchema): ForeignKeyValidationResult
+    private fun validateRoomRelationships(roomEntityInfo: RoomEntityInfo, data: Map<String, Any>, schema: CachedDatabaseSchema): RoomRelationshipValidationResult
 }
 ```
 
-### Step 7: MCP Tool Integration
+### Step 4: Enhanced MCP Tool Integration
 
-Add to existing `ToolProvider.kt`:
+Update existing database tools in `DatabaseToolProvider.kt`:
 
 ```kotlin
-private fun createDatabaseEditingTools(): List<Tool> {
+private fun createEnhancedDatabaseEditTools(): List<Tool> {
     return listOf(
         Tool(
-            name = "database_insert",
-            description = "Insert new record into database table",
+            name = "database_schema_aware_insert",
+            description = "Insert new record with comprehensive schema validation and Room/SQLDelight integration",
             inputSchema = Tool.Input(
                 properties = buildJsonObject {
                     put("database_uri", buildJsonObject {
@@ -521,7 +416,12 @@ private fun createDatabaseEditingTools(): List<Tool> {
                     })
                     put("data", buildJsonObject {
                         put("type", JsonPrimitive("object"))
-                        put("description", JsonPrimitive("Record data as key-value pairs"))
+                        put("description", JsonPrimitive("Record data with schema-aware validation"))
+                    })
+                    put("validate_relationships", buildJsonObject {
+                        put("type", JsonPrimitive("boolean"))
+                        put("default", JsonPrimitive(true))
+                        put("description", JsonPrimitive("Validate Room relationships and foreign keys"))
                     })
                     put("dry_run", buildJsonObject {
                         put("type", JsonPrimitive("boolean"))
@@ -534,8 +434,8 @@ private fun createDatabaseEditingTools(): List<Tool> {
         ),
         
         Tool(
-            name = "database_update",
-            description = "Update existing database records",
+            name = "database_schema_aware_update",
+            description = "Update existing records with comprehensive schema validation",
             inputSchema = Tool.Input(
                 properties = buildJsonObject {
                     put("database_uri", buildJsonObject {
@@ -548,7 +448,7 @@ private fun createDatabaseEditingTools(): List<Tool> {
                     })
                     put("data", buildJsonObject {
                         put("type", JsonPrimitive("object"))
-                        put("description", JsonPrimitive("Updated data as key-value pairs"))
+                        put("description", JsonPrimitive("Updated data with schema validation"))
                     })
                     put("where_clause", buildJsonObject {
                         put("type", JsonPrimitive("string"))
@@ -558,14 +458,19 @@ private fun createDatabaseEditingTools(): List<Tool> {
                         put("type", JsonPrimitive("array"))
                         put("description", JsonPrimitive("WHERE clause parameters"))
                     })
+                    put("validate_constraints", buildJsonObject {
+                        put("type", JsonPrimitive("boolean"))
+                        put("default", JsonPrimitive(true))
+                        put("description", JsonPrimitive("Validate all constraints before update"))
+                    })
                 },
                 required = listOf("database_uri", "table_name", "data", "where_clause")
             )
         ),
         
         Tool(
-            name = "database_delete",
-            description = "Delete records from database table",
+            name = "database_schema_aware_delete",
+            description = "Delete records with relationship impact analysis",
             inputSchema = Tool.Input(
                 properties = buildJsonObject {
                     put("database_uri", buildJsonObject {
@@ -584,6 +489,11 @@ private fun createDatabaseEditingTools(): List<Tool> {
                         put("type", JsonPrimitive("array"))
                         put("description", JsonPrimitive("WHERE clause parameters"))
                     })
+                    put("analyze_impact", buildJsonObject {
+                        put("type", JsonPrimitive("boolean"))
+                        put("default", JsonPrimitive(true))
+                        put("description", JsonPrimitive("Analyze foreign key relationship impact"))
+                    })
                     put("confirm", buildJsonObject {
                         put("type", JsonPrimitive("boolean"))
                         put("default", JsonPrimitive(false))
@@ -595,176 +505,60 @@ private fun createDatabaseEditingTools(): List<Tool> {
         ),
         
         Tool(
-            name = "database_transaction",
-            description = "Execute multiple database operations in a transaction",
+            name = "database_validate_edit_operation",
+            description = "Validate edit operation against schema without execution",
             inputSchema = Tool.Input(
                 properties = buildJsonObject {
-                    put("operations", buildJsonObject {
-                        put("type", JsonPrimitive("array"))
-                        put("description", JsonPrimitive("List of database operations"))
+                    put("database_uri", buildJsonObject {
+                        put("type", JsonPrimitive("string"))
+                        put("description", JsonPrimitive("Database URI"))
                     })
-                    put("rollback_on_error", buildJsonObject {
+                    put("operation", buildJsonObject {
+                        put("type", JsonPrimitive("string"))
+                        put("enum", buildJsonArray {
+                            add("insert")
+                            add("update")
+                            add("delete")
+                        })
+                        put("description", JsonPrimitive("Operation type to validate"))
+                    })
+                    put("table_name", buildJsonObject {
+                        put("type", JsonPrimitive("string"))
+                        put("description", JsonPrimitive("Table name"))
+                    })
+                    put("data", buildJsonObject {
+                        put("type", JsonPrimitive("object"))
+                        put("description", JsonPrimitive("Operation data"))
+                    })
+                    put("include_relationship_analysis", buildJsonObject {
                         put("type", JsonPrimitive("boolean"))
                         put("default", JsonPrimitive(true))
-                        put("description", JsonPrimitive("Rollback entire transaction on any error"))
+                        put("description", JsonPrimitive("Include relationship impact analysis"))
                     })
                 },
-                required = listOf("operations")
+                required = listOf("database_uri", "operation", "table_name")
             )
         )
     )
 }
 ```
 
-### Step 8: Audit Logging
-
-Create `core/src/main/kotlin/dev/jasonpearson/mcpandroidsdk/database/DatabaseAuditLogger.kt`:
-
-```kotlin
-class DatabaseAuditLogger(
-    private val context: Context
-) {
-    
-    data class AuditRecord(
-        val id: String = UUID.randomUUID().toString(),
-        val timestamp: Long = System.currentTimeMillis(),
-        val operation: String,
-        val tableName: String,
-        val databaseUri: String,
-        val rowsAffected: Int,
-        val executionTimeMs: Long,
-        val success: Boolean,
-        val errorMessage: String? = null,
-        val userContext: String? = null,
-        val beforeData: String? = null,
-        val afterData: String? = null
-    )
-    
-    suspend fun logOperation(
-        operation: String,
-        tableName: String,
-        databaseUri: String,
-        result: EditResult,
-        beforeData: String? = null,
-        afterData: String? = null
-    ): String {
-        val record = AuditRecord(
-            operation = operation,
-            tableName = tableName,
-            databaseUri = databaseUri,
-            rowsAffected = result.rowsAffected,
-            executionTimeMs = result.executionTimeMs,
-            success = result.success,
-            errorMessage = result.validationErrors.joinToString("; ").takeIf { it.isNotEmpty() },
-            beforeData = beforeData,
-            afterData = afterData
-        )
-        
-        storeAuditRecord(record)
-        return record.id
-    }
-    
-    suspend fun getAuditHistory(
-        databaseUri: String? = null,
-        tableName: String? = null,
-        operation: String? = null,
-        limit: Int = 100
-    ): List<AuditRecord>
-    
-    suspend fun exportAuditLog(format: String = "json"): String
-    
-    private suspend fun storeAuditRecord(record: AuditRecord)
-}
-```
-
-## Verification Steps
-
-### 1. Unit Tests
-
-Create `lib/src/test/kotlin/dev/jasonpearson/mcpandroidsdk/database/DatabaseEditorTest.kt`:
-
-```kotlin
-@Test
-fun `data validation should prevent invalid inserts`()
-
-@Test
-fun `transaction rollback should work on validation failure`()
-
-@Test
-fun `SQL injection prevention should work in edit operations`()
-
-@Test
-fun `batch operations should handle large datasets efficiently`()
-
-@Test
-fun `audit logging should capture all database changes`()
-
-@Test
-fun `backup creation should work before destructive operations`()
-```
-
-### 2. Integration Tests
-
-Create
-`lib/src/androidTest/kotlin/dev/jasonpearson/mcpandroidsdk/DatabaseEditingIntegrationTest.kt`:
-
-```kotlin
-@Test
-fun `Room entity insertion should work with validation`()
-
-@Test
-fun `SQLite direct editing should respect constraints`()
-
-@Test
-fun `Content Provider editing should handle permissions`()
-
-@Test
-fun `Transaction management should ensure ACID properties`()
-
-@Test
-fun `Audit trail should be complete and accurate`()
-```
-
-### 3. Manual Testing
-
-1. **Test data insertion** with valid and invalid data
-2. **Verify transaction rollback** on constraint violations
-3. **Test batch operations** with large datasets
-4. **Validate audit logging** captures all changes
-5. **Test backup and recovery** functionality
-6. **Verify permission handling** for restricted operations
-
 ## Dependencies
 
-- **Task 08**: Database Resources Implementation (must be completed first)
-- **Task 16**: Database Querying (for validation queries)
-- **Core ResourceProvider**: Basic resource framework
-- **Core ToolProvider**: Tool execution framework
+- **Task 16**: Database Querying Implementation (schema cache dependency)
+- **DatabaseSchemaCache**: Required for schema-aware validation
+- **Room**: `androidx.room:room-runtime` for Room integration
+- **SQLDelight**: Optional integration for SQLDelight support
 
 ## Success Criteria
 
-- [ ] Safe database modification operations for all database types
-- [ ] Transaction support with ACID properties
-- [ ] Comprehensive data validation and constraint checking
-- [ ] SQL injection prevention for all write operations
-- [ ] Complete audit logging of database changes
-- [ ] Backup and recovery mechanisms functional
-- [ ] Batch operation support for efficiency
-- [ ] Permission-based access control working
-- [ ] MCP tool integration complete
-- [ ] Test coverage >90% for edit operations
-- [ ] Sample app demonstrates all editing patterns
-
-## Resources
-
-### Android Documentation
-
-- [Room Database Modifications](https://developer.android.com/training/data-storage/room/accessing-data#update)
-- [SQLite Transactions](https://www.sqlite.org/lang_transaction.html)
-- [Content Provider Modifications](https://developer.android.com/guide/topics/providers/content-provider-basics#Inserting)
-
-### Security Resources
-
-- [Database Security Best Practices](https://owasp.org/www-community/attacks/SQL_Injection)
-- [Android Data Storage Security](https://developer.android.com/training/articles/security-tips#StoringData)
-- [Transaction Management](https://developer.android.com/training/data-storage/room/accessing-data#database-transactions)
+- [ ] Schema-aware validation for all edit operations
+- [ ] Room entity integration with type-safe operations
+- [ ] SQLDelight integration for compile-time validated operations
+- [ ] Comprehensive constraint validation using cached schema
+- [ ] Foreign key relationship impact analysis
+- [ ] Automatic schema refresh on validation failures
+- [ ] Enhanced MCP tools with schema intelligence
+- [ ] Transaction support with schema-aware rollback
+- [ ] Audit logging with schema context
+- [ ] Test coverage >95% for schema-aware edit operations
