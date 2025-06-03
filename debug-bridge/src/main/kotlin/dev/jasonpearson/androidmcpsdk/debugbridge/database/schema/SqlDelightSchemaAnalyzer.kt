@@ -2,18 +2,16 @@ package dev.jasonpearson.androidmcpsdk.debugbridge.database.schema
 
 import android.content.Context
 import android.util.Log
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
- * Analyzes SQLDelight database schemas and extracts query information.
- * Uses reflection to avoid hard dependencies on SQLDelight.
+ * Analyzes SQLDelight database schemas and extracts query information. Uses reflection to avoid
+ * hard dependencies on SQLDelight.
  */
-class SqlDelightSchemaAnalyzer(
-    private val context: Context
-) {
+class SqlDelightSchemaAnalyzer(private val context: Context) {
 
     companion object {
         private const val TAG = "SqlDelightSchemaAnalyzer"
@@ -27,38 +25,36 @@ class SqlDelightSchemaAnalyzer(
         val queries: List<SqlDelightQuery>,
         val migrations: List<SqlDelightMigration>,
         val generatedClasses: List<KClass<*>>,
-        val tables: List<SqlDelightTable>
+        val tables: List<SqlDelightTable>,
     )
 
     data class SqlDelightInfo(
         val schemaFile: String,
         val compiledQueries: List<SqlDelightQuery>,
         val migrations: List<SqlDelightMigration>,
-        val tables: List<SqlDelightTable>
+        val tables: List<SqlDelightTable>,
     )
 
     data class SqlDelightTable(
         val name: String,
         val createStatement: String,
         val dataClass: KClass<*>?,
-        val properties: List<SqlDelightProperty>
+        val properties: List<SqlDelightProperty>,
     )
 
     data class SqlDelightProperty(
         val propertyName: String,
         val columnName: String,
-        val propertyType: KType
+        val propertyType: KType,
     )
 
     data class SqlDelightMigration(
         val version: Int,
         val migrationFile: String,
-        val statements: List<String>
+        val statements: List<String>,
     )
 
-    /**
-     * Check if SQLDelight is available in the classpath.
-     */
+    /** Check if SQLDelight is available in the classpath. */
     fun isSqlDelightAvailable(): Boolean {
         return try {
             Class.forName(SQLDELIGHT_DRIVER_CLASS)
@@ -69,9 +65,7 @@ class SqlDelightSchemaAnalyzer(
         }
     }
 
-    /**
-     * Analyze a SQLDelight database and extract comprehensive information.
-     */
+    /** Analyze a SQLDelight database and extract comprehensive information. */
     suspend fun analyzeSqlDelightDatabase(databasePath: String): SqlDelightDatabaseInfo? =
         withContext(Dispatchers.IO) {
             return@withContext try {
@@ -90,7 +84,7 @@ class SqlDelightSchemaAnalyzer(
 
                 Log.d(
                     TAG,
-                    "Analyzed SQLDelight database with ${schemaFiles.size} schema files, ${compiledQueries.size} queries"
+                    "Analyzed SQLDelight database with ${schemaFiles.size} schema files, ${compiledQueries.size} queries",
                 )
 
                 SqlDelightDatabaseInfo(
@@ -99,7 +93,7 @@ class SqlDelightSchemaAnalyzer(
                     queries = compiledQueries,
                     migrations = migrations,
                     generatedClasses = generatedClasses,
-                    tables = tables
+                    tables = tables,
                 )
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to analyze SQLDelight database: $databasePath", e)
@@ -107,39 +101,46 @@ class SqlDelightSchemaAnalyzer(
             }
         }
 
-    /**
-     * Enhance table schema with SQLDelight information.
-     */
+    /** Enhance table schema with SQLDelight information. */
     suspend fun enhanceTableSchemaWithSqlDelight(
         tableSchema: DatabaseSchemaCache.TableSchema,
-        sqlDelightInfo: SqlDelightDatabaseInfo
-    ): DatabaseSchemaCache.TableSchema = withContext(Dispatchers.IO) {
+        sqlDelightInfo: SqlDelightDatabaseInfo,
+    ): DatabaseSchemaCache.TableSchema =
+        withContext(Dispatchers.IO) {
+            val sqlDelightTable =
+                sqlDelightInfo.tables.find { it.name == tableSchema.name }
+                    ?: return@withContext tableSchema
 
-        val sqlDelightTable = sqlDelightInfo.tables.find { it.name == tableSchema.name }
-            ?: return@withContext tableSchema
+            Log.d(TAG, "Enhancing table schema for ${tableSchema.name} with SQLDelight info")
 
-        Log.d(TAG, "Enhancing table schema for ${tableSchema.name} with SQLDelight info")
+            val enhancedColumns =
+                tableSchema.columns.map { column ->
+                    val sqlDelightProperty =
+                        sqlDelightTable.properties.find { it.columnName == column.name }
+                    column.copy(
+                        sqlDelightPropertyInfo =
+                            sqlDelightProperty?.let {
+                                SqlDelightPropertyInfo(
+                                    propertyName = it.propertyName,
+                                    columnName = it.columnName,
+                                    propertyType = it.propertyType,
+                                )
+                            }
+                    )
+                }
 
-        val enhancedColumns = tableSchema.columns.map { column ->
-            val sqlDelightProperty =
-                sqlDelightTable.properties.find { it.columnName == column.name }
-            column.copy(sqlDelightPropertyInfo = sqlDelightProperty?.let {
-                SqlDelightPropertyInfo(
-                    propertyName = it.propertyName,
-                    columnName = it.columnName,
-                    propertyType = it.propertyType
-                )
-            })
-        }
-
-        return@withContext tableSchema.copy(
-            columns = enhancedColumns,
-            sqlDelightInfo = SqlDelightTableInfo(
-                dataClass = sqlDelightTable.dataClass,
-                queries = sqlDelightInfo.queries.filter { it.affectedTables.contains(tableSchema.name) }
+            return@withContext tableSchema.copy(
+                columns = enhancedColumns,
+                sqlDelightInfo =
+                    SqlDelightTableInfo(
+                        dataClass = sqlDelightTable.dataClass,
+                        queries =
+                            sqlDelightInfo.queries.filter {
+                                it.affectedTables.contains(tableSchema.name)
+                            },
+                    ),
             )
-        )
-    }
+        }
 
     private fun findSqlDelightSchemaFiles(): List<String> {
         return try {
@@ -229,8 +230,6 @@ class SqlDelightSchemaAnalyzer(
     }
 }
 
-/**
- * Exception thrown when SQLDelight analysis fails.
- */
+/** Exception thrown when SQLDelight analysis fails. */
 class SqlDelightAnalysisException(message: String, cause: Throwable? = null) :
     Exception(message, cause)

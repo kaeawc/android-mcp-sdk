@@ -1,10 +1,10 @@
 import android.content.Context
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.jasonpearson.androidmcpsdk.core.McpServerManager
+import kotlin.system.measureTimeMillis
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import org.junit.Assert.*
-import kotlin.system.measureTimeMillis
 
 abstract class ToolValidationFramework {
 
@@ -15,7 +15,7 @@ abstract class ToolValidationFramework {
         val success: Boolean,
         val result: String,
         val executionTimeMs: Long,
-        val error: String? = null
+        val error: String? = null,
     )
 
     data class ToolValidationReport(
@@ -26,7 +26,7 @@ abstract class ToolValidationFramework {
         val averageExecutionTime: Double,
         val minExecutionTime: Long,
         val maxExecutionTime: Long,
-        val failures: List<String>
+        val failures: List<String>,
     )
 
     protected fun setupTestEnvironment() {
@@ -45,7 +45,7 @@ abstract class ToolValidationFramework {
 
     protected fun executeToolWithMeasurement(
         toolName: String,
-        arguments: Map<String, Any> = emptyMap()
+        arguments: Map<String, Any> = emptyMap(),
     ): ToolExecutionResult {
         return try {
             var result = ""
@@ -55,29 +55,27 @@ abstract class ToolValidationFramework {
                     if (toolResult.isError != true) {
                         toolResult.content.joinToString("\n") { content ->
                             when (content) {
-                                is io.modelcontextprotocol.kotlin.sdk.TextContent -> content.text
-                                    ?: ""
+                                is io.modelcontextprotocol.kotlin.sdk.TextContent ->
+                                    content.text ?: ""
 
                                 else -> content.toString()
                             }
                         }
                     } else {
-                        throw Exception("Tool execution failed: ${toolResult.content.joinToString { it.toString() }}")
+                        throw Exception(
+                            "Tool execution failed: ${toolResult.content.joinToString { it.toString() }}"
+                        )
                     }
                 }
             }
 
-            ToolExecutionResult(
-                success = true,
-                result = result,
-                executionTimeMs = executionTime
-            )
+            ToolExecutionResult(success = true, result = result, executionTimeMs = executionTime)
         } catch (e: Exception) {
             ToolExecutionResult(
                 success = false,
                 result = "",
                 executionTimeMs = -1,
-                error = e.message
+                error = e.message,
             )
         }
     }
@@ -85,9 +83,7 @@ abstract class ToolValidationFramework {
     protected fun validateJsonStructure(jsonString: String, requiredFields: List<String>): Boolean {
         return try {
             val json = JSONObject(jsonString)
-            requiredFields.all { field ->
-                json.has(field) && !json.isNull(field)
-            }
+            requiredFields.all { field -> json.has(field) && !json.isNull(field) }
         } catch (e: Exception) {
             false
         }
@@ -96,7 +92,7 @@ abstract class ToolValidationFramework {
     protected fun validateNumericValue(
         value: String,
         min: Double? = null,
-        max: Double? = null
+        max: Double? = null,
     ): Boolean {
         return try {
             val numValue = value.toDouble()
@@ -112,7 +108,7 @@ abstract class ToolValidationFramework {
 
     protected fun runToolValidationSuite(
         toolName: String,
-        testCases: List<() -> Pair<String, Boolean>>
+        testCases: List<() -> Pair<String, Boolean>>,
     ): ToolValidationReport {
         val failures = mutableListOf<String>()
         var totalTests = 0
@@ -146,10 +142,11 @@ abstract class ToolValidationFramework {
             totalTests = totalTests,
             passedTests = passedTests,
             failedTests = failures.size,
-            averageExecutionTime = if (executionTimes.isNotEmpty()) executionTimes.average() else 0.0,
+            averageExecutionTime =
+                if (executionTimes.isNotEmpty()) executionTimes.average() else 0.0,
             minExecutionTime = executionTimes.minOrNull() ?: 0,
             maxExecutionTime = executionTimes.maxOrNull() ?: 0,
-            failures = failures
+            failures = failures,
         )
     }
 
@@ -158,7 +155,9 @@ abstract class ToolValidationFramework {
         println("Total Tests: ${report.totalTests}")
         println("Passed: ${report.passedTests}")
         println("Failed: ${report.failedTests}")
-        println("Success Rate: ${(report.passedTests.toDouble() / report.totalTests * 100).toInt()}%")
+        println(
+            "Success Rate: ${(report.passedTests.toDouble() / report.totalTests * 100).toInt()}%"
+        )
         println("Performance:")
         println("  - Average execution time: ${report.averageExecutionTime.toInt()}ms")
         println("  - Min execution time: ${report.minExecutionTime}ms")
@@ -166,9 +165,7 @@ abstract class ToolValidationFramework {
 
         if (report.failures.isNotEmpty()) {
             println("Failures:")
-            report.failures.forEach { failure ->
-                println("  - $failure")
-            }
+            report.failures.forEach { failure -> println("  - $failure") }
         }
         println("=" + ("=".repeat(49)))
     }

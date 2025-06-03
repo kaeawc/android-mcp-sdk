@@ -14,9 +14,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
-/**
- * Enhanced database tool provider with intelligent schema caching and query optimization.
- */
+/** Enhanced database tool provider with intelligent schema caching and query optimization. */
 class EnhancedDatabaseToolProvider(private val context: Context) {
 
     companion object {
@@ -25,17 +23,15 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
 
     private val schemaCache = DatabaseSchemaCache(context)
     private val queryValidator = IntelligentQueryValidator(schemaCache)
-    private val databaseOperations = DatabaseOperations(
-        context = context,
-        databaseFactory = StandardSqliteDatabaseFactory()
-    )
+    private val databaseOperations =
+        DatabaseOperations(context = context, databaseFactory = StandardSqliteDatabaseFactory())
 
     @Serializable
     data class ListTablesInput(
         val databaseUri: String,
         val includeSourceMappings: Boolean = true,
         val includeIndexAnalysis: Boolean = true,
-        val refreshCache: Boolean = false
+        val refreshCache: Boolean = false,
     )
 
     @Serializable
@@ -45,14 +41,14 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
         val parameters: Map<String, String> = emptyMap(),
         val optimizationLevel: String = "balanced",
         val pagination: PaginationInput? = null,
-        val outputFormat: String = "json"
+        val outputFormat: String = "json",
     )
 
     @Serializable
     data class PaginationInput(
         val pageSize: Int = 100,
         val pageToken: String? = null,
-        val sortColumns: List<String> = emptyList()
+        val sortColumns: List<String> = emptyList(),
     )
 
     @Serializable
@@ -60,7 +56,7 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
         val databaseUri: String,
         val query: String,
         val includeExecutionPlan: Boolean = true,
-        val suggestIndexes: Boolean = true
+        val suggestIndexes: Boolean = true,
     )
 
     @Serializable
@@ -69,7 +65,7 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
         val tableName: String,
         val data: Map<String, String>,
         val validateRelationships: Boolean = true,
-        val dryRun: Boolean = false
+        val dryRun: Boolean = false,
     )
 
     @Serializable
@@ -79,7 +75,7 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
         val data: Map<String, String>,
         val whereClause: String,
         val whereArgs: List<String> = emptyList(),
-        val validateConstraints: Boolean = true
+        val validateConstraints: Boolean = true,
     )
 
     @Serializable
@@ -89,7 +85,7 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
         val whereClause: String,
         val whereArgs: List<String> = emptyList(),
         val analyzeImpact: Boolean = true,
-        val confirm: Boolean = false
+        val confirm: Boolean = false,
     )
 
     @Serializable
@@ -98,13 +94,10 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
         val operation: String, // insert, update, delete
         val tableName: String,
         val data: Map<String, String> = emptyMap(),
-        val includeRelationshipAnalysis: Boolean = true
+        val includeRelationshipAnalysis: Boolean = true,
     )
 
-    @Serializable
-    data class SchemaCacheStatsInput(
-        val databaseUri: String? = null
-    )
+    @Serializable data class SchemaCacheStatsInput(val databaseUri: String? = null)
 
     fun registerTools(toolProvider: McpToolProvider) {
         Log.d(TAG, "Registering enhanced database tools with schema intelligence")
@@ -112,7 +105,8 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
         // Enhanced table listing with schema intelligence
         toolProvider.addTool<ListTablesInput>(
             name = "database_list_tables",
-            description = "List database tables with comprehensive schema information including Room/SQLDelight mappings",
+            description =
+                "List database tables with comprehensive schema information including Room/SQLDelight mappings",
         ) { input ->
             listTablesWithSchemaIntelligence(input)
         }
@@ -136,7 +130,8 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
         // Schema-aware data insertion
         toolProvider.addTool<SchemaAwareInsertInput>(
             name = "database_schema_aware_insert",
-            description = "Insert new record with comprehensive schema validation and Room/SQLDelight integration",
+            description =
+                "Insert new record with comprehensive schema validation and Room/SQLDelight integration",
         ) { input ->
             insertWithSchemaValidation(input)
         }
@@ -188,8 +183,13 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
 
             if (schema == null) {
                 return CallToolResult(
-                    content = listOf(TextContent(text = "Failed to load schema for database: ${input.databaseUri}")),
-                    isError = true
+                    content =
+                        listOf(
+                            TextContent(
+                                text = "Failed to load schema for database: ${input.databaseUri}"
+                            )
+                        ),
+                    isError = true,
                 )
             }
 
@@ -219,7 +219,9 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
                             appendLine("    Room Entity: ${roomInfo.entityClass.simpleName}")
                         }
                         table.sqlDelightInfo?.let { sqlDelightInfo ->
-                            appendLine("    SQLDelight Data Class: ${sqlDelightInfo.dataClass?.simpleName ?: "None"}")
+                            appendLine(
+                                "    SQLDelight Data Class: ${sqlDelightInfo.dataClass?.simpleName ?: "None"}"
+                            )
                             appendLine("    Associated Queries: ${sqlDelightInfo.queries.size}")
                         }
                     }
@@ -231,10 +233,14 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
                             appendLine("    Indexes:")
                             tableIndexes.forEach { index ->
                                 val uniqueInfo = if (index.isUnique) " (UNIQUE)" else ""
-                                appendLine("      - ${index.name}: ${index.columns.joinToString(", ")}$uniqueInfo")
+                                appendLine(
+                                    "      - ${index.name}: ${index.columns.joinToString(", ")}$uniqueInfo"
+                                )
                                 index.usageStats?.let { stats ->
                                     appendLine("        Access Count: ${stats.accessCount}")
-                                    appendLine("        Avg Access Time: ${stats.averageAccessTime}ms")
+                                    appendLine(
+                                        "        Avg Access Time: ${stats.averageAccessTime}ms"
+                                    )
                                 }
                             }
                         }
@@ -246,7 +252,9 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
                     appendLine("Views:")
                     schema.views.values.forEach { view ->
                         appendLine("  ${view.name}")
-                        appendLine("    Dependent Tables: ${view.dependentTables.joinToString(", ")}")
+                        appendLine(
+                            "    Dependent Tables: ${view.dependentTables.joinToString(", ")}"
+                        )
                     }
                     appendLine()
                 }
@@ -257,18 +265,19 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
                         appendLine("  ${mapping.tableName}")
                         mapping.entityClass?.let { appendLine("    Entity: ${it.simpleName}") }
                         mapping.daoClass?.let { appendLine("    DAO: ${it.simpleName}") }
-                        mapping.generatedClass?.let { appendLine("    Generated: ${it.simpleName}") }
+                        mapping.generatedClass?.let {
+                            appendLine("    Generated: ${it.simpleName}")
+                        }
                     }
                 }
             }
 
             CallToolResult(content = listOf(TextContent(text = output)), isError = false)
-
         } catch (e: Exception) {
             Log.e(TAG, "Failed to list tables with schema intelligence", e)
             CallToolResult(
                 content = listOf(TextContent(text = "Failed to list tables: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }
@@ -278,11 +287,12 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
             Log.d(TAG, "Executing optimized query for: ${input.databaseUri}")
 
             // Validate query first
-            val validation = queryValidator.validateQuery(
-                databaseUri = input.databaseUri,
-                query = input.query,
-                parameters = input.parameters
-            )
+            val validation =
+                queryValidator.validateQuery(
+                    databaseUri = input.databaseUri,
+                    query = input.query,
+                    parameters = input.parameters,
+                )
 
             if (!validation.isValid) {
                 val errorOutput = buildString {
@@ -294,7 +304,7 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
                 }
                 return CallToolResult(
                     content = listOf(TextContent(text = errorOutput)),
-                    isError = true
+                    isError = true,
                 )
             }
 
@@ -324,20 +334,23 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
                         appendLine("  Table: ${recommendation.tableName}")
                         appendLine("    Columns: ${recommendation.columns.joinToString(", ")}")
                         appendLine("    Reason: ${recommendation.reason}")
-                        appendLine("    Expected Improvement: ${recommendation.expectedImprovement}")
+                        appendLine(
+                            "    Expected Improvement: ${recommendation.expectedImprovement}"
+                        )
                     }
                     appendLine()
                 }
             }
 
             // Execute the query using existing DatabaseOperations
-            val result = databaseOperations.executeQuery(
-                databasePath = input.databaseUri,
-                query = input.query,
-                parameters = input.parameters.values.toTypedArray(),
-                pageSize = input.pagination?.pageSize ?: 100,
-                pageOffset = 0 // TODO: Handle page tokens
-            )
+            val result =
+                databaseOperations.executeQuery(
+                    databasePath = input.databaseUri,
+                    query = input.query,
+                    parameters = input.parameters.values.toTypedArray(),
+                    pageSize = input.pagination?.pageSize ?: 100,
+                    pageOffset = 0, // TODO: Handle page tokens
+                )
 
             if (result.success && result.data != null) {
                 val queryResult = result.data
@@ -379,15 +392,14 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
             } else {
                 CallToolResult(
                     content = listOf(TextContent(text = "Query failed: ${result.error}")),
-                    isError = true
+                    isError = true,
                 )
             }
-
         } catch (e: Exception) {
             Log.e(TAG, "Optimized query execution failed", e)
             CallToolResult(
                 content = listOf(TextContent(text = "Query failed: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }
@@ -396,10 +408,8 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
         return try {
             Log.d(TAG, "Analyzing query for: ${input.databaseUri}")
 
-            val validation = queryValidator.validateQuery(
-                databaseUri = input.databaseUri,
-                query = input.query
-            )
+            val validation =
+                queryValidator.validateQuery(databaseUri = input.databaseUri, query = input.query)
 
             val output = buildString {
                 appendLine("Query Analysis Report")
@@ -453,18 +463,19 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
                         appendLine("     Columns: ${recommendation.columns.joinToString(", ")}")
                         appendLine("     Unique: ${recommendation.unique}")
                         appendLine("     Reason: ${recommendation.reason}")
-                        appendLine("     Expected Improvement: ${recommendation.expectedImprovement}")
+                        appendLine(
+                            "     Expected Improvement: ${recommendation.expectedImprovement}"
+                        )
                     }
                 }
             }
 
             CallToolResult(content = listOf(TextContent(text = output)), isError = false)
-
         } catch (e: Exception) {
             Log.e(TAG, "Query analysis failed", e)
             CallToolResult(
                 content = listOf(TextContent(text = "Query analysis failed: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }
@@ -476,23 +487,26 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
             if (input.dryRun) {
                 // TODO: Implement schema validation for insert
                 return CallToolResult(
-                    content = listOf(
-                        TextContent(
-                            text = "DRY RUN: Would insert record into ${input.tableName} with schema validation"
-                        )
-                    ),
-                    isError = false
+                    content =
+                        listOf(
+                            TextContent(
+                                text =
+                                    "DRY RUN: Would insert record into ${input.tableName} with schema validation"
+                            )
+                        ),
+                    isError = false,
                 )
             }
 
             // For now, delegate to existing insert operation
             // TODO: Add schema validation
             val typedData = convertStringDataToTypes(input.data)
-            val result = databaseOperations.insertRecord(
-                databasePath = input.databaseUri,
-                tableName = input.tableName,
-                data = typedData
-            )
+            val result =
+                databaseOperations.insertRecord(
+                    databasePath = input.databaseUri,
+                    tableName = input.tableName,
+                    data = typedData,
+                )
 
             if (result.success) {
                 val output = buildString {
@@ -505,15 +519,14 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
             } else {
                 CallToolResult(
                     content = listOf(TextContent(text = "Insert failed: ${result.error}")),
-                    isError = true
+                    isError = true,
                 )
             }
-
         } catch (e: Exception) {
             Log.e(TAG, "Schema-aware insert failed", e)
             CallToolResult(
                 content = listOf(TextContent(text = "Insert failed: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }
@@ -525,13 +538,14 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
             // For now, delegate to existing update operation
             // TODO: Add schema validation
             val typedData = convertStringDataToTypes(input.data)
-            val result = databaseOperations.updateRecords(
-                databasePath = input.databaseUri,
-                tableName = input.tableName,
-                data = typedData,
-                whereClause = input.whereClause,
-                whereArgs = input.whereArgs.toTypedArray()
-            )
+            val result =
+                databaseOperations.updateRecords(
+                    databasePath = input.databaseUri,
+                    tableName = input.tableName,
+                    data = typedData,
+                    whereClause = input.whereClause,
+                    whereArgs = input.whereArgs.toTypedArray(),
+                )
 
             if (result.success) {
                 val output = buildString {
@@ -543,15 +557,14 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
             } else {
                 CallToolResult(
                     content = listOf(TextContent(text = "Update failed: ${result.error}")),
-                    isError = true
+                    isError = true,
                 )
             }
-
         } catch (e: Exception) {
             Log.e(TAG, "Schema-aware update failed", e)
             CallToolResult(
                 content = listOf(TextContent(text = "Update failed: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }
@@ -562,23 +575,26 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
 
             if (!input.confirm) {
                 return CallToolResult(
-                    content = listOf(
-                        TextContent(
-                            text = "Delete operation requires confirmation. Set 'confirm' to true to proceed."
-                        )
-                    ),
-                    isError = true
+                    content =
+                        listOf(
+                            TextContent(
+                                text =
+                                    "Delete operation requires confirmation. Set 'confirm' to true to proceed."
+                            )
+                        ),
+                    isError = true,
                 )
             }
 
             // For now, delegate to existing delete operation
             // TODO: Add relationship impact analysis
-            val result = databaseOperations.deleteRecords(
-                databasePath = input.databaseUri,
-                tableName = input.tableName,
-                whereClause = input.whereClause,
-                whereArgs = input.whereArgs.toTypedArray()
-            )
+            val result =
+                databaseOperations.deleteRecords(
+                    databasePath = input.databaseUri,
+                    tableName = input.tableName,
+                    whereClause = input.whereClause,
+                    whereArgs = input.whereArgs.toTypedArray(),
+                )
 
             if (result.success) {
                 val output = buildString {
@@ -594,15 +610,14 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
             } else {
                 CallToolResult(
                     content = listOf(TextContent(text = "Delete failed: ${result.error}")),
-                    isError = true
+                    isError = true,
                 )
             }
-
         } catch (e: Exception) {
             Log.e(TAG, "Schema-aware delete failed", e)
             CallToolResult(
                 content = listOf(TextContent(text = "Delete failed: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }
@@ -633,12 +648,11 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
             }
 
             CallToolResult(content = listOf(TextContent(text = output)), isError = false)
-
         } catch (e: Exception) {
             Log.e(TAG, "Edit operation validation failed", e)
             CallToolResult(
                 content = listOf(TextContent(text = "Validation failed: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }
@@ -669,7 +683,9 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
                         appendLine("Schema Version: ${schema.schemaVersion}")
                         appendLine("Tables Cached: ${schema.tables.size}")
                         appendLine("Indexes Cached: ${schema.indexes.size}")
-                        appendLine("Last Schema Update: ${java.time.Instant.ofEpochMilli(schema.lastUpdated)}")
+                        appendLine(
+                            "Last Schema Update: ${java.time.Instant.ofEpochMilli(schema.lastUpdated)}"
+                        )
                     } else {
                         appendLine()
                         appendLine("No cached schema found for: ${input.databaseUri}")
@@ -678,12 +694,11 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
             }
 
             CallToolResult(content = listOf(TextContent(text = output)), isError = false)
-
         } catch (e: Exception) {
             Log.e(TAG, "Failed to get schema cache stats", e)
             CallToolResult(
                 content = listOf(TextContent(text = "Failed to get cache stats: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }
@@ -702,85 +717,97 @@ class EnhancedDatabaseToolProvider(private val context: Context) {
         }
     }
 
-    private fun formatAsJson(queryResult: dev.jasonpearson.androidmcpsdk.debugbridge.database.QueryResult): String {
+    private fun formatAsJson(
+        queryResult: dev.jasonpearson.androidmcpsdk.debugbridge.database.QueryResult
+    ): String {
         return try {
             kotlinx.serialization.json.Json.encodeToString(
                 kotlinx.serialization.json.JsonArray.serializer(),
                 kotlinx.serialization.json.buildJsonArray {
                     queryResult.rows.forEach { row ->
-                        add(buildJsonObject {
-                            row.forEach { (key, value) ->
-                                when (value) {
-                                    null -> put(key, kotlinx.serialization.json.JsonNull)
-                                    is String -> put(key, value)
-                                    is Number -> put(key, value)
-                                    is Boolean -> put(key, value)
-                                    else -> put(key, value.toString())
+                        add(
+                            buildJsonObject {
+                                row.forEach { (key, value) ->
+                                    when (value) {
+                                        null -> put(key, kotlinx.serialization.json.JsonNull)
+                                        is String -> put(key, value)
+                                        is Number -> put(key, value)
+                                        is Boolean -> put(key, value)
+                                        else -> put(key, value.toString())
+                                    }
                                 }
                             }
-                        })
+                        )
                     }
-                }
+                },
             )
         } catch (e: Exception) {
             "Error formatting JSON: ${e.message}"
         }
     }
 
-    private fun formatAsCsv(queryResult: dev.jasonpearson.androidmcpsdk.debugbridge.database.QueryResult): String {
+    private fun formatAsCsv(
+        queryResult: dev.jasonpearson.androidmcpsdk.debugbridge.database.QueryResult
+    ): String {
         return buildString {
             // Headers
             appendLine(queryResult.columnNames.joinToString(","))
 
             // Data rows
             queryResult.rows.forEach { row ->
-                val values = queryResult.columnNames.map { columnName ->
-                    val value = row[columnName]?.toString() ?: ""
-                    if (value.contains(",") || value.contains("\"")) {
-                        "\"${value.replace("\"", "\"\"")}\""
-                    } else {
-                        value
+                val values =
+                    queryResult.columnNames.map { columnName ->
+                        val value = row[columnName]?.toString() ?: ""
+                        if (value.contains(",") || value.contains("\"")) {
+                            "\"${value.replace("\"", "\"\"")}\""
+                        } else {
+                            value
+                        }
                     }
-                }
                 appendLine(values.joinToString(","))
             }
         }
     }
 
-    private fun formatAsTable(queryResult: dev.jasonpearson.androidmcpsdk.debugbridge.database.QueryResult): String {
+    private fun formatAsTable(
+        queryResult: dev.jasonpearson.androidmcpsdk.debugbridge.database.QueryResult
+    ): String {
         if (queryResult.rows.isEmpty()) {
             return "No data returned"
         }
 
         // Calculate column widths
-        val columnWidths = queryResult.columnNames.associateWith { columnName ->
-            maxOf(
-                columnName.length,
-                queryResult.rows.maxOfOrNull { row ->
-                    row[columnName]?.toString()?.length ?: 0
-                } ?: 0
-            )
-        }
+        val columnWidths =
+            queryResult.columnNames.associateWith { columnName ->
+                maxOf(
+                    columnName.length,
+                    queryResult.rows.maxOfOrNull { row -> row[columnName]?.toString()?.length ?: 0 }
+                        ?: 0,
+                )
+            }
 
         return buildString {
             // Header
-            val header = queryResult.columnNames.joinToString(" | ") { columnName ->
-                columnName.padEnd(columnWidths[columnName]!!)
-            }
+            val header =
+                queryResult.columnNames.joinToString(" | ") { columnName ->
+                    columnName.padEnd(columnWidths[columnName]!!)
+                }
             appendLine(header)
 
             // Separator
-            val separator = queryResult.columnNames.joinToString("-|-") { columnName ->
-                "-".repeat(columnWidths[columnName]!!)
-            }
+            val separator =
+                queryResult.columnNames.joinToString("-|-") { columnName ->
+                    "-".repeat(columnWidths[columnName]!!)
+                }
             appendLine(separator)
 
             // Data rows
             queryResult.rows.forEach { row ->
-                val rowString = queryResult.columnNames.joinToString(" | ") { columnName ->
-                    val value = row[columnName]?.toString() ?: ""
-                    value.padEnd(columnWidths[columnName]!!)
-                }
+                val rowString =
+                    queryResult.columnNames.joinToString(" | ") { columnName ->
+                        val value = row[columnName]?.toString() ?: ""
+                        value.padEnd(columnWidths[columnName]!!)
+                    }
                 appendLine(rowString)
             }
         }

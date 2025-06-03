@@ -1,12 +1,11 @@
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import java.util.*
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.Assert.*
-import java.text.SimpleDateFormat
-import java.util.*
 
 @RunWith(AndroidJUnit4::class)
 class SystemTimeToolTest : ToolValidationFramework() {
@@ -18,9 +17,7 @@ class SystemTimeToolTest : ToolValidationFramework() {
 
     @After
     fun teardown() {
-        runBlocking {
-            serverManager.stopServer()
-        }
+        runBlocking { serverManager.stopServer() }
     }
 
     @Test
@@ -78,7 +75,7 @@ class SystemTimeToolTest : ToolValidationFramework() {
         // Timestamp should be within execution window
         assertTrue(
             "Timestamp should be recent",
-            timestamp!! >= beforeTime && timestamp <= afterTime
+            timestamp!! >= beforeTime && timestamp <= afterTime,
         )
     }
 
@@ -120,18 +117,14 @@ class SystemTimeToolTest : ToolValidationFramework() {
 
     @Test
     fun testSystemTimeWithTimezone() {
-        val result = executeToolWithMeasurement(
-            "system_time", mapOf(
-                "format" to "iso",
-                "timezone" to "UTC"
-            )
-        )
+        val result =
+            executeToolWithMeasurement("system_time", mapOf("format" to "iso", "timezone" to "UTC"))
         assertTrue("Tool should execute successfully", result.success)
 
         val resultText = result.result
         assertTrue(
             "Result should contain requested timezone",
-            resultText.contains("Requested Timezone: UTC")
+            resultText.contains("Requested Timezone: UTC"),
         )
         assertTrue("Result should contain time in UTC", resultText.contains("Time in UTC:"))
     }
@@ -152,56 +145,63 @@ class SystemTimeToolTest : ToolValidationFramework() {
         assertTrue("Second timestamp should be later or equal", timestamp2 >= timestamp1)
         assertTrue(
             "Timestamps should be close",
-            (timestamp2 - timestamp1) < 5000
+            (timestamp2 - timestamp1) < 5000,
         ) // Less than 5 seconds
     }
 
     @Test
     fun testComprehensiveSystemTimeValidation() {
-        val testCases = listOf<() -> Pair<String, Boolean>>(
-            {
-                val result = executeToolWithMeasurement("system_time")
-                "Basic execution" to result.success
-            },
-            {
-                val result = executeToolWithMeasurement("system_time")
-                "Contains system time information" to result.result.contains("System Time Information:")
-            },
-            {
-                val result = executeToolWithMeasurement("system_time", mapOf("format" to "iso"))
-                "ISO format works" to (result.success && result.result.contains("ISO Format:"))
-            },
-            {
-                val result =
-                    executeToolWithMeasurement("system_time", mapOf("format" to "timestamp"))
-                "Timestamp format works" to (result.success && result.result.contains("Timestamp:"))
-            },
-            {
-                val result =
-                    executeToolWithMeasurement("system_time", mapOf("format" to "readable"))
-                "Readable format works" to (result.success && result.result.contains("Readable Format:"))
-            },
-            {
-                val result = executeToolWithMeasurement("system_time")
-                "Contains system timezone" to result.result.contains("System Timezone:")
-            },
-            {
-                val result = executeToolWithMeasurement("system_time")
-                "Contains uptime" to result.result.contains("Uptime:")
-            },
-            {
-                val result = executeToolWithMeasurement("system_time", mapOf("timezone" to "UTC"))
-                "Timezone parameter works" to (result.success && result.result.contains("Requested Timezone: UTC"))
-            },
-            {
-                val result = executeToolWithMeasurement("system_time", mapOf("format" to "invalid"))
-                "Handles invalid format gracefully" to result.success
-            },
-            {
-                val result = executeToolWithMeasurement("system_time")
-                "Execution very fast" to (result.executionTimeMs < 200)
-            }
-        )
+        val testCases =
+            listOf<() -> Pair<String, Boolean>>(
+                {
+                    val result = executeToolWithMeasurement("system_time")
+                    "Basic execution" to result.success
+                },
+                {
+                    val result = executeToolWithMeasurement("system_time")
+                    "Contains system time information" to
+                        result.result.contains("System Time Information:")
+                },
+                {
+                    val result = executeToolWithMeasurement("system_time", mapOf("format" to "iso"))
+                    "ISO format works" to (result.success && result.result.contains("ISO Format:"))
+                },
+                {
+                    val result =
+                        executeToolWithMeasurement("system_time", mapOf("format" to "timestamp"))
+                    "Timestamp format works" to
+                        (result.success && result.result.contains("Timestamp:"))
+                },
+                {
+                    val result =
+                        executeToolWithMeasurement("system_time", mapOf("format" to "readable"))
+                    "Readable format works" to
+                        (result.success && result.result.contains("Readable Format:"))
+                },
+                {
+                    val result = executeToolWithMeasurement("system_time")
+                    "Contains system timezone" to result.result.contains("System Timezone:")
+                },
+                {
+                    val result = executeToolWithMeasurement("system_time")
+                    "Contains uptime" to result.result.contains("Uptime:")
+                },
+                {
+                    val result =
+                        executeToolWithMeasurement("system_time", mapOf("timezone" to "UTC"))
+                    "Timezone parameter works" to
+                        (result.success && result.result.contains("Requested Timezone: UTC"))
+                },
+                {
+                    val result =
+                        executeToolWithMeasurement("system_time", mapOf("format" to "invalid"))
+                    "Handles invalid format gracefully" to result.success
+                },
+                {
+                    val result = executeToolWithMeasurement("system_time")
+                    "Execution very fast" to (result.executionTimeMs < 200)
+                },
+            )
 
         val report = runToolValidationSuite("system_time", testCases)
         printValidationReport(report)

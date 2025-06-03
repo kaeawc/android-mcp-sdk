@@ -8,21 +8,16 @@ import java.io.File
 /**
  * Example implementation for SQLCipher support.
  *
- * This is a demonstration of how to implement the SqliteDatabase interface
- * for encrypted databases. In a real implementation, you would:
- *
+ * This is a demonstration of how to implement the SqliteDatabase interface for encrypted databases.
+ * In a real implementation, you would:
  * 1. Add SQLCipher dependency to build.gradle.kts:
  *    implementation("net.zetetic:android-database-sqlcipher:4.5.4")
- *
- * 2. Replace the commented code with actual SQLCipher calls:
- *    import net.zetetic.database.sqlcipher.SQLiteDatabase as SqlCipherDatabase
- *
+ * 2. Replace the commented code with actual SQLCipher calls: import
+ *    net.zetetic.database.sqlcipher.SQLiteDatabase as SqlCipherDatabase
  * 3. Use SqlCipherDatabase.openOrCreateDatabase(path, password, null, null)
  */
-class SqlCipherDatabase(
-    private val database: SQLiteDatabase,
-    private val password: String
-) : SqliteDatabase {
+class SqlCipherDatabase(private val database: SQLiteDatabase, private val password: String) :
+    SqliteDatabase {
 
     // In real implementation, this would be:
     // private val database: net.zetetic.database.sqlcipher.SQLiteDatabase
@@ -39,7 +34,7 @@ class SqlCipherDatabase(
         table: String,
         values: ContentValues,
         whereClause: String?,
-        whereArgs: Array<String>?
+        whereArgs: Array<String>?,
     ): Int {
         return database.update(table, values, whereClause, whereArgs)
     }
@@ -88,8 +83,8 @@ class SqlCipherDatabase(
 /**
  * Example factory for creating SQLCipher database instances.
  *
- * This demonstrates how to implement encrypted database support.
- * In a real implementation, this would use the actual SQLCipher library.
+ * This demonstrates how to implement encrypted database support. In a real implementation, this
+ * would use the actual SQLCipher library.
  */
 class SqlCipherDatabaseFactory : SqliteDatabaseFactory {
 
@@ -133,7 +128,6 @@ class SqlCipherDatabaseFactory : SqliteDatabaseFactory {
 
 /**
  * Example of how to use SQLCipher with the database operations:
- *
  * ```kotlin
  * val sqlCipherFactory = SqlCipherDatabaseFactory()
  * val databaseOperations = DatabaseOperations(

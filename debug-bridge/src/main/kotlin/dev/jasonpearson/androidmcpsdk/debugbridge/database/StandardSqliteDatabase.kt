@@ -6,9 +6,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import java.io.File
 
-/**
- * Standard Android SQLite database implementation.
- */
+/** Standard Android SQLite database implementation. */
 class StandardSqliteDatabase(private val database: SQLiteDatabase) : SqliteDatabase {
 
     override fun rawQuery(sql: String, selectionArgs: Array<String>?): Cursor {
@@ -23,7 +21,7 @@ class StandardSqliteDatabase(private val database: SQLiteDatabase) : SqliteDatab
         table: String,
         values: ContentValues,
         whereClause: String?,
-        whereArgs: Array<String>?
+        whereArgs: Array<String>?,
     ): Int {
         return database.update(table, values, whereClause, whereArgs)
     }
@@ -67,17 +65,16 @@ class StandardSqliteDatabase(private val database: SQLiteDatabase) : SqliteDatab
     override fun execSQL(sql: String) {
         database.execSQL(sql)
     }
-
 }
 
-/**
- * Factory for creating standard SQLite database instances.
- */
+/** Factory for creating standard SQLite database instances. */
 class StandardSqliteDatabaseFactory : SqliteDatabaseFactory {
 
     override fun openOrCreateDatabase(path: String, password: String?): SqliteDatabase {
         if (password != null) {
-            throw UnsupportedOperationException("Standard SQLite does not support password encryption. Use SQLCipher factory instead.")
+            throw UnsupportedOperationException(
+                "Standard SQLite does not support password encryption. Use SQLCipher factory instead."
+            )
         }
 
         val database = SQLiteDatabase.openOrCreateDatabase(path, null)
@@ -86,7 +83,9 @@ class StandardSqliteDatabaseFactory : SqliteDatabaseFactory {
 
     override fun openDatabase(path: String, flags: Int, password: String?): SqliteDatabase {
         if (password != null) {
-            throw UnsupportedOperationException("Standard SQLite does not support password encryption. Use SQLCipher factory instead.")
+            throw UnsupportedOperationException(
+                "Standard SQLite does not support password encryption. Use SQLCipher factory instead."
+            )
         }
 
         val database = SQLiteDatabase.openDatabase(path, null, flags)
@@ -100,12 +99,10 @@ class StandardSqliteDatabaseFactory : SqliteDatabaseFactory {
     override fun getFactoryName(): String = "StandardSQLite"
 }
 
-/**
- * Helper class for creating database instances with proper configuration.
- */
+/** Helper class for creating database instances with proper configuration. */
 class DatabaseHelper(
     private val config: DatabaseConfig,
-    private val factory: SqliteDatabaseFactory = StandardSqliteDatabaseFactory()
+    private val factory: SqliteDatabaseFactory = StandardSqliteDatabaseFactory(),
 ) : SQLiteOpenHelper(null, config.path, null, 1) {
 
     override fun onCreate(db: SQLiteDatabase?) {
@@ -117,11 +114,12 @@ class DatabaseHelper(
     }
 
     fun openDatabase(): SqliteDatabase {
-        val flags = if (config.readOnly) {
-            SQLiteDatabase.OPEN_READONLY
-        } else {
-            SQLiteDatabase.OPEN_READWRITE
-        }
+        val flags =
+            if (config.readOnly) {
+                SQLiteDatabase.OPEN_READONLY
+            } else {
+                SQLiteDatabase.OPEN_READWRITE
+            }
 
         val database = factory.openDatabase(config.path, flags, config.password)
 

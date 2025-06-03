@@ -1,7 +1,6 @@
 package dev.jasonpearson.androidmcpsdk.debugbridge.tools
 
 import android.content.Context
-import dev.jasonpearson.androidmcpsdk.core.features.tools.McpToolProvider
 import dev.jasonpearson.androidmcpsdk.debugbridge.database.*
 import io.mockk.mockk
 import org.junit.After
@@ -28,10 +27,11 @@ class DatabaseToolProviderTest {
     @Test
     fun `DatabaseQueryInput should have correct default values`() {
         // Act
-        val input = DatabaseToolProvider.DatabaseQueryInput(
-            databasePath = "/test/path",
-            query = "SELECT * FROM test"
-        )
+        val input =
+            DatabaseToolProvider.DatabaseQueryInput(
+                databasePath = "/test/path",
+                query = "SELECT * FROM test",
+            )
 
         // Assert
         assertEquals("/test/path", input.databasePath)
@@ -45,11 +45,12 @@ class DatabaseToolProviderTest {
     @Test
     fun `DatabaseInsertInput should have correct default values`() {
         // Act
-        val input = DatabaseToolProvider.DatabaseInsertInput(
-            databasePath = "/test/path",
-            tableName = "test_table",
-            data = mapOf("name" to "test")
-        )
+        val input =
+            DatabaseToolProvider.DatabaseInsertInput(
+                databasePath = "/test/path",
+                tableName = "test_table",
+                data = mapOf("name" to "test"),
+            )
 
         // Assert
         assertEquals("/test/path", input.databasePath)
@@ -61,12 +62,13 @@ class DatabaseToolProviderTest {
     @Test
     fun `DatabaseUpdateInput should have correct default values`() {
         // Act
-        val input = DatabaseToolProvider.DatabaseUpdateInput(
-            databasePath = "/test/path",
-            tableName = "test_table",
-            data = mapOf("name" to "updated"),
-            whereClause = "id = ?"
-        )
+        val input =
+            DatabaseToolProvider.DatabaseUpdateInput(
+                databasePath = "/test/path",
+                tableName = "test_table",
+                data = mapOf("name" to "updated"),
+                whereClause = "id = ?",
+            )
 
         // Assert
         assertEquals("/test/path", input.databasePath)
@@ -80,11 +82,12 @@ class DatabaseToolProviderTest {
     @Test
     fun `DatabaseDeleteInput should have correct default values`() {
         // Act
-        val input = DatabaseToolProvider.DatabaseDeleteInput(
-            databasePath = "/test/path",
-            tableName = "test_table",
-            whereClause = "id = ?"
-        )
+        val input =
+            DatabaseToolProvider.DatabaseDeleteInput(
+                databasePath = "/test/path",
+                tableName = "test_table",
+                whereClause = "id = ?",
+            )
 
         // Assert
         assertEquals("/test/path", input.databasePath)
@@ -97,9 +100,7 @@ class DatabaseToolProviderTest {
     @Test
     fun `DatabaseSchemaInput should have correct default values`() {
         // Act
-        val input = DatabaseToolProvider.DatabaseSchemaInput(
-            databasePath = "/test/path"
-        )
+        val input = DatabaseToolProvider.DatabaseSchemaInput(databasePath = "/test/path")
 
         // Assert
         assertEquals("/test/path", input.databasePath)
@@ -121,12 +122,13 @@ class DatabaseToolProviderTest {
     @Test
     fun `convertStringDataToTypes should convert boolean strings`() {
         // Arrange
-        val data = mapOf(
-            "true_field" to "true",
-            "false_field" to "false",
-            "True_field" to "True",
-            "FALSE_field" to "FALSE"
-        )
+        val data =
+            mapOf(
+                "true_field" to "true",
+                "false_field" to "false",
+                "True_field" to "True",
+                "FALSE_field" to "FALSE",
+            )
 
         // Act
         val result = databaseToolProvider.convertStringDataToTypes(data)
@@ -141,12 +143,13 @@ class DatabaseToolProviderTest {
     @Test
     fun `convertStringDataToTypes should convert numeric strings`() {
         // Arrange
-        val data = mapOf(
-            "integer_field" to "42",
-            "negative_int" to "-123",
-            "double_field" to "3.14159",
-            "negative_double" to "-2.71"
-        )
+        val data =
+            mapOf(
+                "integer_field" to "42",
+                "negative_int" to "-123",
+                "double_field" to "3.14159",
+                "negative_double" to "-2.71",
+            )
 
         // Act
         val result = databaseToolProvider.convertStringDataToTypes(data)
@@ -161,12 +164,13 @@ class DatabaseToolProviderTest {
     @Test
     fun `convertStringDataToTypes should preserve string values when not convertible`() {
         // Arrange
-        val data = mapOf(
-            "string_field" to "hello world",
-            "mixed_field" to "123abc",
-            "empty_field" to "",
-            "space_field" to "   "
-        )
+        val data =
+            mapOf(
+                "string_field" to "hello world",
+                "mixed_field" to "123abc",
+                "empty_field" to "",
+                "space_field" to "   ",
+            )
 
         // Act
         val result = databaseToolProvider.convertStringDataToTypes(data)
@@ -181,12 +185,13 @@ class DatabaseToolProviderTest {
     @Test
     fun `formatAsJson should handle empty result set`() {
         // Arrange
-        val queryResult = QueryResult(
-            rows = emptyList(),
-            columnNames = listOf("id", "name"),
-            rowCount = 0,
-            executionTimeMs = 5L
-        )
+        val queryResult =
+            QueryResult(
+                rows = emptyList(),
+                columnNames = listOf("id", "name"),
+                rowCount = 0,
+                executionTimeMs = 5L,
+            )
 
         // Act
         val result = databaseToolProvider.formatAsJson(queryResult)
@@ -198,15 +203,17 @@ class DatabaseToolProviderTest {
     @Test
     fun `formatAsCsv should include headers and data`() {
         // Arrange
-        val queryResult = QueryResult(
-            rows = listOf(
-                mapOf("id" to 1, "name" to "John", "email" to "john@example.com"),
-                mapOf("id" to 2, "name" to "Jane", "email" to "jane@example.com")
-            ),
-            columnNames = listOf("id", "name", "email"),
-            rowCount = 2,
-            executionTimeMs = 10L
-        )
+        val queryResult =
+            QueryResult(
+                rows =
+                    listOf(
+                        mapOf("id" to 1, "name" to "John", "email" to "john@example.com"),
+                        mapOf("id" to 2, "name" to "Jane", "email" to "jane@example.com"),
+                    ),
+                columnNames = listOf("id", "name", "email"),
+                rowCount = 2,
+                executionTimeMs = 10L,
+            )
 
         // Act
         val result = databaseToolProvider.formatAsCsv(queryResult)
@@ -222,14 +229,14 @@ class DatabaseToolProviderTest {
     @Test
     fun `formatAsCsv should handle commas and quotes in data`() {
         // Arrange
-        val queryResult = QueryResult(
-            rows = listOf(
-                mapOf("id" to 1, "name" to "John, Jr.", "notes" to "He said \"Hello\"")
-            ),
-            columnNames = listOf("id", "name", "notes"),
-            rowCount = 1,
-            executionTimeMs = 5L
-        )
+        val queryResult =
+            QueryResult(
+                rows =
+                    listOf(mapOf("id" to 1, "name" to "John, Jr.", "notes" to "He said \"Hello\"")),
+                columnNames = listOf("id", "name", "notes"),
+                rowCount = 1,
+                executionTimeMs = 5L,
+            )
 
         // Act
         val result = databaseToolProvider.formatAsCsv(queryResult)
@@ -244,15 +251,14 @@ class DatabaseToolProviderTest {
     @Test
     fun `formatAsTable should create proper table layout`() {
         // Arrange
-        val queryResult = QueryResult(
-            rows = listOf(
-                mapOf("id" to 1, "name" to "John"),
-                mapOf("id" to 2, "name" to "Jane")
-            ),
-            columnNames = listOf("id", "name"),
-            rowCount = 2,
-            executionTimeMs = 8L
-        )
+        val queryResult =
+            QueryResult(
+                rows =
+                    listOf(mapOf("id" to 1, "name" to "John"), mapOf("id" to 2, "name" to "Jane")),
+                columnNames = listOf("id", "name"),
+                rowCount = 2,
+                executionTimeMs = 8L,
+            )
 
         // Act
         val result = databaseToolProvider.formatAsTable(queryResult)
@@ -270,12 +276,13 @@ class DatabaseToolProviderTest {
     @Test
     fun `formatAsTable should handle empty result`() {
         // Arrange
-        val queryResult = QueryResult(
-            rows = emptyList(),
-            columnNames = listOf("id", "name"),
-            rowCount = 0,
-            executionTimeMs = 1L
-        )
+        val queryResult =
+            QueryResult(
+                rows = emptyList(),
+                columnNames = listOf("id", "name"),
+                rowCount = 0,
+                executionTimeMs = 1L,
+            )
 
         // Act
         val result = databaseToolProvider.formatAsTable(queryResult)
@@ -303,7 +310,9 @@ class DatabaseToolProviderTest {
     }
 
     // Helper method to access private method for testing
-    private fun DatabaseToolProvider.convertStringDataToTypes(data: Map<String, String>): Map<String, Any?> {
+    private fun DatabaseToolProvider.convertStringDataToTypes(
+        data: Map<String, String>
+    ): Map<String, Any?> {
         // Use reflection to access private method
         val method = this::class.java.getDeclaredMethod("convertStringDataToTypes", Map::class.java)
         method.isAccessible = true

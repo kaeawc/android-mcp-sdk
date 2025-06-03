@@ -1,23 +1,24 @@
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.Assert.*
 
 @RunWith(AndroidJUnit4::class)
 class AllToolsValidationTest : ToolValidationFramework() {
 
-    private val allBuiltInTools = listOf(
-        "device_info",
-        "hardware_info",
-        "system_info",
-        "app_info",
-        "system_time",
-        "memory_info",
-        "battery_info"
-    )
+    private val allBuiltInTools =
+        listOf(
+            "device_info",
+            "hardware_info",
+            "system_info",
+            "app_info",
+            "system_time",
+            "memory_info",
+            "battery_info",
+        )
 
     @Before
     fun setup() {
@@ -26,9 +27,7 @@ class AllToolsValidationTest : ToolValidationFramework() {
 
     @After
     fun teardown() {
-        runBlocking {
-            serverManager.stopServer()
-        }
+        runBlocking { serverManager.stopServer() }
     }
 
     @Test
@@ -99,10 +98,8 @@ class AllToolsValidationTest : ToolValidationFramework() {
 
     @Test
     fun testToolsWithInvalidArguments() {
-        val invalidArgs = mapOf<String, Any>(
-            "invalid_param" to "invalid_value",
-            "another_param" to 12345
-        )
+        val invalidArgs =
+            mapOf<String, Any>("invalid_param" to "invalid_value", "another_param" to 12345)
 
         for (tool in allBuiltInTools) {
             val result = executeToolWithMeasurement(tool, invalidArgs)
@@ -120,7 +117,7 @@ class AllToolsValidationTest : ToolValidationFramework() {
             assertTrue("Tool $tool should return non-empty text", result.result.isNotEmpty())
             assertTrue(
                 "Tool $tool should return meaningful content",
-                result.result.trim().isNotEmpty()
+                result.result.trim().isNotEmpty(),
             )
         }
     }
@@ -143,10 +140,7 @@ class AllToolsValidationTest : ToolValidationFramework() {
             stressTestResults[tool] = successCount
 
             // At least 90% should succeed in stress test
-            assertTrue(
-                "Tool $tool should handle stress test",
-                successCount >= iterations * 0.9
-            )
+            assertTrue("Tool $tool should handle stress test", successCount >= iterations * 0.9)
         }
 
         // Print stress test summary
@@ -161,28 +155,29 @@ class AllToolsValidationTest : ToolValidationFramework() {
         val overallReport = mutableMapOf<String, ToolValidationReport>()
 
         for (tool in allBuiltInTools) {
-            val testCases = listOf<() -> Pair<String, Boolean>>(
-                {
-                    val result = executeToolWithMeasurement(tool)
-                    "Basic execution" to result.success
-                },
-                {
-                    val result = executeToolWithMeasurement(tool)
-                    "Non-empty result" to result.result.isNotEmpty()
-                },
-                {
-                    val result = executeToolWithMeasurement(tool)
-                    "Meaningful content" to result.result.trim().isNotEmpty()
-                },
-                {
-                    val result = executeToolWithMeasurement(tool)
-                    "Reasonable execution time" to (result.executionTimeMs < 5000)
-                },
-                {
-                    val result = executeToolWithMeasurement(tool, mapOf("invalid" to "args"))
-                    "Handles invalid args" to result.success
-                }
-            )
+            val testCases =
+                listOf<() -> Pair<String, Boolean>>(
+                    {
+                        val result = executeToolWithMeasurement(tool)
+                        "Basic execution" to result.success
+                    },
+                    {
+                        val result = executeToolWithMeasurement(tool)
+                        "Non-empty result" to result.result.isNotEmpty()
+                    },
+                    {
+                        val result = executeToolWithMeasurement(tool)
+                        "Meaningful content" to result.result.trim().isNotEmpty()
+                    },
+                    {
+                        val result = executeToolWithMeasurement(tool)
+                        "Reasonable execution time" to (result.executionTimeMs < 5000)
+                    },
+                    {
+                        val result = executeToolWithMeasurement(tool, mapOf("invalid" to "args"))
+                        "Handles invalid args" to result.success
+                    },
+                )
 
             val report = runToolValidationSuite(tool, testCases)
             overallReport[tool] = report
@@ -209,19 +204,16 @@ class AllToolsValidationTest : ToolValidationFramework() {
         assertTrue("Device info should execute", deviceInfoResult.success)
         assertTrue(
             "Device info should contain manufacturer",
-            deviceInfoResult.result.contains("Manufacturer:")
+            deviceInfoResult.result.contains("Manufacturer:"),
         )
-        assertTrue(
-            "Device info should contain model",
-            deviceInfoResult.result.contains("Model:")
-        )
+        assertTrue("Device info should contain model", deviceInfoResult.result.contains("Model:"))
 
         // Test system_time specific validations
         val systemTimeResult = executeToolWithMeasurement("system_time")
         assertTrue("System time should execute", systemTimeResult.success)
         assertTrue(
             "System time should contain time information",
-            systemTimeResult.result.contains("System Time Information:")
+            systemTimeResult.result.contains("System Time Information:"),
         )
 
         // Test app_info specific validations
@@ -229,7 +221,7 @@ class AllToolsValidationTest : ToolValidationFramework() {
         assertTrue("App info should execute", appInfoResult.success)
         assertTrue(
             "App info should contain package name",
-            appInfoResult.result.contains("Package Name:")
+            appInfoResult.result.contains("Package Name:"),
         )
 
         // Test memory_info specific validations
@@ -237,7 +229,7 @@ class AllToolsValidationTest : ToolValidationFramework() {
         assertTrue("Memory info should execute", memoryInfoResult.success)
         assertTrue(
             "Memory info should contain memory information",
-            memoryInfoResult.result.contains("Memory Information:")
+            memoryInfoResult.result.contains("Memory Information:"),
         )
 
         // Test battery_info specific validations
@@ -245,7 +237,7 @@ class AllToolsValidationTest : ToolValidationFramework() {
         assertTrue("Battery info should execute", batteryInfoResult.success)
         assertTrue(
             "Battery info should contain battery information",
-            batteryInfoResult.result.contains("Battery Information:")
+            batteryInfoResult.result.contains("Battery Information:"),
         )
     }
 }

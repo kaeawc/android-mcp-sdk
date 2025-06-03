@@ -20,10 +20,8 @@ class DatabaseToolProvider(private val context: Context) {
         private const val TAG = "DatabaseToolProvider"
     }
 
-    private val databaseOperations = DatabaseOperations(
-        context = context,
-        databaseFactory = StandardSqliteDatabaseFactory()
-    )
+    private val databaseOperations =
+        DatabaseOperations(context = context, databaseFactory = StandardSqliteDatabaseFactory())
 
     @Serializable
     data class DatabaseQueryInput(
@@ -32,7 +30,7 @@ class DatabaseToolProvider(private val context: Context) {
         val parameters: List<String> = emptyList(),
         val pageSize: Int = 100,
         val pageOffset: Int = 0,
-        val outputFormat: String = "json"
+        val outputFormat: String = "json",
     )
 
     @Serializable
@@ -40,7 +38,7 @@ class DatabaseToolProvider(private val context: Context) {
         val databasePath: String,
         val tableName: String,
         val data: Map<String, String>, // Using String values for serialization simplicity
-        val dryRun: Boolean = false
+        val dryRun: Boolean = false,
     )
 
     @Serializable
@@ -50,7 +48,7 @@ class DatabaseToolProvider(private val context: Context) {
         val data: Map<String, String>,
         val whereClause: String,
         val whereArgs: List<String> = emptyList(),
-        val dryRun: Boolean = false
+        val dryRun: Boolean = false,
     )
 
     @Serializable
@@ -59,17 +57,13 @@ class DatabaseToolProvider(private val context: Context) {
         val tableName: String,
         val whereClause: String,
         val whereArgs: List<String> = emptyList(),
-        val confirm: Boolean = false
+        val confirm: Boolean = false,
     )
 
     @Serializable
-    data class DatabaseSchemaInput(
-        val databasePath: String,
-        val tableName: String? = null
-    )
+    data class DatabaseSchemaInput(val databasePath: String, val tableName: String? = null)
 
-    @Serializable
-    data class EmptyInput(val placeholder: String? = null)
+    @Serializable data class EmptyInput(val placeholder: String? = null)
 
     fun registerTools(toolProvider: McpToolProvider) {
         Log.d(TAG, "Registering database tools")
@@ -127,13 +121,14 @@ class DatabaseToolProvider(private val context: Context) {
 
     private suspend fun executeQuery(input: DatabaseQueryInput): CallToolResult {
         return try {
-            val result = databaseOperations.executeQuery(
-                databasePath = input.databasePath,
-                query = input.query,
-                parameters = input.parameters.toTypedArray(),
-                pageSize = input.pageSize,
-                pageOffset = input.pageOffset
-            )
+            val result =
+                databaseOperations.executeQuery(
+                    databasePath = input.databasePath,
+                    query = input.query,
+                    parameters = input.parameters.toTypedArray(),
+                    pageSize = input.pageSize,
+                    pageOffset = input.pageOffset,
+                )
 
             if (result.success && result.data != null) {
                 val queryResult = result.data
@@ -171,15 +166,14 @@ class DatabaseToolProvider(private val context: Context) {
             } else {
                 CallToolResult(
                     content = listOf(TextContent(text = "Query failed: ${result.error}")),
-                    isError = true
+                    isError = true,
                 )
             }
-
         } catch (e: Exception) {
             Log.e(TAG, "Query execution failed", e)
             CallToolResult(
                 content = listOf(TextContent(text = "Query failed: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }
@@ -188,23 +182,26 @@ class DatabaseToolProvider(private val context: Context) {
         return try {
             if (input.dryRun) {
                 return CallToolResult(
-                    content = listOf(
-                        TextContent(
-                            text = "DRY RUN: Would insert record into ${input.tableName} with data: ${input.data}"
-                        )
-                    ),
-                    isError = false
+                    content =
+                        listOf(
+                            TextContent(
+                                text =
+                                    "DRY RUN: Would insert record into ${input.tableName} with data: ${input.data}"
+                            )
+                        ),
+                    isError = false,
                 )
             }
 
             // Convert string values to appropriate types
             val typedData = convertStringDataToTypes(input.data)
 
-            val result = databaseOperations.insertRecord(
-                databasePath = input.databasePath,
-                tableName = input.tableName,
-                data = typedData
-            )
+            val result =
+                databaseOperations.insertRecord(
+                    databasePath = input.databasePath,
+                    tableName = input.tableName,
+                    data = typedData,
+                )
 
             if (result.success && result.data != null) {
                 val output = buildString {
@@ -218,15 +215,14 @@ class DatabaseToolProvider(private val context: Context) {
             } else {
                 CallToolResult(
                     content = listOf(TextContent(text = "Insert failed: ${result.error}")),
-                    isError = true
+                    isError = true,
                 )
             }
-
         } catch (e: Exception) {
             Log.e(TAG, "Insert operation failed", e)
             CallToolResult(
                 content = listOf(TextContent(text = "Insert failed: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }
@@ -235,25 +231,28 @@ class DatabaseToolProvider(private val context: Context) {
         return try {
             if (input.dryRun) {
                 return CallToolResult(
-                    content = listOf(
-                        TextContent(
-                            text = "DRY RUN: Would update records in ${input.tableName} where ${input.whereClause} with data: ${input.data}"
-                        )
-                    ),
-                    isError = false
+                    content =
+                        listOf(
+                            TextContent(
+                                text =
+                                    "DRY RUN: Would update records in ${input.tableName} where ${input.whereClause} with data: ${input.data}"
+                            )
+                        ),
+                    isError = false,
                 )
             }
 
             // Convert string values to appropriate types
             val typedData = convertStringDataToTypes(input.data)
 
-            val result = databaseOperations.updateRecords(
-                databasePath = input.databasePath,
-                tableName = input.tableName,
-                data = typedData,
-                whereClause = input.whereClause,
-                whereArgs = input.whereArgs.toTypedArray()
-            )
+            val result =
+                databaseOperations.updateRecords(
+                    databasePath = input.databasePath,
+                    tableName = input.tableName,
+                    data = typedData,
+                    whereClause = input.whereClause,
+                    whereArgs = input.whereArgs.toTypedArray(),
+                )
 
             if (result.success && result.data != null) {
                 val output = buildString {
@@ -266,15 +265,14 @@ class DatabaseToolProvider(private val context: Context) {
             } else {
                 CallToolResult(
                     content = listOf(TextContent(text = "Update failed: ${result.error}")),
-                    isError = true
+                    isError = true,
                 )
             }
-
         } catch (e: Exception) {
             Log.e(TAG, "Update operation failed", e)
             CallToolResult(
                 content = listOf(TextContent(text = "Update failed: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }
@@ -283,21 +281,24 @@ class DatabaseToolProvider(private val context: Context) {
         return try {
             if (!input.confirm) {
                 return CallToolResult(
-                    content = listOf(
-                        TextContent(
-                            text = "Delete operation requires confirmation. Set 'confirm' to true to proceed."
-                        )
-                    ),
-                    isError = true
+                    content =
+                        listOf(
+                            TextContent(
+                                text =
+                                    "Delete operation requires confirmation. Set 'confirm' to true to proceed."
+                            )
+                        ),
+                    isError = true,
                 )
             }
 
-            val result = databaseOperations.deleteRecords(
-                databasePath = input.databasePath,
-                tableName = input.tableName,
-                whereClause = input.whereClause,
-                whereArgs = input.whereArgs.toTypedArray()
-            )
+            val result =
+                databaseOperations.deleteRecords(
+                    databasePath = input.databasePath,
+                    tableName = input.tableName,
+                    whereClause = input.whereClause,
+                    whereArgs = input.whereArgs.toTypedArray(),
+                )
 
             if (result.success && result.data != null) {
                 val output = buildString {
@@ -310,15 +311,14 @@ class DatabaseToolProvider(private val context: Context) {
             } else {
                 CallToolResult(
                     content = listOf(TextContent(text = "Delete failed: ${result.error}")),
-                    isError = true
+                    isError = true,
                 )
             }
-
         } catch (e: Exception) {
             Log.e(TAG, "Delete operation failed", e)
             CallToolResult(
                 content = listOf(TextContent(text = "Delete failed: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }
@@ -348,21 +348,27 @@ class DatabaseToolProvider(private val context: Context) {
                                 val nullInfo = if (column.nullable) "" else " NOT NULL"
                                 val defaultInfo =
                                     column.defaultValue?.let { " DEFAULT '$it'" } ?: ""
-                                appendLine("  - ${column.name}: ${column.type}$keyInfo$nullInfo$defaultInfo")
+                                appendLine(
+                                    "  - ${column.name}: ${column.type}$keyInfo$nullInfo$defaultInfo"
+                                )
                             }
 
                             if (table.indexes.isNotEmpty()) {
                                 appendLine("Indexes:")
                                 table.indexes.forEach { index ->
                                     val uniqueInfo = if (index.unique) " (UNIQUE)" else ""
-                                    appendLine("  - ${index.name}: ${index.columns.joinToString(", ")}$uniqueInfo")
+                                    appendLine(
+                                        "  - ${index.name}: ${index.columns.joinToString(", ")}$uniqueInfo"
+                                    )
                                 }
                             }
 
                             if (table.foreignKeys.isNotEmpty()) {
                                 appendLine("Foreign Keys:")
                                 table.foreignKeys.forEach { fk ->
-                                    appendLine("  - ${fk.column} -> ${fk.referencedTable}.${fk.referencedColumn}")
+                                    appendLine(
+                                        "  - ${fk.column} -> ${fk.referencedTable}.${fk.referencedColumn}"
+                                    )
                                 }
                             }
                         } else {
@@ -377,17 +383,13 @@ class DatabaseToolProvider(private val context: Context) {
                         if (metadata.views.isNotEmpty()) {
                             appendLine()
                             appendLine("Views:")
-                            metadata.views.forEach { view ->
-                                appendLine("  - $view")
-                            }
+                            metadata.views.forEach { view -> appendLine("  - $view") }
                         }
 
                         if (metadata.triggers.isNotEmpty()) {
                             appendLine()
                             appendLine("Triggers:")
-                            metadata.triggers.forEach { trigger ->
-                                appendLine("  - $trigger")
-                            }
+                            metadata.triggers.forEach { trigger -> appendLine("  - $trigger") }
                         }
                     }
                 }
@@ -395,16 +397,16 @@ class DatabaseToolProvider(private val context: Context) {
                 CallToolResult(content = listOf(TextContent(text = output)), isError = false)
             } else {
                 CallToolResult(
-                    content = listOf(TextContent(text = "Schema retrieval failed: ${result.error}")),
-                    isError = true
+                    content =
+                        listOf(TextContent(text = "Schema retrieval failed: ${result.error}")),
+                    isError = true,
                 )
             }
-
         } catch (e: Exception) {
             Log.e(TAG, "Schema retrieval failed", e)
             CallToolResult(
                 content = listOf(TextContent(text = "Schema retrieval failed: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }
@@ -418,22 +420,21 @@ class DatabaseToolProvider(private val context: Context) {
                 if (databases.isEmpty()) {
                     appendLine("No database files found in application directory")
                 } else {
-                    databases.forEach { dbPath ->
-                        appendLine("  - $dbPath")
-                    }
+                    databases.forEach { dbPath -> appendLine("  - $dbPath") }
                 }
                 appendLine()
-                appendLine("Note: Only databases in the application's database directory are listed.")
+                appendLine(
+                    "Note: Only databases in the application's database directory are listed."
+                )
                 appendLine("To query external databases, provide the full path.")
             }
 
             CallToolResult(content = listOf(TextContent(text = output)), isError = false)
-
         } catch (e: Exception) {
             Log.e(TAG, "Database listing failed", e)
             CallToolResult(
                 content = listOf(TextContent(text = "Database listing failed: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }
@@ -451,85 +452,97 @@ class DatabaseToolProvider(private val context: Context) {
         }
     }
 
-    private fun formatAsJson(queryResult: dev.jasonpearson.androidmcpsdk.debugbridge.database.QueryResult): String {
+    private fun formatAsJson(
+        queryResult: dev.jasonpearson.androidmcpsdk.debugbridge.database.QueryResult
+    ): String {
         return try {
             Json.encodeToString(
                 kotlinx.serialization.json.JsonArray.serializer(),
                 kotlinx.serialization.json.buildJsonArray {
                     queryResult.rows.forEach { row ->
-                        add(buildJsonObject {
-                            row.forEach { (key, value) ->
-                                when (value) {
-                                    null -> put(key, kotlinx.serialization.json.JsonNull)
-                                    is String -> put(key, value)
-                                    is Number -> put(key, value)
-                                    is Boolean -> put(key, value)
-                                    else -> put(key, value.toString())
+                        add(
+                            buildJsonObject {
+                                row.forEach { (key, value) ->
+                                    when (value) {
+                                        null -> put(key, kotlinx.serialization.json.JsonNull)
+                                        is String -> put(key, value)
+                                        is Number -> put(key, value)
+                                        is Boolean -> put(key, value)
+                                        else -> put(key, value.toString())
+                                    }
                                 }
                             }
-                        })
+                        )
                     }
-                }
+                },
             )
         } catch (e: Exception) {
             "Error formatting JSON: ${e.message}"
         }
     }
 
-    private fun formatAsCsv(queryResult: dev.jasonpearson.androidmcpsdk.debugbridge.database.QueryResult): String {
+    private fun formatAsCsv(
+        queryResult: dev.jasonpearson.androidmcpsdk.debugbridge.database.QueryResult
+    ): String {
         return buildString {
             // Headers
             appendLine(queryResult.columnNames.joinToString(","))
 
             // Data rows
             queryResult.rows.forEach { row ->
-                val values = queryResult.columnNames.map { columnName ->
-                    val value = row[columnName]?.toString() ?: ""
-                    if (value.contains(",") || value.contains("\"")) {
-                        "\"${value.replace("\"", "\"\"")}\""
-                    } else {
-                        value
+                val values =
+                    queryResult.columnNames.map { columnName ->
+                        val value = row[columnName]?.toString() ?: ""
+                        if (value.contains(",") || value.contains("\"")) {
+                            "\"${value.replace("\"", "\"\"")}\""
+                        } else {
+                            value
+                        }
                     }
-                }
                 appendLine(values.joinToString(","))
             }
         }
     }
 
-    private fun formatAsTable(queryResult: dev.jasonpearson.androidmcpsdk.debugbridge.database.QueryResult): String {
+    private fun formatAsTable(
+        queryResult: dev.jasonpearson.androidmcpsdk.debugbridge.database.QueryResult
+    ): String {
         if (queryResult.rows.isEmpty()) {
             return "No data returned"
         }
 
         // Calculate column widths
-        val columnWidths = queryResult.columnNames.associateWith { columnName ->
-            maxOf(
-                columnName.length,
-                queryResult.rows.maxOfOrNull { row ->
-                    row[columnName]?.toString()?.length ?: 0
-                } ?: 0
-            )
-        }
+        val columnWidths =
+            queryResult.columnNames.associateWith { columnName ->
+                maxOf(
+                    columnName.length,
+                    queryResult.rows.maxOfOrNull { row -> row[columnName]?.toString()?.length ?: 0 }
+                        ?: 0,
+                )
+            }
 
         return buildString {
             // Header
-            val header = queryResult.columnNames.joinToString(" | ") { columnName ->
-                columnName.padEnd(columnWidths[columnName]!!)
-            }
+            val header =
+                queryResult.columnNames.joinToString(" | ") { columnName ->
+                    columnName.padEnd(columnWidths[columnName]!!)
+                }
             appendLine(header)
 
             // Separator
-            val separator = queryResult.columnNames.joinToString("-|-") { columnName ->
-                "-".repeat(columnWidths[columnName]!!)
-            }
+            val separator =
+                queryResult.columnNames.joinToString("-|-") { columnName ->
+                    "-".repeat(columnWidths[columnName]!!)
+                }
             appendLine(separator)
 
             // Data rows
             queryResult.rows.forEach { row ->
-                val rowString = queryResult.columnNames.joinToString(" | ") { columnName ->
-                    val value = row[columnName]?.toString() ?: ""
-                    value.padEnd(columnWidths[columnName]!!)
-                }
+                val rowString =
+                    queryResult.columnNames.joinToString(" | ") { columnName ->
+                        val value = row[columnName]?.toString() ?: ""
+                        value.padEnd(columnWidths[columnName]!!)
+                    }
                 appendLine(rowString)
             }
         }

@@ -2,7 +2,6 @@ package dev.jasonpearson.androidmcpsdk.debugbridge.database
 
 import android.content.Context
 import io.mockk.*
-import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
@@ -29,19 +28,20 @@ class DatabaseOperationsTest {
     @Test
     fun `validateQuerySafety should allow safe SELECT queries`() {
         // Use reflection to access private method
-        val method = DatabaseOperations::class.java.getDeclaredMethod(
-            "validateQuerySafety",
-            String::class.java
-        )
+        val method =
+            DatabaseOperations::class
+                .java
+                .getDeclaredMethod("validateQuerySafety", String::class.java)
         method.isAccessible = true
 
         // Test safe queries
-        val safeQueries = listOf(
-            "SELECT * FROM users",
-            "select id, name from products",
-            "SELECT COUNT(*) FROM orders WHERE status = 'active'",
-            "select distinct category from items"
-        )
+        val safeQueries =
+            listOf(
+                "SELECT * FROM users",
+                "select id, name from products",
+                "SELECT COUNT(*) FROM orders WHERE status = 'active'",
+                "select distinct category from items",
+            )
 
         safeQueries.forEach { query ->
             val result = method.invoke(databaseOperations, query) as Boolean
@@ -52,22 +52,23 @@ class DatabaseOperationsTest {
     @Test
     fun `validateQuerySafety should reject unsafe queries`() {
         // Use reflection to access private method
-        val method = DatabaseOperations::class.java.getDeclaredMethod(
-            "validateQuerySafety",
-            String::class.java
-        )
+        val method =
+            DatabaseOperations::class
+                .java
+                .getDeclaredMethod("validateQuerySafety", String::class.java)
         method.isAccessible = true
 
         // Test unsafe queries
-        val unsafeQueries = listOf(
-            "DROP TABLE users",
-            "DELETE FROM products",
-            "UPDATE users SET password = 'hacked'",
-            "INSERT INTO admin VALUES ('hacker')",
-            "ALTER TABLE users ADD COLUMN hacked TEXT",
-            "CREATE TABLE malicious (id INT)",
-            "PRAGMA user_version = 999"
-        )
+        val unsafeQueries =
+            listOf(
+                "DROP TABLE users",
+                "DELETE FROM products",
+                "UPDATE users SET password = 'hacked'",
+                "INSERT INTO admin VALUES ('hacker')",
+                "ALTER TABLE users ADD COLUMN hacked TEXT",
+                "CREATE TABLE malicious (id INT)",
+                "PRAGMA user_version = 999",
+            )
 
         unsafeQueries.forEach { query ->
             val result = method.invoke(databaseOperations, query) as Boolean
@@ -78,12 +79,15 @@ class DatabaseOperationsTest {
     @Test
     fun `addLimitToQuery should add LIMIT and OFFSET correctly`() {
         // Use reflection to access private method
-        val method = DatabaseOperations::class.java.getDeclaredMethod(
-            "addLimitToQuery",
-            String::class.java,
-            Int::class.java,
-            Int::class.java
-        )
+        val method =
+            DatabaseOperations::class
+                .java
+                .getDeclaredMethod(
+                    "addLimitToQuery",
+                    String::class.java,
+                    Int::class.java,
+                    Int::class.java,
+                )
         method.isAccessible = true
 
         // Test adding limit to query without existing limit
@@ -95,12 +99,15 @@ class DatabaseOperationsTest {
     @Test
     fun `addLimitToQuery should preserve existing LIMIT clause`() {
         // Use reflection to access private method
-        val method = DatabaseOperations::class.java.getDeclaredMethod(
-            "addLimitToQuery",
-            String::class.java,
-            Int::class.java,
-            Int::class.java
-        )
+        val method =
+            DatabaseOperations::class
+                .java
+                .getDeclaredMethod(
+                    "addLimitToQuery",
+                    String::class.java,
+                    Int::class.java,
+                    Int::class.java,
+                )
         method.isAccessible = true
 
         // Test preserving existing limit
@@ -140,13 +147,14 @@ class DatabaseOperationsTest {
     @Test
     fun `DatabaseResult should have correct properties`() {
         // Test successful result
-        val successResult = DatabaseResult(
-            success = true,
-            data = "test data",
-            rowsAffected = 5,
-            lastInsertId = 123L,
-            executionTimeMs = 250L
-        )
+        val successResult =
+            DatabaseResult(
+                success = true,
+                data = "test data",
+                rowsAffected = 5,
+                lastInsertId = 123L,
+                executionTimeMs = 250L,
+            )
 
         assertTrue(successResult.success)
         assertEquals("test data", successResult.data)
@@ -156,10 +164,7 @@ class DatabaseOperationsTest {
         assertNull(successResult.error)
 
         // Test error result
-        val errorResult = DatabaseResult<String>(
-            success = false,
-            error = "Database error occurred"
-        )
+        val errorResult = DatabaseResult<String>(success = false, error = "Database error occurred")
 
         assertFalse(errorResult.success)
         assertNull(errorResult.data)
@@ -171,19 +176,17 @@ class DatabaseOperationsTest {
 
     @Test
     fun `QueryResult should have correct properties`() {
-        val rows = listOf(
-            mapOf("id" to 1, "name" to "John"),
-            mapOf("id" to 2, "name" to "Jane")
-        )
+        val rows = listOf(mapOf("id" to 1, "name" to "John"), mapOf("id" to 2, "name" to "Jane"))
 
-        val queryResult = QueryResult(
-            rows = rows,
-            columnNames = listOf("id", "name"),
-            rowCount = 2,
-            executionTimeMs = 150L,
-            hasMore = true,
-            nextPageToken = "token123"
-        )
+        val queryResult =
+            QueryResult(
+                rows = rows,
+                columnNames = listOf("id", "name"),
+                rowCount = 2,
+                executionTimeMs = 150L,
+                hasMore = true,
+                nextPageToken = "token123",
+            )
 
         assertEquals(rows, queryResult.rows)
         assertEquals(listOf("id", "name"), queryResult.columnNames)
@@ -195,31 +198,36 @@ class DatabaseOperationsTest {
 
     @Test
     fun `TableSchema should have correct structure`() {
-        val columns = listOf(
-            ColumnInfo(name = "id", type = "INTEGER", nullable = false, primaryKey = true),
-            ColumnInfo(
-                name = "name",
-                type = "TEXT",
-                nullable = false,
-                primaryKey = false,
-                defaultValue = "''"
+        val columns =
+            listOf(
+                ColumnInfo(name = "id", type = "INTEGER", nullable = false, primaryKey = true),
+                ColumnInfo(
+                    name = "name",
+                    type = "TEXT",
+                    nullable = false,
+                    primaryKey = false,
+                    defaultValue = "''",
+                ),
             )
-        )
 
-        val indexes = listOf(
-            IndexInfo(name = "idx_name", unique = true, columns = listOf("name"))
-        )
+        val indexes = listOf(IndexInfo(name = "idx_name", unique = true, columns = listOf("name")))
 
-        val foreignKeys = listOf(
-            ForeignKeyInfo(column = "user_id", referencedTable = "users", referencedColumn = "id")
-        )
+        val foreignKeys =
+            listOf(
+                ForeignKeyInfo(
+                    column = "user_id",
+                    referencedTable = "users",
+                    referencedColumn = "id",
+                )
+            )
 
-        val tableSchema = TableSchema(
-            name = "test_table",
-            columns = columns,
-            indexes = indexes,
-            foreignKeys = foreignKeys
-        )
+        val tableSchema =
+            TableSchema(
+                name = "test_table",
+                columns = columns,
+                indexes = indexes,
+                foreignKeys = foreignKeys,
+            )
 
         assertEquals("test_table", tableSchema.name)
         assertEquals(columns, tableSchema.columns)
@@ -230,12 +238,8 @@ class DatabaseOperationsTest {
     @Test
     fun `ColumnInfo should have correct properties`() {
         // Test primary key column
-        val primaryColumn = ColumnInfo(
-            name = "id",
-            type = "INTEGER",
-            nullable = false,
-            primaryKey = true
-        )
+        val primaryColumn =
+            ColumnInfo(name = "id", type = "INTEGER", nullable = false, primaryKey = true)
 
         assertEquals("id", primaryColumn.name)
         assertEquals("INTEGER", primaryColumn.type)
@@ -244,13 +248,14 @@ class DatabaseOperationsTest {
         assertNull(primaryColumn.defaultValue)
 
         // Test column with default value
-        val defaultColumn = ColumnInfo(
-            name = "status",
-            type = "TEXT",
-            nullable = true,
-            primaryKey = false,
-            defaultValue = "'active'"
-        )
+        val defaultColumn =
+            ColumnInfo(
+                name = "status",
+                type = "TEXT",
+                nullable = true,
+                primaryKey = false,
+                defaultValue = "'active'",
+            )
 
         assertEquals("status", defaultColumn.name)
         assertEquals("TEXT", defaultColumn.type)
@@ -261,21 +266,19 @@ class DatabaseOperationsTest {
 
     @Test
     fun `IndexInfo should have correct properties`() {
-        val uniqueIndex = IndexInfo(
-            name = "unique_email_idx",
-            unique = true,
-            columns = listOf("email")
-        )
+        val uniqueIndex =
+            IndexInfo(name = "unique_email_idx", unique = true, columns = listOf("email"))
 
         assertEquals("unique_email_idx", uniqueIndex.name)
         assertTrue(uniqueIndex.unique)
         assertEquals(listOf("email"), uniqueIndex.columns)
 
-        val compositeIndex = IndexInfo(
-            name = "composite_idx",
-            unique = false,
-            columns = listOf("last_name", "first_name")
-        )
+        val compositeIndex =
+            IndexInfo(
+                name = "composite_idx",
+                unique = false,
+                columns = listOf("last_name", "first_name"),
+            )
 
         assertEquals("composite_idx", compositeIndex.name)
         assertFalse(compositeIndex.unique)
@@ -284,11 +287,8 @@ class DatabaseOperationsTest {
 
     @Test
     fun `ForeignKeyInfo should have correct properties`() {
-        val foreignKey = ForeignKeyInfo(
-            column = "user_id",
-            referencedTable = "users",
-            referencedColumn = "id"
-        )
+        val foreignKey =
+            ForeignKeyInfo(column = "user_id", referencedTable = "users", referencedColumn = "id")
 
         assertEquals("user_id", foreignKey.column)
         assertEquals("users", foreignKey.referencedTable)
@@ -297,18 +297,20 @@ class DatabaseOperationsTest {
 
     @Test
     fun `DatabaseMetadata should have correct structure`() {
-        val tables = listOf(
-            TableSchema(name = "users", columns = emptyList()),
-            TableSchema(name = "products", columns = emptyList())
-        )
+        val tables =
+            listOf(
+                TableSchema(name = "users", columns = emptyList()),
+                TableSchema(name = "products", columns = emptyList()),
+            )
 
-        val metadata = DatabaseMetadata(
-            path = "/test/database.db",
-            version = 1,
-            tables = tables,
-            views = listOf("user_view"),
-            triggers = listOf("update_trigger")
-        )
+        val metadata =
+            DatabaseMetadata(
+                path = "/test/database.db",
+                version = 1,
+                tables = tables,
+                views = listOf("user_view"),
+                triggers = listOf("update_trigger"),
+            )
 
         assertEquals("/test/database.db", metadata.path)
         assertEquals(1, metadata.version)

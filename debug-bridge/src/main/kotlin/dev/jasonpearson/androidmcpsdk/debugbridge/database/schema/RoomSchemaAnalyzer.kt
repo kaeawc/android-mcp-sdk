@@ -2,18 +2,16 @@ package dev.jasonpearson.androidmcpsdk.debugbridge.database.schema
 
 import android.content.Context
 import android.util.Log
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
- * Analyzes Room database schemas and extracts entity information.
- * Uses reflection to avoid hard dependencies on Room.
+ * Analyzes Room database schemas and extracts entity information. Uses reflection to avoid hard
+ * dependencies on Room.
  */
-class RoomSchemaAnalyzer(
-    private val context: Context
-) {
+class RoomSchemaAnalyzer(private val context: Context) {
 
     companion object {
         private const val TAG = "RoomSchemaAnalyzer"
@@ -26,7 +24,7 @@ class RoomSchemaAnalyzer(
         val daos: List<RoomDaoInfo>,
         val version: Int,
         val migrations: List<RoomMigrationInfo>,
-        val typeConverters: List<RoomTypeConverter>
+        val typeConverters: List<RoomTypeConverter>,
     )
 
     data class RoomDaoInfo(
@@ -34,48 +32,39 @@ class RoomSchemaAnalyzer(
         val queries: List<RoomQueryMethod>,
         val insertMethods: List<RoomInsertMethod>,
         val updateMethods: List<RoomUpdateMethod>,
-        val deleteMethods: List<RoomDeleteMethod>
+        val deleteMethods: List<RoomDeleteMethod>,
     )
 
     data class RoomQueryMethod(
         val methodName: String,
         val query: String,
         val returnType: KType,
-        val parameters: List<RoomParameter>
+        val parameters: List<RoomParameter>,
     )
 
     data class RoomInsertMethod(
         val methodName: String,
         val entityType: KType,
-        val onConflict: String
+        val onConflict: String,
     )
 
     data class RoomUpdateMethod(
         val methodName: String,
         val entityType: KType,
-        val onConflict: String
+        val onConflict: String,
     )
 
-    data class RoomDeleteMethod(
-        val methodName: String,
-        val entityType: KType
-    )
+    data class RoomDeleteMethod(val methodName: String, val entityType: KType)
 
-    data class RoomParameter(
-        val name: String,
-        val type: KType,
-        val bind: String?
-    )
+    data class RoomParameter(val name: String, val type: KType, val bind: String?)
 
     data class RoomMigrationInfo(
         val fromVersion: Int,
         val toVersion: Int,
-        val migrationClass: KClass<*>?
+        val migrationClass: KClass<*>?,
     )
 
-    /**
-     * Check if Room is available in the classpath.
-     */
+    /** Check if Room is available in the classpath. */
     fun isRoomAvailable(): Boolean {
         return try {
             Class.forName(ROOM_DATABASE_CLASS)
@@ -87,70 +76,73 @@ class RoomSchemaAnalyzer(
     }
 
     /**
-     * Analyze a Room database and extract comprehensive information.
-     * Uses reflection to avoid hard Room dependencies.
+     * Analyze a Room database and extract comprehensive information. Uses reflection to avoid hard
+     * Room dependencies.
      */
     suspend fun analyzeRoomDatabase(database: Any): RoomDatabaseInfo? =
         withContext(Dispatchers.IO) {
-        return@withContext try {
-            if (!isRoomAvailable()) {
-                Log.w(TAG, "Room not available, cannot analyze database")
-                return@withContext null
+            return@withContext try {
+                if (!isRoomAvailable()) {
+                    Log.w(TAG, "Room not available, cannot analyze database")
+                    return@withContext null
+                }
+
+                if (!isRoomDatabase(database)) {
+                    Log.w(TAG, "Object is not a Room database: ${database::class.simpleName}")
+                    return@withContext null
+                }
+
+                Log.d(TAG, "Analyzing Room database: ${database::class.simpleName}")
+
+                val entities = extractRoomEntities(database)
+                val daos = extractRoomDaos(database)
+                val migrations = extractMigrationInfo(database)
+                val version = extractDatabaseVersion(database)
+                val typeConverters = extractGlobalTypeConverters(database)
+
+                Log.d(
+                    TAG,
+                    "Analyzed Room database with ${entities.size} entities, ${daos.size} DAOs",
+                )
+
+                RoomDatabaseInfo(
+                    databaseClass = database::class,
+                    entities = entities,
+                    daos = daos,
+                    version = version,
+                    migrations = migrations,
+                    typeConverters = typeConverters,
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to analyze Room database: ${database::class.simpleName}", e)
+                throw RoomAnalysisException("Failed to analyze Room database: ${e.message}", e)
             }
-
-            if (!isRoomDatabase(database)) {
-                Log.w(TAG, "Object is not a Room database: ${database::class.simpleName}")
-                return@withContext null
-            }
-
-            Log.d(TAG, "Analyzing Room database: ${database::class.simpleName}")
-
-            val entities = extractRoomEntities(database)
-            val daos = extractRoomDaos(database)
-            val migrations = extractMigrationInfo(database)
-            val version = extractDatabaseVersion(database)
-            val typeConverters = extractGlobalTypeConverters(database)
-
-            Log.d(TAG, "Analyzed Room database with ${entities.size} entities, ${daos.size} DAOs")
-
-            RoomDatabaseInfo(
-                databaseClass = database::class,
-                entities = entities,
-                daos = daos,
-                version = version,
-                migrations = migrations,
-                typeConverters = typeConverters
-            )
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to analyze Room database: ${database::class.simpleName}", e)
-            throw RoomAnalysisException("Failed to analyze Room database: ${e.message}", e)
         }
-    }
 
-    /**
-     * Enhance table schema with Room entity information.
-     */
+    /** Enhance table schema with Room entity information. */
     suspend fun enhanceTableSchemaWithRoom(
         tableSchema: DatabaseSchemaCache.TableSchema,
-        roomInfo: RoomDatabaseInfo
-    ): DatabaseSchemaCache.TableSchema = withContext(Dispatchers.IO) {
-        
-        val entityInfo = roomInfo.entities.find { it.tableName == tableSchema.name }
-            ?: return@withContext tableSchema
+        roomInfo: RoomDatabaseInfo,
+    ): DatabaseSchemaCache.TableSchema =
+        withContext(Dispatchers.IO) {
+            val entityInfo =
+                roomInfo.entities.find { it.tableName == tableSchema.name }
+                    ?: return@withContext tableSchema
 
-        Log.d(TAG, "Enhancing table schema for ${tableSchema.name} with Room entity info")
+            Log.d(TAG, "Enhancing table schema for ${tableSchema.name} with Room entity info")
 
-        val enhancedColumns = tableSchema.columns.map { column ->
-            // Find corresponding Room property info
-            val roomProperty = findRoomPropertyForColumn(entityInfo, column.name)
-            column.copy(roomPropertyInfo = roomProperty)
+            val enhancedColumns =
+                tableSchema.columns.map { column ->
+                    // Find corresponding Room property info
+                    val roomProperty = findRoomPropertyForColumn(entityInfo, column.name)
+                    column.copy(roomPropertyInfo = roomProperty)
+                }
+
+            return@withContext tableSchema.copy(
+                columns = enhancedColumns,
+                roomEntityInfo = entityInfo,
+            )
         }
-
-        return@withContext tableSchema.copy(
-            columns = enhancedColumns,
-            roomEntityInfo = entityInfo
-        )
-    }
 
     private fun isRoomDatabase(obj: Any): Boolean {
         return try {
@@ -164,10 +156,11 @@ class RoomSchemaAnalyzer(
     private fun extractRoomEntities(database: Any): List<RoomEntityInfo> {
         return try {
             // Use reflection to extract entity information from Room database
-            // This is a simplified implementation - in practice, we'd need to parse Room annotations
-            
+            // This is a simplified implementation - in practice, we'd need to parse Room
+            // annotations
+
             Log.d(TAG, "Extracting Room entities from database")
-            
+
             // TODO: Implement actual Room entity extraction using reflection
             // We would need to:
             // 1. Get the @Database annotation from the database class
@@ -185,7 +178,7 @@ class RoomSchemaAnalyzer(
     private fun extractRoomDaos(database: Any): List<RoomDaoInfo> {
         return try {
             Log.d(TAG, "Extracting Room DAOs from database")
-            
+
             // TODO: Implement actual Room DAO extraction using reflection
             // We would need to:
             // 1. Find all abstract methods in the database class that return DAO types
@@ -203,7 +196,7 @@ class RoomSchemaAnalyzer(
     private fun extractMigrationInfo(database: Any): List<RoomMigrationInfo> {
         return try {
             Log.d(TAG, "Extracting Room migration information")
-            
+
             // TODO: Implement actual migration extraction
             // We would need to:
             // 1. Get the database builder configuration
@@ -222,9 +215,10 @@ class RoomSchemaAnalyzer(
             // Get the database version using reflection
             // Look for @Database annotation and extract version
             val databaseClass = database::class.java
-            val databaseAnnotation = databaseClass.annotations.find {
-                it.annotationClass.java.name == "androidx.room.Database"
-            }
+            val databaseAnnotation =
+                databaseClass.annotations.find {
+                    it.annotationClass.java.name == "androidx.room.Database"
+                }
 
             if (databaseAnnotation != null) {
                 // Use reflection to get the version field from the annotation
@@ -243,7 +237,7 @@ class RoomSchemaAnalyzer(
     private fun extractGlobalTypeConverters(database: Any): List<RoomTypeConverter> {
         return try {
             Log.d(TAG, "Extracting global type converters")
-            
+
             // TODO: Implement actual type converter extraction
             // We would need to:
             // 1. Look for @TypeConverters annotation on the database class
@@ -258,7 +252,10 @@ class RoomSchemaAnalyzer(
         }
     }
 
-    private fun findRoomPropertyForColumn(entityInfo: RoomEntityInfo, columnName: String): RoomPropertyInfo? {
+    private fun findRoomPropertyForColumn(
+        entityInfo: RoomEntityInfo,
+        columnName: String,
+    ): RoomPropertyInfo? {
         // TODO: Implement property mapping logic
         // This would map database column names to Room entity property names
         // accounting for @ColumnInfo(name = "...") annotations
@@ -266,7 +263,5 @@ class RoomSchemaAnalyzer(
     }
 }
 
-/**
- * Exception thrown when Room analysis fails.
- */
+/** Exception thrown when Room analysis fails. */
 class RoomAnalysisException(message: String, cause: Throwable? = null) : Exception(message, cause)
