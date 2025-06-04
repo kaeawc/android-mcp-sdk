@@ -173,6 +173,10 @@ class NetworkInspector(private val context: Context) {
         return RequestAnalysis(request = request, performance = performance, security = security)
     }
 
+    suspend fun getStoredRequest(requestId: String): NetworkRequest? {
+        return storedRequests[requestId]
+    }
+
     fun createInterceptor(): Interceptor {
         return McpNetworkInterceptor()
     }

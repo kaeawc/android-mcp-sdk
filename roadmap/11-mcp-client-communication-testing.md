@@ -4,24 +4,25 @@
 
 ## Objective
 
-Develop comprehensive end-to-end testing for MCP client communication with the Android MCP server.
-This includes testing with real MCP clients, validating protocol compliance, message flow, error
-handling, and ensuring compatibility with the broader MCP ecosystem.
+Develop comprehensive end-to-end testing for MCP client communication with the Android MCP server
+using `fast-agent`, the only complete MCP client implementation.
+This includes testing full protocol compliance, message flow, error handling, and ensuring compatibility with the complete MCP ecosystem.
 
 ## Requirements
 
 ### Technical Requirements
 
-- **Real MCP Clients**: Integration with actual MCP client implementations
-- **Protocol Compliance**: Full MCP protocol specification compliance testing
+- **fast-agent MCP Client**: Integration with the only complete MCP client implementation (
+  fast-agent)
+- **Full Protocol Compliance**: Complete MCP specification compliance testing
 - **Message Flow**: Bidirectional communication testing (client ↔ server)
 - **Error Scenarios**: Testing malformed messages, network failures, timeouts
 - **Performance**: Latency, throughput, and resource usage testing
 
 ### Testing Scope
 
-- **MCP Protocol Methods**: Initialize, tools, resources, prompts, notifications
-- **Client Compatibility**: Multiple MCP client implementations
+- **MCP Protocol Methods**: Initialize, tools, resources, prompts, notifications, sampling
+- **Client Compatibility**: Complete MCP specification through fast-agent
 - **Transport Protocols**: WebSocket and HTTP/SSE client communication
 - **Lifecycle Management**: Connection, session management, cleanup
 - **Error Handling**: Protocol errors, network failures, timeout scenarios
@@ -29,56 +30,51 @@ handling, and ensuring compatibility with the broader MCP ecosystem.
 
 ### Test Categories
 
-1. **Protocol Compliance Tests**: MCP specification adherence
-2. **Client Integration Tests**: Real MCP client interactions
+1. **Protocol Compliance Tests**: Full MCP specification adherence verified through fast-agent
+2. **Client Integration Tests**: fast-agent client interactions
 3. **Message Flow Tests**: Request/response patterns
 4. **Error Handling Tests**: Failure scenario testing
-5. **Performance Tests**: Load and stress testing with real clients
+5. **Performance Tests**: Load and stress testing with fast-agent
 
 ## Dependencies
 
 **Must Complete First:**
 
-- [04-websocket-transport-implementation.md](04-websocket-transport-implementation.md) - WebSocket
-  transport needed
-- [05-http-sse-transport-implementation.md](05-http-sse-transport-implementation.md) - HTTP/SSE
-  transport needed
 - [09-integration-testing-suite.md](09-integration-testing-suite.md) - Testing infrastructure
 - [10-adb-port-forwarding-testing.md](10-adb-port-forwarding-testing.md) - ADB connectivity
 
-**Should Complete First:**
+**Already Complete:**
 
-- [03-jsonrpc-message-parsing.md](03-jsonrpc-message-parsing.md) - Message parsing
+- Transport implementations (handled by official MCP Kotlin SDK)
+- JSON-RPC message parsing (handled by official MCP Kotlin SDK)
 
 ## Implementation Steps
 
-### Phase 1: MCP Client Test Infrastructure
+### Phase 1: fast-agent MCP Client Test Infrastructure
 
-#### Step 1.1: Setup MCP Client Test Environment
+#### Step 1.1: Setup fast-agent Client Test Environment
 
-Create `testing/mcp_clients/`:
+Create `testing/fast_agent_client/`:
 
-**setup_mcp_clients.sh:**
+**setup_fast_agent_client.sh:**
 
 ```bash
 #!/bin/bash
 
-# Android MCP SDK - MCP Client Test Environment Setup
+# Android MCP SDK - fast-agent Client Test Environment Setup
 set -e
 
-CLIENTS_DIR="testing/mcp_clients"
+CLIENTS_DIR="testing/fast_agent_client"
 PYTHON_VENV="$CLIENTS_DIR/venv"
-NODE_DIR="$CLIENTS_DIR/node"
 
-echo "Setting up MCP client test environment..."
+echo "Setting up fast-agent MCP client test environment..."
 
 # Create directory structure
 mkdir -p "$CLIENTS_DIR"
-mkdir -p "$NODE_DIR"
 
-# Setup Python MCP client
-setup_python_client() {
-    echo "Setting up Python MCP client..."
+# Setup fast-agent MCP client
+setup_fast_agent_client() {
+    echo "Setting up fast-agent MCP client..."
     
     if ! command -v python3 &> /dev/null; then
         echo "Error: Python3 not found. Please install Python 3.8+."
@@ -89,131 +85,135 @@ setup_python_client() {
     python3 -m venv "$PYTHON_VENV"
     source "$PYTHON_VENV/bin/activate"
     
-    # Install MCP Python SDK
+    # Install fast-agent - the only complete MCP client implementation
     pip install --upgrade pip
-    pip install mcp websockets aiohttp
+    pip install fast-agent
     
-    echo "✓ Python MCP client environment ready"
+    echo "✓ fast-agent MCP client environment ready"
 }
 
-# Setup Node.js MCP client
-setup_node_client() {
-    echo "Setting up Node.js MCP client..."
+# Verify fast-agent installation
+verify_fast_agent() {
+    echo "Verifying fast-agent installation..."
     
-    if ! command -v node &> /dev/null; then
-        echo "Warning: Node.js not found. Skipping Node.js MCP client setup."
+    source "$PYTHON_VENV/bin/activate"
+    
+    if python3 -c "import fastagent" 2>/dev/null; then
+        echo "✓ fast-agent import successful"
+        
+        # Get version info
+        fast_agent_version=$(python3 -c "import fastagent; print(fastagent.__version__)" 2>/dev/null || echo "unknown")
+        echo "✓ fast-agent version: $fast_agent_version"
+        
         return 0
+    else
+        echo "✗ fast-agent import failed"
+        return 1
     fi
-    
-    cd "$NODE_DIR"
-    
-    # Initialize package.json if it doesn't exist
-    if [ ! -f "package.json" ]; then
-        npm init -y
-    fi
-    
-    # Install MCP Node.js SDK and testing dependencies
-    npm install @modelcontextprotocol/sdk ws node-fetch
-    
-    echo "✓ Node.js MCP client environment ready"
 }
 
-# Create test client scripts
-create_test_clients() {
-    echo "Creating test client scripts..."
+# Create fast-agent test scripts
+create_fast_agent_scripts() {
+    echo "Creating fast-agent test scripts..."
     
-    # Python WebSocket test client
-    cat > "$CLIENTS_DIR/python_ws_client.py" << 'EOF'
+    # fast-agent WebSocket test client
+    cat > "$CLIENTS_DIR/fast_agent_ws_test.py" << 'EOF'
 #!/usr/bin/env python3
 """
-Python WebSocket MCP Client for testing Android MCP SDK
+fast-agent WebSocket MCP Client for testing Android MCP SDK
 """
 
 import asyncio
-import json
 import sys
-import websockets
+from fastagent import FastAgent
+from fastagent.adapters.mcp import MCPWebSocketAdapter
 from typing import Dict, Any, Optional
 
-class McpWebSocketClient:
+class FastAgentTestClient:
     def __init__(self, uri: str = "ws://localhost:8080/mcp"):
         self.uri = uri
-        self.websocket = None
-        self.request_id = 0
+        self.agent = None
+        self.adapter = None
         
     async def connect(self):
-        """Connect to MCP server"""
+        """Connect to MCP server using fast-agent"""
         try:
-            self.websocket = await websockets.connect(self.uri)
-            print(f"✓ Connected to {self.uri}")
+            # Create MCP WebSocket adapter
+            self.adapter = MCPWebSocketAdapter(self.uri)
+            
+            # Create FastAgent with MCP adapter
+            self.agent = FastAgent(
+                adapter=self.adapter,
+                client_info={
+                    "name": "fast-agent Test Client",
+                    "version": "1.0.0"
+                }
+            )
+            
+            # Connect and initialize
+            await self.agent.connect()
+            print(f"✓ Connected to {self.uri} via fast-agent")
             return True
+            
         except Exception as e:
             print(f"✗ Connection failed: {e}")
             return False
     
     async def disconnect(self):
         """Disconnect from MCP server"""
-        if self.websocket:
-            await self.websocket.close()
+        if self.agent:
+            await self.agent.disconnect()
             print("✓ Disconnected")
     
-    async def send_request(self, method: str, params: Dict[str, Any] = None) -> Optional[Dict[str, Any]]:
-        """Send MCP request and wait for response"""
-        if not self.websocket:
-            print("✗ Not connected")
-            return None
-            
-        self.request_id += 1
-        request = {
-            "jsonrpc": "2.0",
-            "id": self.request_id,
-            "method": method,
-            "params": params or {}
-        }
-        
+    async def list_tools(self):
+        """List available tools"""
         try:
-            await self.websocket.send(json.dumps(request))
-            print(f"→ Sent: {method}")
-            
-            response_text = await self.websocket.recv()
-            response = json.loads(response_text)
-            print(f"← Received: {response.get('id', 'unknown')}")
-            
-            return response
+            tools = await self.agent.list_tools()
+            print(f"✓ Listed {len(tools)} tools")
+            return tools
         except Exception as e:
-            print(f"✗ Request failed: {e}")
+            print(f"✗ List tools failed: {e}")
+            return []
+    
+    async def call_tool(self, name: str, arguments: Dict[str, Any] = None):
+        """Call a tool"""
+        try:
+            result = await self.agent.call_tool(name, arguments or {})
+            print(f"✓ Tool {name} executed successfully")
+            return result
+        except Exception as e:
+            print(f"✗ Tool {name} failed: {e}")
             return None
     
-    async def initialize(self):
-        """Initialize MCP session"""
-        params = {
-            "protocolVersion": "2024-11-05",
-            "capabilities": {
-                "roots": {"listChanged": True},
-                "sampling": {}
-            },
-            "clientInfo": {
-                "name": "Python Test Client",
-                "version": "1.0.0"
-            }
-        }
-        
-        response = await self.send_request("initialize", params)
-        if response and "result" in response:
-            print("✓ Initialization successful")
-            
-            # Send initialized notification
-            notification = {
-                "jsonrpc": "2.0",
-                "method": "notifications/initialized"
-            }
-            await self.websocket.send(json.dumps(notification))
-            print("✓ Sent initialized notification")
-            
-            return True
-        else:
-            print("✗ Initialization failed")
-            return False
+    async def list_resources(self):
+        """List available resources"""
+        try:
+            resources = await self.agent.list_resources()
+            print(f"✓ Listed {len(resources)} resources")
+            return resources
+        except Exception as e:
+            print(f"✗ List resources failed: {e}")
+            return []
+    
+    async def read_resource(self, uri: str):
+        """Read a resource"""
+        try:
+            content = await self.agent.read_resource(uri)
+            print(f"✓ Resource {uri} read successfully")
+            return content
+        except Exception as e:
+            print(f"✗ Resource {uri} read failed: {e}")
+            return None
+    
+    async def list_prompts(self):
+        """List available prompts"""
+        try:
+            prompts = await self.agent.list_prompts()
+            print(f"✓ Listed {len(prompts)} prompts")
+            return prompts
+        except Exception as e:
+            print(f"✗ List prompts failed: {e}")
+            return []
 
 async def main():
     """Main test function"""
@@ -222,42 +222,42 @@ async def main():
     else:
         uri = "ws://localhost:8080/mcp"
     
-    client = McpWebSocketClient(uri)
+    client = FastAgentTestClient(uri)
     
     try:
-        # Connect and initialize
+        # Connect using fast-agent
         if not await client.connect():
             return 1
         
-        if not await client.initialize():
-            return 1
+        # Test tools
+        tools = await client.list_tools()
+        if tools:
+            print(f"✓ Found {len(tools)} tools")
+            
+            # Test calling device_info tool
+            device_info = await client.call_tool("device_info")
+            if device_info:
+                print("✓ device_info tool call successful")
         
-        # Test basic MCP methods
-        tests = [
-            ("tools/list", {}),
-            ("resources/list", {}),
-            ("prompts/list", {}),
-        ]
+        # Test resources
+        resources = await client.list_resources()
+        if resources:
+            print(f"✓ Found {len(resources)} resources")
+            
+            # Test reading first resource if available
+            if resources:
+                first_resource_uri = resources[0].get('uri')
+                if first_resource_uri:
+                    content = await client.read_resource(first_resource_uri)
+                    if content:
+                        print(f"✓ Resource {first_resource_uri} read successful")
         
-        for method, params in tests:
-            response = await client.send_request(method, params)
-            if response and "result" in response:
-                print(f"✓ {method} successful")
-            else:
-                print(f"✗ {method} failed")
+        # Test prompts
+        prompts = await client.list_prompts()
+        if prompts:
+            print(f"✓ Found {len(prompts)} prompts")
         
-        # Test tool call
-        tool_response = await client.send_request("tools/call", {
-            "name": "device_info",
-            "arguments": {}
-        })
-        
-        if tool_response and "result" in tool_response:
-            print("✓ Tool call successful")
-        else:
-            print("✗ Tool call failed")
-        
-        print("\n✓ All tests completed")
+        print("\n✓ All fast-agent tests completed")
         return 0
         
     except KeyboardInterrupt:
@@ -270,63 +270,81 @@ if __name__ == "__main__":
     exit(asyncio.run(main()))
 EOF
     
-    # Python HTTP test client
-    cat > "$CLIENTS_DIR/python_http_client.py" << 'EOF'
+    # fast-agent HTTP test client
+    cat > "$CLIENTS_DIR/fast_agent_http_test.py" << 'EOF'
 #!/usr/bin/env python3
 """
-Python HTTP MCP Client for testing Android MCP SDK
+fast-agent HTTP MCP Client for testing Android MCP SDK
 """
 
-import aiohttp
 import asyncio
-import json
 import sys
+from fastagent import FastAgent
+from fastagent.adapters.mcp import MCPHTTPAdapter
 from typing import Dict, Any, Optional
 
-class McpHttpClient:
+class FastAgentHttpTestClient:
     def __init__(self, base_url: str = "http://localhost:8081"):
         self.base_url = base_url.rstrip('/')
-        self.session = None
-        self.request_id = 0
+        self.agent = None
+        self.adapter = None
     
-    async def __aenter__(self):
-        self.session = aiohttp.ClientSession()
-        return self
-    
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        if self.session:
-            await self.session.close()
-    
-    async def send_request(self, method: str, params: Dict[str, Any] = None) -> Optional[Dict[str, Any]]:
-        """Send MCP request via HTTP POST"""
-        if not self.session:
-            print("✗ Session not initialized")
-            return None
-        
-        self.request_id += 1
-        request = {
-            "jsonrpc": "2.0",
-            "id": self.request_id,
-            "method": method,
-            "params": params or {}
-        }
-        
+    async def connect(self):
+        """Connect to MCP server using fast-agent HTTP adapter"""
         try:
-            async with self.session.post(
-                f"{self.base_url}/mcp/message",
-                json=request,
-                headers={"Content-Type": "application/json"}
-            ) as response:
-                if response.status == 200:
-                    result = await response.json()
-                    print(f"✓ {method} successful")
-                    return result
-                else:
-                    print(f"✗ {method} failed: HTTP {response.status}")
-                    return None
+            # Create MCP HTTP adapter
+            self.adapter = MCPHTTPAdapter(f"{self.base_url}/mcp")
+            
+            # Create FastAgent with MCP adapter
+            self.agent = FastAgent(
+                adapter=self.adapter,
+                client_info={
+                    "name": "fast-agent HTTP Test Client",
+                    "version": "1.0.0"
+                }
+            )
+            
+            # Connect and initialize
+            await self.agent.connect()
+            print(f"✓ Connected to {self.base_url} via fast-agent HTTP")
+            return True
+            
         except Exception as e:
-            print(f"✗ {method} error: {e}")
-            return None
+            print(f"✗ HTTP Connection failed: {e}")
+            return False
+    
+    async def disconnect(self):
+        """Disconnect from MCP server"""
+        if self.agent:
+            await self.agent.disconnect()
+            print("✓ HTTP Disconnected")
+    
+    async def run_tests(self):
+        """Run HTTP test suite"""
+        try:
+            # Test tools
+            tools = await self.agent.list_tools()
+            print(f"✓ HTTP: Found {len(tools)} tools")
+            
+            if tools:
+                # Test calling a tool
+                result = await self.agent.call_tool("device_info")
+                if result:
+                    print("✓ HTTP: device_info tool call successful")
+            
+            # Test resources
+            resources = await self.agent.list_resources()
+            print(f"✓ HTTP: Found {len(resources)} resources")
+            
+            # Test prompts
+            prompts = await self.agent.list_prompts()
+            print(f"✓ HTTP: Found {len(prompts)} prompts")
+            
+            return True
+            
+        except Exception as e:
+            print(f"✗ HTTP tests failed: {e}")
+            return False
 
 async def main():
     """Main test function"""
@@ -335,63 +353,66 @@ async def main():
     else:
         base_url = "http://localhost:8081"
     
-    async with McpHttpClient(base_url) as client:
-        # Test basic MCP methods
-        tests = [
-            ("tools/list", {}),
-            ("resources/list", {}),
-            ("prompts/list", {}),
-        ]
-        
-        for method, params in tests:
-            await client.send_request(method, params)
-        
-        # Test tool call
-        await client.send_request("tools/call", {
-            "name": "device_info",
-            "arguments": {}
-        })
-        
-        print("\n✓ All HTTP tests completed")
+    client = FastAgentHttpTestClient(base_url)
+    
+    try:
+        if await client.connect():
+            if await client.run_tests():
+                print("\n✓ All fast-agent HTTP tests completed")
+                return 0
+            else:
+                print("\n✗ fast-agent HTTP tests failed")
+                return 1
+        else:
+            print("\n✗ fast-agent HTTP connection failed")
+            return 1
+    finally:
+        await client.disconnect()
 
 if __name__ == "__main__":
     asyncio.run(main())
 EOF
     
     # Make scripts executable
-    chmod +x "$CLIENTS_DIR/python_ws_client.py"
-    chmod +x "$CLIENTS_DIR/python_http_client.py"
+    chmod +x "$CLIENTS_DIR/fast_agent_ws_test.py"
+    chmod +x "$CLIENTS_DIR/fast_agent_http_test.py"
     
-    echo "✓ Test client scripts created"
+    echo "✓ fast-agent test scripts created"
 }
 
 # Main execution
 main() {
-    setup_python_client
-    setup_node_client
-    create_test_clients
+    setup_fast_agent_client
     
-    echo ""
-    echo "MCP client test environment setup complete!"
-    echo ""
-    echo "To activate Python environment:"
-    echo "  source $PYTHON_VENV/bin/activate"
-    echo ""
-    echo "To run WebSocket test client:"
-    echo "  $CLIENTS_DIR/python_ws_client.py"
-    echo ""
-    echo "To run HTTP test client:"
-    echo "  $CLIENTS_DIR/python_http_client.py"
+    if verify_fast_agent; then
+        create_fast_agent_scripts
+        
+        echo ""
+        echo "fast-agent MCP client test environment setup complete!"
+        echo ""
+        echo "To activate Python environment:"
+        echo "  source $PYTHON_VENV/bin/activate"
+        echo ""
+        echo "To run WebSocket test client:"
+        echo "  $CLIENTS_DIR/fast_agent_ws_test.py"
+        echo ""
+        echo "To run HTTP test client:"
+        echo "  $CLIENTS_DIR/fast_agent_http_test.py"
+    else
+        echo ""
+        echo "✗ fast-agent setup failed"
+        exit 1
+    fi
 }
 
 main "$@"
 ```
 
-#### Step 1.2: Create Protocol Compliance Test Suite
+#### Step 1.2: Create fast-agent Protocol Compliance Test Suite
 
 Create `lib/src/androidTest/kotlin/dev/jasonpearson/mcpandroidsdk/client/`:
 
-**McpProtocolComplianceTestSuite.kt:**
+**FastAgentProtocolComplianceTestSuite.kt:**
 
 ```kotlin
 package dev.jasonpearson.mcpandroidsdk.client
@@ -412,7 +433,7 @@ import org.junit.Assert.*
 import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
-class McpProtocolComplianceTestSuite {
+class FastAgentProtocolComplianceTestSuite {
     
     private lateinit var serverManager: McpServerManager
     private lateinit var context: android.content.Context
@@ -433,7 +454,7 @@ class McpProtocolComplianceTestSuite {
         serverManager = McpServerManager.getInstance()
         
         runBlocking {
-            serverManager.initialize(context, "Protocol Compliance Test Server", "1.0.0")
+            serverManager.initialize(context, "fast-agent Protocol Compliance Test Server", "1.0.0")
             serverManager.startServer()
             McpTestUtils.waitForCondition { serverManager.isServerRunning() }
         }
@@ -448,7 +469,7 @@ class McpProtocolComplianceTestSuite {
     }
     
     @Test
-    fun testMcpInitializationHandshake() = runBlocking {
+    fun testFastAgentInitializationHandshake() = runBlocking {
         var initResponse: JSONObject? = null
         var initNotificationSent = false
         
@@ -467,7 +488,7 @@ class McpProtocolComplianceTestSuite {
                             put("sampling", JSONObject())
                         })
                         put("clientInfo", JSONObject().apply {
-                            put("name", "Protocol Test Client")
+                            put("name", "fast-agent Protocol Test Client")
                             put("version", "1.0.0")
                         })
                     })
@@ -522,7 +543,7 @@ class McpProtocolComplianceTestSuite {
     }
     
     @Test
-    fun testToolsListCompliance() = runBlocking {
+    fun testFastAgentToolsListCompliance() = runBlocking {
         val testMessage = JSONObject().apply {
             put("jsonrpc", "2.0")
             put("id", 1)
@@ -554,16 +575,18 @@ class McpProtocolComplianceTestSuite {
             }
         }
         
-        // Verify built-in tools are present
+        // Verify built-in tools are present (fast-agent can see all tools)
         val toolNames = (0 until tools.length()).map { 
             tools.getJSONObject(it).getString("name") 
         }
         assertTrue("Should have device_info tool", toolNames.contains("device_info"))
         assertTrue("Should have app_info tool", toolNames.contains("app_info"))
+        assertTrue("Should have system_info tool", toolNames.contains("system_info"))
+        assertTrue("Should have memory_info tool", toolNames.contains("memory_info"))
     }
     
     @Test
-    fun testToolCallCompliance() = runBlocking {
+    fun testFastAgentToolCallCompliance() = runBlocking {
         val testMessage = JSONObject().apply {
             put("jsonrpc", "2.0")
             put("id", 1)
@@ -596,12 +619,12 @@ class McpProtocolComplianceTestSuite {
     }
     
     @Test
-    fun testResourcesListCompliance() = runBlocking {
+    fun testFastAgentResourcesListCompliance() = runBlocking {
         // Add a test resource first
         serverManager.addFileResource(
             uri = "test://sample.txt",
             name = "Sample Resource",
-            description = "Test resource for protocol compliance",
+            description = "Test resource for fast-agent protocol compliance",
             filePath = context.filesDir.absolutePath + "/sample.txt",
             mimeType = "text/plain"
         )
@@ -641,16 +664,16 @@ class McpProtocolComplianceTestSuite {
     }
     
     @Test
-    fun testResourceReadCompliance() = runBlocking {
+    fun testFastAgentResourceReadCompliance() = runBlocking {
         // Add and populate a test resource
-        val testContent = "This is test content for protocol compliance testing."
-        val testFile = java.io.File(context.filesDir, "protocol_test.txt")
+        val testContent = "This is test content for fast-agent protocol compliance testing."
+        val testFile = java.io.File(context.filesDir, "fast_agent_test.txt")
         testFile.writeText(testContent)
         
         serverManager.addFileResource(
-            uri = "test://protocol_test.txt",
-            name = "Protocol Test Resource",
-            description = "Resource for testing protocol compliance",
+            uri = "test://fast_agent_test.txt",
+            name = "fast-agent Test Resource",
+            description = "Resource for testing fast-agent protocol compliance",
             filePath = testFile.absolutePath,
             mimeType = "text/plain"
         )
@@ -660,7 +683,7 @@ class McpProtocolComplianceTestSuite {
             put("id", 1)
             put("method", "resources/read")
             put("params", JSONObject().apply {
-                put("uri", "test://protocol_test.txt")
+                put("uri", "test://fast_agent_test.txt")
             })
         }
         
@@ -685,14 +708,14 @@ class McpProtocolComplianceTestSuite {
             assertEquals("Content text should match", testContent, text)
         }
         
-        assertEquals("Content URI should match", "test://protocol_test.txt", 
+        assertEquals("Content URI should match", "test://fast_agent_test.txt", 
             contentItem.getString("uri"))
         assertEquals("Content mimeType should match", "text/plain", 
             contentItem.getString("mimeType"))
     }
     
     @Test
-    fun testPromptsListCompliance() = runBlocking {
+    fun testFastAgentPromptsListCompliance() = runBlocking {
         // Add a test prompt
         serverManager.addSimplePrompt(
             name = "test_prompt",
@@ -820,7 +843,7 @@ class McpProtocolComplianceTestSuite {
 #### Step 2.1: Real Client Integration Tests
 
 Create
-`lib/src/androidTest/kotlin/dev/jasonpearson/mcpandroidsdk/client/RealClientIntegrationTest.kt`:
+`lib/src/androidTest/kotlin/dev/jasonpearson/mcpandroidsdk/client/FastAgentIntegrationTest.kt`:
 
 ```kotlin
 package dev.jasonpearson.mcpandroidsdk.client
@@ -839,7 +862,7 @@ import java.io.File
 import java.io.IOException
 
 @RunWith(AndroidJUnit4::class)
-class RealClientIntegrationTest {
+class FastAgentIntegrationTest {
     
     private lateinit var serverManager: McpServerManager
     private lateinit var context: android.content.Context
@@ -866,11 +889,11 @@ class RealClientIntegrationTest {
     
     @Test
     fun testPythonWebSocketClient() = runBlocking {
-        val pythonClientScript = File(context.externalCacheDir, "python_ws_client.py")
+        val pythonClientScript = File(context.externalCacheDir, "fast_agent_ws_test.py")
         
         // Skip test if Python client script not available
         if (!pythonClientScript.exists()) {
-            println("! Python WebSocket client script not found, skipping test")
+            println("! fast-agent WebSocket client script not found, skipping test")
             return@runBlocking
         }
         
@@ -888,7 +911,7 @@ class RealClientIntegrationTest {
             }
             
             if (exitCode != null) {
-                assertEquals("Python WebSocket client should succeed", 0, exitCode)
+              assertEquals("fast-agent WebSocket client should succeed", 0, exitCode)
                 
                 // Read output
                 val output = process.inputStream.bufferedReader().readText()
@@ -910,17 +933,17 @@ class RealClientIntegrationTest {
                 fail("Python WebSocket client test timed out")
             }
         } catch (e: IOException) {
-            println("! Python WebSocket client test skipped (Python not available): ${e.message}")
+          println("! Python WebSocket client test skipped (fast-agent not available): ${e.message}")
         }
     }
     
     @Test
     fun testPythonHttpClient() = runBlocking {
-        val pythonClientScript = File(context.externalCacheDir, "python_http_client.py")
+        val pythonClientScript = File(context.externalCacheDir, "fast_agent_http_test.py")
         
         // Skip test if Python client script not available
         if (!pythonClientScript.exists()) {
-            println("! Python HTTP client script not found, skipping test")
+            println("! fast-agent HTTP client script not found, skipping test")
             return@runBlocking
         }
         
@@ -938,7 +961,7 @@ class RealClientIntegrationTest {
             }
             
             if (exitCode != null) {
-                assertEquals("Python HTTP client should succeed", 0, exitCode)
+              assertEquals("fast-agent HTTP client should succeed", 0, exitCode)
                 
                 // Read output
                 val output = process.inputStream.bufferedReader().readText()
@@ -965,15 +988,15 @@ class RealClientIntegrationTest {
     @Test
     fun testClientReconnection() = runBlocking {
         // This test simulates a client reconnecting after server restart
-        val pythonClientScript = File(context.externalCacheDir, "python_ws_client.py")
+      val pythonClientScript = File(context.externalCacheDir, "fast_agent_ws_test.py")
         
         if (!pythonClientScript.exists()) {
-            println("! Python WebSocket client script not found, skipping test")
+          println("! fast-agent WebSocket client script not found, skipping test")
             return@runBlocking
         }
         
         try {
-            // Start first client session
+          // Start first fast-agent client session
             var process = ProcessBuilder(
                 "python3", 
                 pythonClientScript.absolutePath,
@@ -985,8 +1008,8 @@ class RealClientIntegrationTest {
                     process.waitFor()
                 }
             }
-            
-            assertEquals("First client session should succeed", 0, exitCode)
+
+          assertEquals("First fast-agent client session should succeed", 0, exitCode)
             
             // Restart server
             serverManager.stopServer()
@@ -994,8 +1017,8 @@ class RealClientIntegrationTest {
             serverManager.startServer()
             McpTestUtils.waitForCondition { serverManager.isServerRunning() }
             delay(3000) // Additional stabilization time
-            
-            // Start second client session (reconnection)
+
+          // Start second fast-agent client session (reconnection)
             process = ProcessBuilder(
                 "python3", 
                 pythonClientScript.absolutePath,
@@ -1007,30 +1030,30 @@ class RealClientIntegrationTest {
                     process.waitFor()
                 }
             }
-            
-            assertEquals("Client reconnection should succeed", 0, exitCode)
-            
-            println("✓ Client reconnection test completed successfully")
+
+          assertEquals("fast-agent client reconnection should succeed", 0, exitCode)
+
+          println("✓ fast-agent client reconnection test completed successfully")
             
         } catch (e: IOException) {
-            println("! Client reconnection test skipped (Python not available): ${e.message}")
+          println("! fast-agent client reconnection test skipped (Python not available): ${e.message}")
         }
     }
     
     @Test
-    fun testMultipleClientsSameTime() = runBlocking {
-        val pythonClientScript = File(context.externalCacheDir, "python_ws_client.py")
+    fun testMultipleFastAgentClientsSameTime() = runBlocking {
+      val pythonClientScript = File(context.externalCacheDir, "fast_agent_ws_test.py")
         
         if (!pythonClientScript.exists()) {
-            println("! Python WebSocket client script not found, skipping test")
+          println("! fast-agent WebSocket client script not found, skipping test")
             return@runBlocking
         }
         
         try {
             val clientCount = 3
             val processes = mutableListOf<Process>()
-            
-            // Start multiple clients concurrently
+
+          // Start multiple fast-agent clients concurrently
             repeat(clientCount) { index ->
                 val process = ProcessBuilder(
                     "python3", 
@@ -1039,8 +1062,8 @@ class RealClientIntegrationTest {
                 ).start()
                 processes.add(process)
             }
-            
-            // Wait for all clients to complete
+
+          // Wait for all fast-agent clients to complete
             val results = processes.map { process ->
                 async {
                     withTimeoutOrNull(30000) {
@@ -1063,8 +1086,8 @@ class RealClientIntegrationTest {
             
             assertTrue("At least 2 out of 3 clients should succeed", successCount >= 2)
             assertEquals("No clients should timeout", 0, timeoutCount)
-            
-            println("Multiple clients test results:")
+
+          println("Multiple fast-agent clients test results:")
             println("- Total clients: $clientCount")
             println("- Successful: $successCount")
             println("- Failed: ${results.count { it != 0 && it != -1 }}")
@@ -1081,7 +1104,8 @@ class RealClientIntegrationTest {
 
 #### Step 3.1: Client Performance Tests
 
-Create `lib/src/androidTest/kotlin/dev/jasonpearson/mcpandroidsdk/client/ClientPerformanceTest.kt`:
+Create
+`lib/src/androidTest/kotlin/dev/jasonpearson/mcpandroidsdk/client/FastAgentPerformanceTest.kt`:
 
 ```kotlin
 package dev.jasonpearson.mcpandroidsdk.client
@@ -1102,7 +1126,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.system.measureTimeMillis
 
 @RunWith(AndroidJUnit4::class)
-class ClientPerformanceTest {
+class FastAgentPerformanceTest {
     
     private lateinit var serverManager: McpServerManager
     private lateinit var context: android.content.Context
@@ -1371,15 +1395,15 @@ class ClientPerformanceTest {
 #### Step V1: Setup MCP Client Environment
 
 ```bash
-# Setup MCP client test environment
-chmod +x testing/mcp_clients/setup_mcp_clients.sh
-./testing/mcp_clients/setup_mcp_clients.sh
+# Setup fast-agent test environment
+chmod +x testing/fast_agent_client/setup_fast_agent_client.sh
+./testing/fast_agent_client/setup_fast_agent_client.sh
 ```
 
 #### Step V2: Run Protocol Compliance Tests
 
 ```bash
-./gradlew :core:connectedAndroidTest --tests "*McpProtocolComplianceTestSuite"
+./gradlew :core:connectedAndroidTest --tests "*FastAgentProtocolComplianceTestSuite"
 ```
 
 #### Step V3: Run Client Integration Tests
@@ -1406,17 +1430,17 @@ source testing/mcp_clients/venv/bin/activate
 ./testing/mcp_clients/python_ws_client.py ws://localhost:8080/mcp
 
 # Test HTTP client
-./testing/mcp_clients/python_http_client.py http://localhost:8081
+./testing/mcp_clients/fast_agent_http_test.py http://localhost:8081
 ```
 
 #### Step M2: Test Protocol Compliance
 
 ```bash
-# Use official MCP CLI tools if available
-mcp-client connect ws://localhost:8080/mcp
+# Use fast-agent CLI directly
+fast-agent connect ws://localhost:8080/mcp
 
-# Or use generic WebSocket client
-wscat -c ws://localhost:8080/mcp
+# Verify full MCP specification support
+fast-agent --version
 ```
 
 #### Step M3: Validate Error Handling
@@ -1436,7 +1460,7 @@ curl -X POST http://localhost:8081/mcp/message \
 #### Step M4: Performance Benchmarking
 
 ```bash
-# Load testing with multiple concurrent clients
+# Load testing with multiple concurrent fast-agent clients
 for i in {1..5}; do
   (./testing/mcp_clients/python_ws_client.py &)
 done
@@ -1455,7 +1479,7 @@ wait
 
 ### Client Compatibility
 
-- [ ] Python MCP client integration works
+- [ ] fast-agent client integration works
 - [ ] WebSocket client communication functions
 - [ ] HTTP/SSE client communication functions
 - [ ] Multiple concurrent clients supported
@@ -1487,7 +1511,7 @@ wait
 
 ### Testing Tools
 
-- [Python MCP Client Examples](https://github.com/modelcontextprotocol/python-sdk/tree/main/examples)
+- [fast-agent Client Examples](https://github.com/modelcontextprotocol/python-sdk/tree/main/examples)
 - [WebSocket Testing with wscat](https://github.com/websockets/wscat)
 - [HTTP Testing with curl](https://curl.se/docs/manpage.html)
 

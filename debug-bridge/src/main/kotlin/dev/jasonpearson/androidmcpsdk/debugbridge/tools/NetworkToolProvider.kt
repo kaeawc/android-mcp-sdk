@@ -22,6 +22,7 @@ class NetworkToolProvider(private val context: Context) {
     }
 
     private val networkInspector = NetworkInspector(context)
+    private val networkReplayEngine = NetworkReplayEngine(context)
 
     @Serializable
     data class StartMonitoringInput(
@@ -45,6 +46,26 @@ class NetworkToolProvider(private val context: Context) {
     )
 
     @Serializable data class AnalyzeRequestInput(val requestId: String)
+
+    @Serializable
+    data class ReplayRequestInput(
+        val requestId: String,
+        val modifications: NetworkReplayEngine.RequestModifications? = null
+    )
+
+    @Serializable
+    data class BatchReplayInput(
+        val requestIds: List<String>,
+        val config: NetworkReplayEngine.BatchConfig = NetworkReplayEngine.BatchConfig(),
+        val modifications: Map<String, NetworkReplayEngine.RequestModifications> = emptyMap()
+    )
+
+    @Serializable
+    data class LoadTestInput(
+        val requestId: String,
+        val config: NetworkReplayEngine.LoadTestConfig = NetworkReplayEngine.LoadTestConfig(),
+        val modifications: NetworkReplayEngine.RequestModifications? = null
+    )
 
     fun registerTools(toolProvider: McpToolProvider) {
         Log.d(TAG, "Registering network tools")
@@ -79,6 +100,31 @@ class NetworkToolProvider(private val context: Context) {
             required = listOf("requestId"),
         ) { input ->
             analyzeNetworkRequest(input)
+        }
+
+        // Network replay tools
+        toolProvider.addTool<ReplayRequestInput>(
+            name = "network_replay_request",
+            description = "Replay a specific network request with optional modifications",
+            required = listOf("requestId"),
+        ) { input ->
+            replayNetworkRequest(input)
+        }
+
+        toolProvider.addTool<BatchReplayInput>(
+            name = "network_batch_replay",
+            description = "Replay multiple network requests in batch with configuration options",
+            required = listOf("requestIds"),
+        ) { input ->
+            batchReplayNetworkRequests(input)
+        }
+
+        toolProvider.addTool<LoadTestInput>(
+            name = "network_load_test",
+            description = "Perform a load test by replaying a request multiple times",
+            required = listOf("requestId"),
+        ) { input ->
+            loadTestNetworkRequest(input)
         }
 
         Log.d(TAG, "Network tools registered")
@@ -325,6 +371,228 @@ class NetworkToolProvider(private val context: Context) {
             return CallToolResult(
                 content =
                     listOf(TextContent(text = "❌ Error analyzing network request: ${e.message}")),
+                isError = true,
+            )
+        }
+    }
+
+    private suspend fun replayNetworkRequest(input: ReplayRequestInput): CallToolResult {
+        try {
+            // Get the original request from NetworkInspector
+            val originalRequest = networkInspector.getStoredRequest(input.requestId)
+                ?: return CallToolResult(
+                    content = listOf(TextContent(text = "❌ Request not found: ${input.requestId}")),
+                    isError = true,
+                )
+
+            val result = networkReplayEngine.replayRequest(originalRequest, input.modifications)
+
+            val responseText = buildString {
+                if (result.success) {
+                    appendLine("✅ Request ${input.requestId} replayed successfully")
+                    appendLine()
+                    appendLine("🔄 Replay Details:")
+                    appendLine("   Replay ID: ${result.replayId}")
+                    appendLine("   Original Status: ${result.originalRequest.responseCode}")
+                    appendLine("   Replay Status: ${result.replayedRequest.responseCode}")
+                    appendLine("   Original Duration: ${result.originalRequest.duration}ms")
+                    appendLine("   Replay Duration: ${result.replayedRequest.duration}ms")
+
+                    result.comparison?.let { comparison ->
+                        appendLine()
+                        appendLine("📊 Comparison:")
+                        appendLine("   Status Match: ${if (comparison.statusCodeMatch) "✅" else "❌"}")
+                        appendLine("   Headers Match: ${if (comparison.headersMatch) "✅" else "❌"}")
+                        appendLine("   Body Match: ${if (comparison.bodyMatch) "✅" else "❌"}")
+                        if (comparison.differences.isNotEmpty()) {
+                            appendLine("   Differences:")
+                            comparison.differences.forEach { diff ->
+                                appendLine("     - $diff")
+                            }
+                        }
+                    }
+                } else {
+                    appendLine("❌ Failed to replay request: ${result.error}")
+                }
+            }
+
+            return CallToolResult(
+                content = listOf(TextContent(text = responseText)),
+                isError = !result.success,
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Error replaying network request", e)
+            return CallToolResult(
+                content =
+                    listOf(TextContent(text = "❌ Error replaying network request: ${e.message}")),
+                isError = true,
+            )
+        }
+    }
+
+    private suspend fun batchReplayNetworkRequests(input: BatchReplayInput): CallToolResult {
+        try {
+            // Get the original requests from NetworkInspector
+            val originalRequests = mutableListOf<NetworkInspector.NetworkRequest>()
+            val missingRequestIds = mutableListOf<String>()
+
+            input.requestIds.forEach { requestId ->
+                val request: NetworkInspector.NetworkRequest? =
+                    networkInspector.getStoredRequest(requestId)
+                if (request != null) {
+                    originalRequests.add(request)
+                } else {
+                    missingRequestIds.add(requestId)
+                }
+            }
+
+            if (missingRequestIds.isNotEmpty()) {
+                return CallToolResult(
+                    content = listOf(
+                        TextContent(
+                            text = "❌ Requests not found: ${missingRequestIds.joinToString(", ")}"
+                        )
+                    ),
+                    isError = true,
+                )
+            }
+
+            val result = networkReplayEngine.batchReplay(
+                originalRequests,
+                input.config,
+                input.modifications
+            )
+
+            val responseText = buildString {
+                appendLine("🔄 Batch Replay Results")
+                appendLine("=====================")
+                appendLine()
+                appendLine("📊 Summary:")
+                appendLine("   Batch ID: ${result.batchId}")
+                appendLine("   Total Requests: ${result.totalRequests}")
+                appendLine("   Successful: ${result.successfulRequests}")
+                appendLine("   Failed: ${result.failedRequests}")
+                appendLine("   Total Duration: ${result.totalDuration}ms")
+                appendLine(
+                    "   Average Request Time: ${
+                        String.format(
+                            "%.2f",
+                            result.averageRequestTime
+                        )
+                    }ms"
+                )
+                appendLine()
+
+                if (result.results.isNotEmpty()) {
+                    appendLine("📋 Individual Results:")
+                    result.results.forEach { replayResult ->
+                        val status = if (replayResult.success) "✅" else "❌"
+                        appendLine("   $status ${replayResult.originalRequest.id}: ${replayResult.replayedRequest.responseCode} (${replayResult.replayedRequest.duration}ms)")
+                        if (!replayResult.success && replayResult.error != null) {
+                            appendLine("      Error: ${replayResult.error}")
+                        }
+                    }
+                }
+            }
+
+            return CallToolResult(
+                content = listOf(TextContent(text = responseText)),
+                isError = result.failedRequests > 0,
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Error batch replaying network requests", e)
+            return CallToolResult(
+                content =
+                    listOf(TextContent(text = "❌ Error batch replaying network requests: ${e.message}")),
+                isError = true,
+            )
+        }
+    }
+
+    private suspend fun loadTestNetworkRequest(input: LoadTestInput): CallToolResult {
+        try {
+            // Get the original request from NetworkInspector
+            val originalRequest = networkInspector.getStoredRequest(input.requestId)
+                ?: return CallToolResult(
+                    content = listOf(TextContent(text = "❌ Request not found: ${input.requestId}")),
+                    isError = true,
+                )
+
+            val result =
+                networkReplayEngine.loadTest(originalRequest, input.config, input.modifications)
+
+            val responseText = buildString {
+                appendLine("⚡ Load Test Results")
+                appendLine("==================")
+                appendLine()
+                appendLine("🎯 Test Configuration:")
+                appendLine("   Test ID: ${result.testId}")
+                appendLine("   Requests per Second: ${result.config.requestsPerSecond}")
+                appendLine("   Total Requests: ${result.config.totalRequests}")
+                appendLine("   Concurrency: ${result.config.concurrency}")
+                appendLine("   Duration: ${result.duration}ms")
+                appendLine()
+
+                appendLine("📊 Performance Statistics:")
+                appendLine(
+                    "   Actual RPS: ${
+                        String.format(
+                            "%.2f",
+                            result.statistics.requestsPerSecond
+                        )
+                    }"
+                )
+                appendLine(
+                    "   Throughput: ${
+                        String.format(
+                            "%.2f",
+                            result.statistics.throughput
+                        )
+                    } req/sec"
+                )
+                appendLine(
+                    "   Error Rate: ${
+                        String.format(
+                            "%.2f%%",
+                            result.statistics.errorRate * 100
+                        )
+                    }"
+                )
+                appendLine()
+
+                appendLine("⏱️ Response Times:")
+                appendLine(
+                    "   Average: ${
+                        String.format(
+                            "%.2f",
+                            result.statistics.averageResponseTime
+                        )
+                    }ms"
+                )
+                appendLine("   Min: ${result.statistics.minResponseTime}ms")
+                appendLine("   Max: ${result.statistics.maxResponseTime}ms")
+                appendLine("   P50: ${String.format("%.2f", result.statistics.p50ResponseTime)}ms")
+                appendLine("   P95: ${String.format("%.2f", result.statistics.p95ResponseTime)}ms")
+                appendLine("   P99: ${String.format("%.2f", result.statistics.p99ResponseTime)}ms")
+                appendLine()
+
+                val successCount = result.results.count { it.success }
+                val failureCount = result.results.size - successCount
+                appendLine("✅ Successful Requests: $successCount")
+                if (failureCount > 0) {
+                    appendLine("❌ Failed Requests: $failureCount")
+                }
+            }
+
+            return CallToolResult(
+                content = listOf(TextContent(text = responseText)),
+                isError = result.statistics.errorRate > 0.5, // Error if more than 50% failed
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Error performing load test", e)
+            return CallToolResult(
+                content =
+                    listOf(TextContent(text = "❌ Error performing load test: ${e.message}")),
                 isError = true,
             )
         }

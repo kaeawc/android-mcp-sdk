@@ -39,6 +39,7 @@ class ResourceProvider(private val context: Context) {
     private val customResourceTemplates = ConcurrentHashMap<String, ResourceTemplate>()
 
     private val subscriptionManager = ResourceSubscriptionManager(context)
+    private val sharedPreferencesResourceProvider = SharedPreferencesResourceProvider(context)
 
     // Flow for resource update notifications
     @OptIn(FlowPreview::class)
@@ -64,6 +65,11 @@ class ResourceProvider(private val context: Context) {
 
         if (uri.startsWith("file://")) {
             return readFileResource(uri)
+        }
+
+        // Check if the resource is handled by SharedPreferencesResourceProvider
+        if (uri.startsWith("android://preferences/")) {
+            return sharedPreferencesResourceProvider.readSharedPreferencesResource(uri)
         }
 
         return AndroidResourceContent(uri = uri, text = "Resource not found: $uri")
@@ -109,7 +115,7 @@ class ResourceProvider(private val context: Context) {
                 description = "Basic information about the Android device.",
                 mimeType = "text/plain",
             ),
-        )
+        ) + sharedPreferencesResourceProvider.createSharedPreferencesResources()
     }
 
     private fun createBuiltInResourceTemplates(): List<ResourceTemplate> {
