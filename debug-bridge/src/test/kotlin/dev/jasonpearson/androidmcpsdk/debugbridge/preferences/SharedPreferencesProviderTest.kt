@@ -4,8 +4,6 @@ import android.content.Context
 import android.content.SharedPreferences
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
-import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Before
@@ -13,7 +11,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import java.io.File
 
 @RunWith(RobolectricTestRunner::class)
 class SharedPreferencesProviderTest {
@@ -27,20 +24,21 @@ class SharedPreferencesProviderTest {
     fun setUp() {
         context = RuntimeEnvironment.getApplication()
         provider = SharedPreferencesProvider(context)
-        
+
         mockPrefs = mockk(relaxed = true)
         mockEditor = mockk(relaxed = true)
-        
+
         every { mockPrefs.edit() } returns mockEditor
         every { mockEditor.apply() } returns Unit
     }
 
     @Test
     fun `addPreferencesFile should add preferences successfully`() = runTest {
-        val config = SharedPreferencesProvider.PreferencesConfig(
-            fileName = "test_prefs",
-            enableChangeNotifications = false
-        )
+        val config =
+            SharedPreferencesProvider.PreferencesConfig(
+                fileName = "test_prefs",
+                enableChangeNotifications = false,
+            )
 
         val result = provider.addPreferencesFile("android://preferences/test_prefs", config)
 
@@ -51,7 +49,8 @@ class SharedPreferencesProviderTest {
     fun `getPreferencesContent should return all preferences`() = runTest {
         // Create actual preferences for testing
         val prefs = context.getSharedPreferences("test_content", Context.MODE_PRIVATE)
-        prefs.edit()
+        prefs
+            .edit()
             .putString("test_string", "hello")
             .putInt("test_int", 42)
             .putBoolean("test_bool", true)
@@ -64,7 +63,7 @@ class SharedPreferencesProviderTest {
         assertTrue(content.preferences.containsKey("test_string"))
         assertTrue(content.preferences.containsKey("test_int"))
         assertTrue(content.preferences.containsKey("test_bool"))
-        
+
         assertEquals("hello", content.preferences["test_string"]?.value)
         assertEquals("42", content.preferences["test_int"]?.value)
         assertEquals("true", content.preferences["test_bool"]?.value)
@@ -91,15 +90,16 @@ class SharedPreferencesProviderTest {
 
     @Test
     fun `setPreferenceValue should set string value`() = runTest {
-        val result = provider.setPreferenceValue(
-            "test_set",
-            "string_key",
-            "string_value",
-            SharedPreferencesProvider.PreferenceType.STRING
-        )
+        val result =
+            provider.setPreferenceValue(
+                "test_set",
+                "string_key",
+                "string_value",
+                SharedPreferencesProvider.PreferenceType.STRING,
+            )
 
         assertTrue(result.isSuccess)
-        
+
         // Verify the value was set
         val prefs = context.getSharedPreferences("test_set", Context.MODE_PRIVATE)
         assertEquals("string_value", prefs.getString("string_key", null))
@@ -107,75 +107,80 @@ class SharedPreferencesProviderTest {
 
     @Test
     fun `setPreferenceValue should set int value`() = runTest {
-        val result = provider.setPreferenceValue(
-            "test_set",
-            "int_key",
-            "123",
-            SharedPreferencesProvider.PreferenceType.INT
-        )
+        val result =
+            provider.setPreferenceValue(
+                "test_set",
+                "int_key",
+                "123",
+                SharedPreferencesProvider.PreferenceType.INT,
+            )
 
         assertTrue(result.isSuccess)
-        
+
         val prefs = context.getSharedPreferences("test_set", Context.MODE_PRIVATE)
         assertEquals(123, prefs.getInt("int_key", 0))
     }
 
     @Test
     fun `setPreferenceValue should set boolean value`() = runTest {
-        val result = provider.setPreferenceValue(
-            "test_set",
-            "bool_key",
-            "true",
-            SharedPreferencesProvider.PreferenceType.BOOLEAN
-        )
+        val result =
+            provider.setPreferenceValue(
+                "test_set",
+                "bool_key",
+                "true",
+                SharedPreferencesProvider.PreferenceType.BOOLEAN,
+            )
 
         assertTrue(result.isSuccess)
-        
+
         val prefs = context.getSharedPreferences("test_set", Context.MODE_PRIVATE)
         assertTrue(prefs.getBoolean("bool_key", false))
     }
 
     @Test
     fun `setPreferenceValue should set float value`() = runTest {
-        val result = provider.setPreferenceValue(
-            "test_set",
-            "float_key",
-            "3.14",
-            SharedPreferencesProvider.PreferenceType.FLOAT
-        )
+        val result =
+            provider.setPreferenceValue(
+                "test_set",
+                "float_key",
+                "3.14",
+                SharedPreferencesProvider.PreferenceType.FLOAT,
+            )
 
         assertTrue(result.isSuccess)
-        
+
         val prefs = context.getSharedPreferences("test_set", Context.MODE_PRIVATE)
         assertEquals(3.14f, prefs.getFloat("float_key", 0f))
     }
 
     @Test
     fun `setPreferenceValue should set long value`() = runTest {
-        val result = provider.setPreferenceValue(
-            "test_set",
-            "long_key",
-            "9876543210",
-            SharedPreferencesProvider.PreferenceType.LONG
-        )
+        val result =
+            provider.setPreferenceValue(
+                "test_set",
+                "long_key",
+                "9876543210",
+                SharedPreferencesProvider.PreferenceType.LONG,
+            )
 
         assertTrue(result.isSuccess)
-        
+
         val prefs = context.getSharedPreferences("test_set", Context.MODE_PRIVATE)
         assertEquals(9876543210L, prefs.getLong("long_key", 0L))
     }
 
     @Test
     fun `setPreferenceValue should set string set value`() = runTest {
-        val result = provider.setPreferenceValue(
-            "test_set",
-            "stringset_key",
-            "value1, value2, value3",
-            SharedPreferencesProvider.PreferenceType.STRING_SET
-        )
+        val result =
+            provider.setPreferenceValue(
+                "test_set",
+                "stringset_key",
+                "value1, value2, value3",
+                SharedPreferencesProvider.PreferenceType.STRING_SET,
+            )
 
         assertTrue(result.isSuccess)
-        
+
         val prefs = context.getSharedPreferences("test_set", Context.MODE_PRIVATE)
         val stringSet = prefs.getStringSet("stringset_key", emptySet())
         assertNotNull(stringSet)
@@ -199,10 +204,7 @@ class SharedPreferencesProviderTest {
     @Test
     fun `clearPreferences should clear all preferences`() = runTest {
         val prefs = context.getSharedPreferences("test_clear", Context.MODE_PRIVATE)
-        prefs.edit()
-            .putString("key1", "value1")
-            .putString("key2", "value2")
-            .apply()
+        prefs.edit().putString("key1", "value1").putString("key2", "value2").apply()
 
         val result = provider.clearPreferences("test_clear")
 
@@ -213,10 +215,16 @@ class SharedPreferencesProviderTest {
     @Test
     fun `getAllPreferenceFiles should return existing files`() = runTest {
         // Create some preferences to ensure files exist
-        context.getSharedPreferences("file1", Context.MODE_PRIVATE)
-            .edit().putString("key", "value").apply()
-        context.getSharedPreferences("file2", Context.MODE_PRIVATE)
-            .edit().putInt("count", 42).apply()
+        context
+            .getSharedPreferences("file1", Context.MODE_PRIVATE)
+            .edit()
+            .putString("key", "value")
+            .apply()
+        context
+            .getSharedPreferences("file2", Context.MODE_PRIVATE)
+            .edit()
+            .putInt("count", 42)
+            .apply()
 
         val files = provider.getAllPreferenceFiles()
 
@@ -228,7 +236,8 @@ class SharedPreferencesProviderTest {
     @Test
     fun `serializeValue should handle different types correctly`() = runTest {
         val prefs = context.getSharedPreferences("test_serialize", Context.MODE_PRIVATE)
-        prefs.edit()
+        prefs
+            .edit()
             .putString("string", "hello")
             .putInt("int", 42)
             .putBoolean("boolean", true)
@@ -244,7 +253,7 @@ class SharedPreferencesProviderTest {
         assertEquals("true", content.preferences["boolean"]?.value)
         assertEquals("3.14", content.preferences["float"]?.value)
         assertEquals("123456789", content.preferences["long"]?.value)
-        
+
         val stringSetValue = content.preferences["stringset"]?.value
         assertNotNull(stringSetValue)
         assertTrue(stringSetValue!!.contains("a"))
@@ -255,7 +264,8 @@ class SharedPreferencesProviderTest {
     @Test
     fun `getValueType should detect types correctly`() = runTest {
         val prefs = context.getSharedPreferences("test_types", Context.MODE_PRIVATE)
-        prefs.edit()
+        prefs
+            .edit()
             .putString("string", "hello")
             .putInt("int", 42)
             .putBoolean("boolean", true)
@@ -266,28 +276,41 @@ class SharedPreferencesProviderTest {
 
         val content = provider.getPreferencesContent("test_types")
 
-        assertEquals(SharedPreferencesProvider.PreferenceType.STRING, 
-                    content.preferences["string"]?.originalType)
-        assertEquals(SharedPreferencesProvider.PreferenceType.INT, 
-                    content.preferences["int"]?.originalType)
-        assertEquals(SharedPreferencesProvider.PreferenceType.BOOLEAN, 
-                    content.preferences["boolean"]?.originalType)
-        assertEquals(SharedPreferencesProvider.PreferenceType.FLOAT, 
-                    content.preferences["float"]?.originalType)
-        assertEquals(SharedPreferencesProvider.PreferenceType.LONG, 
-                    content.preferences["long"]?.originalType)
-        assertEquals(SharedPreferencesProvider.PreferenceType.STRING_SET, 
-                    content.preferences["stringset"]?.originalType)
+        assertEquals(
+            SharedPreferencesProvider.PreferenceType.STRING,
+            content.preferences["string"]?.originalType,
+        )
+        assertEquals(
+            SharedPreferencesProvider.PreferenceType.INT,
+            content.preferences["int"]?.originalType,
+        )
+        assertEquals(
+            SharedPreferencesProvider.PreferenceType.BOOLEAN,
+            content.preferences["boolean"]?.originalType,
+        )
+        assertEquals(
+            SharedPreferencesProvider.PreferenceType.FLOAT,
+            content.preferences["float"]?.originalType,
+        )
+        assertEquals(
+            SharedPreferencesProvider.PreferenceType.LONG,
+            content.preferences["long"]?.originalType,
+        )
+        assertEquals(
+            SharedPreferencesProvider.PreferenceType.STRING_SET,
+            content.preferences["stringset"]?.originalType,
+        )
     }
 
     @Test
     fun `invalid type conversion should fail gracefully`() = runTest {
-        val result = provider.setPreferenceValue(
-            "test_invalid",
-            "invalid_int",
-            "not_a_number",
-            SharedPreferencesProvider.PreferenceType.INT
-        )
+        val result =
+            provider.setPreferenceValue(
+                "test_invalid",
+                "invalid_int",
+                "not_a_number",
+                SharedPreferencesProvider.PreferenceType.INT,
+            )
 
         assertTrue(result.isFailure)
     }

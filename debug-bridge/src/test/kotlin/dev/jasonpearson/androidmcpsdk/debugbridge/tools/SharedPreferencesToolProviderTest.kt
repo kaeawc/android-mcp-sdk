@@ -2,9 +2,9 @@ package dev.jasonpearson.androidmcpsdk.debugbridge.tools
 
 import android.content.Context
 import dev.jasonpearson.androidmcpsdk.debugbridge.preferences.SharedPreferencesProvider
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
-import org.junit.Assert.*
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
@@ -23,12 +23,13 @@ class SharedPreferencesToolProviderTest {
 
     @Test
     fun `PreferencesConfig data class should work correctly`() {
-        val config = SharedPreferencesProvider.PreferencesConfig(
-            fileName = "test",
-            mode = Context.MODE_PRIVATE,
-            readOnly = false,
-            enableChangeNotifications = true
-        )
+        val config =
+            SharedPreferencesProvider.PreferencesConfig(
+                fileName = "test",
+                mode = Context.MODE_PRIVATE,
+                readOnly = false,
+                enableChangeNotifications = true,
+            )
 
         assertEquals("test", config.fileName)
         assertEquals(Context.MODE_PRIVATE, config.mode)
@@ -38,11 +39,12 @@ class SharedPreferencesToolProviderTest {
 
     @Test
     fun `PreferencesQueryInput data class should work correctly`() {
-        val input = SharedPreferencesToolProvider.PreferencesQueryInput(
-            fileName = "test_file",
-            key = "test_key",
-            outputFormat = "json"
-        )
+        val input =
+            SharedPreferencesToolProvider.PreferencesQueryInput(
+                fileName = "test_file",
+                key = "test_key",
+                outputFormat = "json",
+            )
 
         assertEquals("test_file", input.fileName)
         assertEquals("test_key", input.key)
@@ -51,13 +53,14 @@ class SharedPreferencesToolProviderTest {
 
     @Test
     fun `PreferencesSetInput data class should work correctly`() {
-        val input = SharedPreferencesToolProvider.PreferencesSetInput(
-            fileName = "test_file",
-            key = "test_key",
-            value = "test_value",
-            type = "STRING",
-            dryRun = false
-        )
+        val input =
+            SharedPreferencesToolProvider.PreferencesSetInput(
+                fileName = "test_file",
+                key = "test_key",
+                value = "test_value",
+                type = "STRING",
+                dryRun = false,
+            )
 
         assertEquals("test_file", input.fileName)
         assertEquals("test_key", input.key)
@@ -68,12 +71,13 @@ class SharedPreferencesToolProviderTest {
 
     @Test
     fun `BatchOperation data class should work correctly`() {
-        val operation = SharedPreferencesToolProvider.BatchOperation(
-            action = "SET",
-            key = "test_key",
-            value = "test_value",
-            type = "STRING"
-        )
+        val operation =
+            SharedPreferencesToolProvider.BatchOperation(
+                action = "SET",
+                key = "test_key",
+                value = "test_value",
+                type = "STRING",
+            )
 
         assertEquals("SET", operation.action)
         assertEquals("test_key", operation.key)
@@ -83,16 +87,18 @@ class SharedPreferencesToolProviderTest {
 
     @Test
     fun `PreferencesBatchEditInput data class should work correctly`() {
-        val operations = listOf(
-            SharedPreferencesToolProvider.BatchOperation("SET", "key1", "value1", "STRING"),
-            SharedPreferencesToolProvider.BatchOperation("REMOVE", "key2")
-        )
+        val operations =
+            listOf(
+                SharedPreferencesToolProvider.BatchOperation("SET", "key1", "value1", "STRING"),
+                SharedPreferencesToolProvider.BatchOperation("REMOVE", "key2"),
+            )
 
-        val input = SharedPreferencesToolProvider.PreferencesBatchEditInput(
-            fileName = "test_file",
-            operations = operations,
-            dryRun = true
-        )
+        val input =
+            SharedPreferencesToolProvider.PreferencesBatchEditInput(
+                fileName = "test_file",
+                operations = operations,
+                dryRun = true,
+            )
 
         assertEquals("test_file", input.fileName)
         assertEquals(2, input.operations.size)

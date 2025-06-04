@@ -21,14 +21,13 @@ class SharedPreferencesToolProvider(private val context: Context) {
 
     private val preferencesProvider = SharedPreferencesProvider(context)
 
-    @Serializable
-    data class PreferencesListInput(val placeholder: String? = null)
+    @Serializable data class PreferencesListInput(val placeholder: String? = null)
 
     @Serializable
     data class PreferencesQueryInput(
         val fileName: String,
         val key: String? = null, // If null, return all preferences
-        val outputFormat: String = "json"
+        val outputFormat: String = "json",
     )
 
     @Serializable
@@ -36,7 +35,7 @@ class SharedPreferencesToolProvider(private val context: Context) {
         val pattern: String,
         val searchInKeys: Boolean = true,
         val searchInValues: Boolean = true,
-        val outputFormat: String = "json"
+        val outputFormat: String = "json",
     )
 
     @Serializable
@@ -45,33 +44,30 @@ class SharedPreferencesToolProvider(private val context: Context) {
         val key: String,
         val value: String,
         val type: String = "STRING", // STRING, INT, BOOLEAN, FLOAT, LONG, STRING_SET
-        val dryRun: Boolean = false
+        val dryRun: Boolean = false,
     )
 
     @Serializable
     data class PreferencesRemoveInput(
         val fileName: String,
         val key: String,
-        val confirm: Boolean = false
+        val confirm: Boolean = false,
     )
 
     @Serializable
-    data class PreferencesClearInput(
-        val fileName: String,
-        val confirm: Boolean = false
-    )
+    data class PreferencesClearInput(val fileName: String, val confirm: Boolean = false)
 
     @Serializable
     data class PreferencesExportInput(
         val fileName: String? = null, // If null, export all
-        val outputFormat: String = "json"
+        val outputFormat: String = "json",
     )
 
     @Serializable
     data class PreferencesBatchEditInput(
         val fileName: String,
         val operations: List<BatchOperation>,
-        val dryRun: Boolean = false
+        val dryRun: Boolean = false,
     )
 
     @Serializable
@@ -79,7 +75,7 @@ class SharedPreferencesToolProvider(private val context: Context) {
         val action: String, // SET, REMOVE
         val key: String,
         val value: String? = null,
-        val type: String = "STRING"
+        val type: String = "STRING",
     )
 
     fun registerTools(toolProvider: McpToolProvider) {
@@ -88,7 +84,7 @@ class SharedPreferencesToolProvider(private val context: Context) {
         // List all preferences files
         toolProvider.addTool<PreferencesListInput>(
             name = "preferences_list",
-            description = "List all SharedPreferences files in the application"
+            description = "List all SharedPreferences files in the application",
         ) { _ ->
             listPreferencesFiles()
         }
@@ -96,7 +92,7 @@ class SharedPreferencesToolProvider(private val context: Context) {
         // Query preferences
         toolProvider.addTool<PreferencesQueryInput>(
             name = "preferences_query",
-            description = "Query SharedPreferences data from a specific file"
+            description = "Query SharedPreferences data from a specific file",
         ) { input ->
             queryPreferences(input)
         }
@@ -104,7 +100,7 @@ class SharedPreferencesToolProvider(private val context: Context) {
         // Search preferences
         toolProvider.addTool<PreferencesSearchInput>(
             name = "preferences_search",
-            description = "Search for preferences keys and values by pattern"
+            description = "Search for preferences keys and values by pattern",
         ) { input ->
             searchPreferences(input)
         }
@@ -112,7 +108,7 @@ class SharedPreferencesToolProvider(private val context: Context) {
         // Set preference value
         toolProvider.addTool<PreferencesSetInput>(
             name = "preferences_set",
-            description = "Set a preference value with type conversion"
+            description = "Set a preference value with type conversion",
         ) { input ->
             setPreference(input)
         }
@@ -120,7 +116,7 @@ class SharedPreferencesToolProvider(private val context: Context) {
         // Remove preference key
         toolProvider.addTool<PreferencesRemoveInput>(
             name = "preferences_remove",
-            description = "Remove a preference key from a file"
+            description = "Remove a preference key from a file",
         ) { input ->
             removePreference(input)
         }
@@ -128,7 +124,7 @@ class SharedPreferencesToolProvider(private val context: Context) {
         // Clear all preferences
         toolProvider.addTool<PreferencesClearInput>(
             name = "preferences_clear",
-            description = "Clear all preferences from a file"
+            description = "Clear all preferences from a file",
         ) { input ->
             clearPreferences(input)
         }
@@ -136,7 +132,7 @@ class SharedPreferencesToolProvider(private val context: Context) {
         // Export preferences
         toolProvider.addTool<PreferencesExportInput>(
             name = "preferences_export",
-            description = "Export preferences data in various formats"
+            description = "Export preferences data in various formats",
         ) { input ->
             exportPreferences(input)
         }
@@ -144,7 +140,7 @@ class SharedPreferencesToolProvider(private val context: Context) {
         // Batch edit operations
         toolProvider.addTool<PreferencesBatchEditInput>(
             name = "preferences_batch_edit",
-            description = "Perform multiple preference operations in a batch"
+            description = "Perform multiple preference operations in a batch",
         ) { input ->
             batchEditPreferences(input)
         }
@@ -176,41 +172,43 @@ class SharedPreferencesToolProvider(private val context: Context) {
         } catch (e: Exception) {
             Log.e(TAG, "Failed to list preferences files", e)
             CallToolResult(
-                content = listOf(TextContent(text = "Failed to list preferences files: ${e.message}")),
-                isError = true
+                content =
+                    listOf(TextContent(text = "Failed to list preferences files: ${e.message}")),
+                isError = true,
             )
         }
     }
 
     private suspend fun queryPreferences(input: PreferencesQueryInput): CallToolResult {
         return try {
-            val result = if (input.key != null) {
-                // Query specific key
-                val value = preferencesProvider.getPreferenceValue(input.fileName, input.key)
-                if (value != null) {
-                    buildString {
-                        appendLine("Preference Value:")
-                        appendLine("File: ${input.fileName}")
-                        appendLine("Key: ${value.key}")
-                        appendLine("Value: ${value.value}")
-                        appendLine("Type: ${value.originalType}")
-                        appendLine("Last Modified: ${java.util.Date(value.lastModified)}")
+            val result =
+                if (input.key != null) {
+                    // Query specific key
+                    val value = preferencesProvider.getPreferenceValue(input.fileName, input.key)
+                    if (value != null) {
+                        buildString {
+                            appendLine("Preference Value:")
+                            appendLine("File: ${input.fileName}")
+                            appendLine("Key: ${value.key}")
+                            appendLine("Value: ${value.value}")
+                            appendLine("Type: ${value.originalType}")
+                            appendLine("Last Modified: ${java.util.Date(value.lastModified)}")
+                        }
+                    } else {
+                        "Preference key '${input.key}' not found in file '${input.fileName}'"
                     }
                 } else {
-                    "Preference key '${input.key}' not found in file '${input.fileName}'"
+                    // Query all preferences
+                    val content = preferencesProvider.getPreferencesContent(input.fileName)
+                    formatPreferencesContent(content, input.outputFormat)
                 }
-            } else {
-                // Query all preferences
-                val content = preferencesProvider.getPreferencesContent(input.fileName)
-                formatPreferencesContent(content, input.outputFormat)
-            }
 
             CallToolResult(content = listOf(TextContent(text = result)), isError = false)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to query preferences", e)
             CallToolResult(
                 content = listOf(TextContent(text = "Failed to query preferences: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }
@@ -226,13 +224,14 @@ class SharedPreferencesToolProvider(private val context: Context) {
                 content.preferences.forEach { (key, value) ->
                     val keyMatches =
                         input.searchInKeys && key.contains(input.pattern, ignoreCase = true)
-                    val valueMatches = input.searchInValues && value.value.contains(
-                        input.pattern,
-                        ignoreCase = true
-                    )
+                    val valueMatches =
+                        input.searchInValues &&
+                            value.value.contains(input.pattern, ignoreCase = true)
 
                     if (keyMatches || valueMatches) {
-                        matches.add("${file.fileName}.$key = ${value.value} (${value.originalType})")
+                        matches.add(
+                            "${file.fileName}.$key = ${value.value} (${value.originalType})"
+                        )
                     }
                 }
             }
@@ -240,9 +239,7 @@ class SharedPreferencesToolProvider(private val context: Context) {
             val output = buildString {
                 appendLine("Search Results for pattern: '${input.pattern}'")
                 appendLine("Found ${matches.size} matches:")
-                matches.forEach { match ->
-                    appendLine("  - $match")
-                }
+                matches.forEach { match -> appendLine("  - $match") }
             }
 
             CallToolResult(content = listOf(TextContent(text = output)), isError = false)
@@ -250,7 +247,7 @@ class SharedPreferencesToolProvider(private val context: Context) {
             Log.e(TAG, "Failed to search preferences", e)
             CallToolResult(
                 content = listOf(TextContent(text = "Failed to search preferences: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }
@@ -259,22 +256,20 @@ class SharedPreferencesToolProvider(private val context: Context) {
         return try {
             if (input.dryRun) {
                 return CallToolResult(
-                    content = listOf(
-                        TextContent(
-                            text = "DRY RUN: Would set ${input.fileName}.${input.key} = ${input.value} (${input.type})"
-                        )
-                    ),
-                    isError = false
+                    content =
+                        listOf(
+                            TextContent(
+                                text =
+                                    "DRY RUN: Would set ${input.fileName}.${input.key} = ${input.value} (${input.type})"
+                            )
+                        ),
+                    isError = false,
                 )
             }
 
             val type = SharedPreferencesProvider.PreferenceType.valueOf(input.type.uppercase())
-            val result = preferencesProvider.setPreferenceValue(
-                input.fileName,
-                input.key,
-                input.value,
-                type
-            )
+            val result =
+                preferencesProvider.setPreferenceValue(input.fileName, input.key, input.value, type)
 
             if (result.isSuccess) {
                 val output = buildString {
@@ -287,15 +282,21 @@ class SharedPreferencesToolProvider(private val context: Context) {
                 CallToolResult(content = listOf(TextContent(text = output)), isError = false)
             } else {
                 CallToolResult(
-                    content = listOf(TextContent(text = "Failed to set preference: ${result.exceptionOrNull()?.message}")),
-                    isError = true
+                    content =
+                        listOf(
+                            TextContent(
+                                text =
+                                    "Failed to set preference: ${result.exceptionOrNull()?.message}"
+                            )
+                        ),
+                    isError = true,
                 )
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to set preference", e)
             CallToolResult(
                 content = listOf(TextContent(text = "Failed to set preference: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }
@@ -304,12 +305,14 @@ class SharedPreferencesToolProvider(private val context: Context) {
         return try {
             if (!input.confirm) {
                 return CallToolResult(
-                    content = listOf(
-                        TextContent(
-                            text = "Remove operation requires confirmation. Set 'confirm' to true to proceed."
-                        )
-                    ),
-                    isError = true
+                    content =
+                        listOf(
+                            TextContent(
+                                text =
+                                    "Remove operation requires confirmation. Set 'confirm' to true to proceed."
+                            )
+                        ),
+                    isError = true,
                 )
             }
 
@@ -324,15 +327,21 @@ class SharedPreferencesToolProvider(private val context: Context) {
                 CallToolResult(content = listOf(TextContent(text = output)), isError = false)
             } else {
                 CallToolResult(
-                    content = listOf(TextContent(text = "Failed to remove preference: ${result.exceptionOrNull()?.message}")),
-                    isError = true
+                    content =
+                        listOf(
+                            TextContent(
+                                text =
+                                    "Failed to remove preference: ${result.exceptionOrNull()?.message}"
+                            )
+                        ),
+                    isError = true,
                 )
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to remove preference", e)
             CallToolResult(
                 content = listOf(TextContent(text = "Failed to remove preference: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }
@@ -341,12 +350,14 @@ class SharedPreferencesToolProvider(private val context: Context) {
         return try {
             if (!input.confirm) {
                 return CallToolResult(
-                    content = listOf(
-                        TextContent(
-                            text = "Clear operation requires confirmation. Set 'confirm' to true to proceed."
-                        )
-                    ),
-                    isError = true
+                    content =
+                        listOf(
+                            TextContent(
+                                text =
+                                    "Clear operation requires confirmation. Set 'confirm' to true to proceed."
+                            )
+                        ),
+                    isError = true,
                 )
             }
 
@@ -360,26 +371,33 @@ class SharedPreferencesToolProvider(private val context: Context) {
                 CallToolResult(content = listOf(TextContent(text = output)), isError = false)
             } else {
                 CallToolResult(
-                    content = listOf(TextContent(text = "Failed to clear preferences: ${result.exceptionOrNull()?.message}")),
-                    isError = true
+                    content =
+                        listOf(
+                            TextContent(
+                                text =
+                                    "Failed to clear preferences: ${result.exceptionOrNull()?.message}"
+                            )
+                        ),
+                    isError = true,
                 )
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to clear preferences", e)
             CallToolResult(
                 content = listOf(TextContent(text = "Failed to clear preferences: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }
 
     private suspend fun exportPreferences(input: PreferencesExportInput): CallToolResult {
         return try {
-            val files = if (input.fileName != null) {
-                listOf(input.fileName)
-            } else {
-                preferencesProvider.getAllPreferenceFiles().map { it.fileName }
-            }
+            val files =
+                if (input.fileName != null) {
+                    listOf(input.fileName)
+                } else {
+                    preferencesProvider.getAllPreferenceFiles().map { it.fileName }
+                }
 
             val output = buildString {
                 appendLine("Preferences Export:")
@@ -401,7 +419,7 @@ class SharedPreferencesToolProvider(private val context: Context) {
             Log.e(TAG, "Failed to export preferences", e)
             CallToolResult(
                 content = listOf(TextContent(text = "Failed to export preferences: ${e.message}")),
-                isError = true
+                isError = true,
             )
         }
     }
@@ -431,18 +449,23 @@ class SharedPreferencesToolProvider(private val context: Context) {
                         "SET" -> {
                             if (operation.value != null) {
                                 val type =
-                                    SharedPreferencesProvider.PreferenceType.valueOf(operation.type.uppercase())
-                                val result = preferencesProvider.setPreferenceValue(
-                                    input.fileName,
-                                    operation.key,
-                                    operation.value,
-                                    type
-                                )
+                                    SharedPreferencesProvider.PreferenceType.valueOf(
+                                        operation.type.uppercase()
+                                    )
+                                val result =
+                                    preferencesProvider.setPreferenceValue(
+                                        input.fileName,
+                                        operation.key,
+                                        operation.value,
+                                        type,
+                                    )
                                 if (result.isSuccess) {
                                     results.add("✓ SET ${operation.key} = ${operation.value}")
                                     successCount++
                                 } else {
-                                    results.add("✗ SET ${operation.key} failed: ${result.exceptionOrNull()?.message}")
+                                    results.add(
+                                        "✗ SET ${operation.key} failed: ${result.exceptionOrNull()?.message}"
+                                    )
                                     errorCount++
                                 }
                             } else {
@@ -452,15 +475,18 @@ class SharedPreferencesToolProvider(private val context: Context) {
                         }
 
                         "REMOVE" -> {
-                            val result = preferencesProvider.removePreferenceKey(
-                                input.fileName,
-                                operation.key
-                            )
+                            val result =
+                                preferencesProvider.removePreferenceKey(
+                                    input.fileName,
+                                    operation.key,
+                                )
                             if (result.isSuccess) {
                                 results.add("✓ REMOVE ${operation.key}")
                                 successCount++
                             } else {
-                                results.add("✗ REMOVE ${operation.key} failed: ${result.exceptionOrNull()?.message}")
+                                results.add(
+                                    "✗ REMOVE ${operation.key} failed: ${result.exceptionOrNull()?.message}"
+                                )
                                 errorCount++
                             }
                         }
@@ -480,24 +506,23 @@ class SharedPreferencesToolProvider(private val context: Context) {
                 appendLine("Batch operation results for ${input.fileName}:")
                 appendLine("Success: $successCount, Errors: $errorCount")
                 appendLine()
-                results.forEach { result ->
-                    appendLine("  $result")
-                }
+                results.forEach { result -> appendLine("  $result") }
             }
 
             CallToolResult(content = listOf(TextContent(text = output)), isError = errorCount > 0)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to perform batch operations", e)
             CallToolResult(
-                content = listOf(TextContent(text = "Failed to perform batch operations: ${e.message}")),
-                isError = true
+                content =
+                    listOf(TextContent(text = "Failed to perform batch operations: ${e.message}")),
+                isError = true,
             )
         }
     }
 
     private fun formatPreferencesContent(
         content: SharedPreferencesProvider.PreferencesContent,
-        format: String
+        format: String,
     ): String {
         return when (format.lowercase()) {
             "json" -> formatAsJson(content)
@@ -515,16 +540,22 @@ class SharedPreferencesToolProvider(private val context: Context) {
                     put("fileName", content.fileName)
                     put("lastModified", content.lastModified)
                     put("size", content.size)
-                    put("preferences", buildJsonObject {
-                        content.preferences.forEach { (key, value) ->
-                            put(key, buildJsonObject {
-                                put("value", value.value)
-                                put("type", value.originalType.name)
-                                put("lastModified", value.lastModified)
-                            })
-                        }
-                    })
-                }
+                    put(
+                        "preferences",
+                        buildJsonObject {
+                            content.preferences.forEach { (key, value) ->
+                                put(
+                                    key,
+                                    buildJsonObject {
+                                        put("value", value.value)
+                                        put("type", value.originalType.name)
+                                        put("lastModified", value.lastModified)
+                                    },
+                                )
+                            }
+                        },
+                    )
+                },
             )
         } catch (e: Exception) {
             "Error formatting JSON: ${e.message}"
@@ -545,16 +576,15 @@ class SharedPreferencesToolProvider(private val context: Context) {
                 appendLine("-".repeat(75))
 
                 content.preferences.forEach { (_, value) ->
-                    val truncatedValue = if (value.value.length > 30) {
-                        value.value.take(27) + "..."
-                    } else {
-                        value.value
-                    }
+                    val truncatedValue =
+                        if (value.value.length > 30) {
+                            value.value.take(27) + "..."
+                        } else {
+                            value.value
+                        }
 
                     appendLine(
-                        value.key.padEnd(30) +
-                                value.originalType.name.padEnd(15) +
-                                truncatedValue
+                        value.key.padEnd(30) + value.originalType.name.padEnd(15) + truncatedValue
                     )
                 }
             }
@@ -566,7 +596,9 @@ class SharedPreferencesToolProvider(private val context: Context) {
             appendLine("Key,Type,Value,LastModified")
             content.preferences.forEach { (_, value) ->
                 val csvValue = value.value.replace("\"", "\"\"")
-                appendLine("${value.key},${value.originalType.name},\"$csvValue\",${value.lastModified}")
+                appendLine(
+                    "${value.key},${value.originalType.name},\"$csvValue\",${value.lastModified}"
+                )
             }
         }
     }

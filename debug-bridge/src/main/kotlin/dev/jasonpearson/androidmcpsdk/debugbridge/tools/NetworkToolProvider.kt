@@ -50,21 +50,21 @@ class NetworkToolProvider(private val context: Context) {
     @Serializable
     data class ReplayRequestInput(
         val requestId: String,
-        val modifications: NetworkReplayEngine.RequestModifications? = null
+        val modifications: NetworkReplayEngine.RequestModifications? = null,
     )
 
     @Serializable
     data class BatchReplayInput(
         val requestIds: List<String>,
         val config: NetworkReplayEngine.BatchConfig = NetworkReplayEngine.BatchConfig(),
-        val modifications: Map<String, NetworkReplayEngine.RequestModifications> = emptyMap()
+        val modifications: Map<String, NetworkReplayEngine.RequestModifications> = emptyMap(),
     )
 
     @Serializable
     data class LoadTestInput(
         val requestId: String,
         val config: NetworkReplayEngine.LoadTestConfig = NetworkReplayEngine.LoadTestConfig(),
-        val modifications: NetworkReplayEngine.RequestModifications? = null
+        val modifications: NetworkReplayEngine.RequestModifications? = null,
     )
 
     fun registerTools(toolProvider: McpToolProvider) {
@@ -379,11 +379,13 @@ class NetworkToolProvider(private val context: Context) {
     private suspend fun replayNetworkRequest(input: ReplayRequestInput): CallToolResult {
         try {
             // Get the original request from NetworkInspector
-            val originalRequest = networkInspector.getStoredRequest(input.requestId)
-                ?: return CallToolResult(
-                    content = listOf(TextContent(text = "❌ Request not found: ${input.requestId}")),
-                    isError = true,
-                )
+            val originalRequest =
+                networkInspector.getStoredRequest(input.requestId)
+                    ?: return CallToolResult(
+                        content =
+                            listOf(TextContent(text = "❌ Request not found: ${input.requestId}")),
+                        isError = true,
+                    )
 
             val result = networkReplayEngine.replayRequest(originalRequest, input.modifications)
 
@@ -401,14 +403,14 @@ class NetworkToolProvider(private val context: Context) {
                     result.comparison?.let { comparison ->
                         appendLine()
                         appendLine("📊 Comparison:")
-                        appendLine("   Status Match: ${if (comparison.statusCodeMatch) "✅" else "❌"}")
+                        appendLine(
+                            "   Status Match: ${if (comparison.statusCodeMatch) "✅" else "❌"}"
+                        )
                         appendLine("   Headers Match: ${if (comparison.headersMatch) "✅" else "❌"}")
                         appendLine("   Body Match: ${if (comparison.bodyMatch) "✅" else "❌"}")
                         if (comparison.differences.isNotEmpty()) {
                             appendLine("   Differences:")
-                            comparison.differences.forEach { diff ->
-                                appendLine("     - $diff")
-                            }
+                            comparison.differences.forEach { diff -> appendLine("     - $diff") }
                         }
                     }
                 } else {
@@ -448,20 +450,19 @@ class NetworkToolProvider(private val context: Context) {
 
             if (missingRequestIds.isNotEmpty()) {
                 return CallToolResult(
-                    content = listOf(
-                        TextContent(
-                            text = "❌ Requests not found: ${missingRequestIds.joinToString(", ")}"
-                        )
-                    ),
+                    content =
+                        listOf(
+                            TextContent(
+                                text =
+                                    "❌ Requests not found: ${missingRequestIds.joinToString(", ")}"
+                            )
+                        ),
                     isError = true,
                 )
             }
 
-            val result = networkReplayEngine.batchReplay(
-                originalRequests,
-                input.config,
-                input.modifications
-            )
+            val result =
+                networkReplayEngine.batchReplay(originalRequests, input.config, input.modifications)
 
             val responseText = buildString {
                 appendLine("🔄 Batch Replay Results")
@@ -477,7 +478,7 @@ class NetworkToolProvider(private val context: Context) {
                     "   Average Request Time: ${
                         String.format(
                             "%.2f",
-                            result.averageRequestTime
+                            result.averageRequestTime,
                         )
                     }ms"
                 )
@@ -487,7 +488,9 @@ class NetworkToolProvider(private val context: Context) {
                     appendLine("📋 Individual Results:")
                     result.results.forEach { replayResult ->
                         val status = if (replayResult.success) "✅" else "❌"
-                        appendLine("   $status ${replayResult.originalRequest.id}: ${replayResult.replayedRequest.responseCode} (${replayResult.replayedRequest.duration}ms)")
+                        appendLine(
+                            "   $status ${replayResult.originalRequest.id}: ${replayResult.replayedRequest.responseCode} (${replayResult.replayedRequest.duration}ms)"
+                        )
                         if (!replayResult.success && replayResult.error != null) {
                             appendLine("      Error: ${replayResult.error}")
                         }
@@ -503,7 +506,9 @@ class NetworkToolProvider(private val context: Context) {
             Log.e(TAG, "Error batch replaying network requests", e)
             return CallToolResult(
                 content =
-                    listOf(TextContent(text = "❌ Error batch replaying network requests: ${e.message}")),
+                    listOf(
+                        TextContent(text = "❌ Error batch replaying network requests: ${e.message}")
+                    ),
                 isError = true,
             )
         }
@@ -512,11 +517,13 @@ class NetworkToolProvider(private val context: Context) {
     private suspend fun loadTestNetworkRequest(input: LoadTestInput): CallToolResult {
         try {
             // Get the original request from NetworkInspector
-            val originalRequest = networkInspector.getStoredRequest(input.requestId)
-                ?: return CallToolResult(
-                    content = listOf(TextContent(text = "❌ Request not found: ${input.requestId}")),
-                    isError = true,
-                )
+            val originalRequest =
+                networkInspector.getStoredRequest(input.requestId)
+                    ?: return CallToolResult(
+                        content =
+                            listOf(TextContent(text = "❌ Request not found: ${input.requestId}")),
+                        isError = true,
+                    )
 
             val result =
                 networkReplayEngine.loadTest(originalRequest, input.config, input.modifications)
@@ -538,7 +545,7 @@ class NetworkToolProvider(private val context: Context) {
                     "   Actual RPS: ${
                         String.format(
                             "%.2f",
-                            result.statistics.requestsPerSecond
+                            result.statistics.requestsPerSecond,
                         )
                     }"
                 )
@@ -546,7 +553,7 @@ class NetworkToolProvider(private val context: Context) {
                     "   Throughput: ${
                         String.format(
                             "%.2f",
-                            result.statistics.throughput
+                            result.statistics.throughput,
                         )
                     } req/sec"
                 )
@@ -554,7 +561,7 @@ class NetworkToolProvider(private val context: Context) {
                     "   Error Rate: ${
                         String.format(
                             "%.2f%%",
-                            result.statistics.errorRate * 100
+                            result.statistics.errorRate * 100,
                         )
                     }"
                 )
@@ -565,7 +572,7 @@ class NetworkToolProvider(private val context: Context) {
                     "   Average: ${
                         String.format(
                             "%.2f",
-                            result.statistics.averageResponseTime
+                            result.statistics.averageResponseTime,
                         )
                     }ms"
                 )
@@ -591,8 +598,7 @@ class NetworkToolProvider(private val context: Context) {
         } catch (e: Exception) {
             Log.e(TAG, "Error performing load test", e)
             return CallToolResult(
-                content =
-                    listOf(TextContent(text = "❌ Error performing load test: ${e.message}")),
+                content = listOf(TextContent(text = "❌ Error performing load test: ${e.message}")),
                 isError = true,
             )
         }

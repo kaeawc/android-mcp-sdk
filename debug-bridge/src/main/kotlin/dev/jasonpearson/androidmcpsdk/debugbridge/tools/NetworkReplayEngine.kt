@@ -2,8 +2,6 @@ package dev.jasonpearson.androidmcpsdk.debugbridge.tools
 
 import android.content.Context
 import android.util.Log
-import java.io.IOException
-import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.*
@@ -29,11 +27,12 @@ class NetworkReplayEngine(private val context: Context) {
     private val replayIdGenerator = AtomicLong(0)
     private val activeReplays = ConcurrentHashMap<String, ReplaySession>()
     private val mutex = Mutex()
-    private val okHttpClient = OkHttpClient.Builder()
-        .connectTimeout(DEFAULT_TIMEOUT_SECONDS, java.util.concurrent.TimeUnit.SECONDS)
-        .readTimeout(DEFAULT_TIMEOUT_SECONDS, java.util.concurrent.TimeUnit.SECONDS)
-        .writeTimeout(DEFAULT_TIMEOUT_SECONDS, java.util.concurrent.TimeUnit.SECONDS)
-        .build()
+    private val okHttpClient =
+        OkHttpClient.Builder()
+            .connectTimeout(DEFAULT_TIMEOUT_SECONDS, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(DEFAULT_TIMEOUT_SECONDS, java.util.concurrent.TimeUnit.SECONDS)
+            .writeTimeout(DEFAULT_TIMEOUT_SECONDS, java.util.concurrent.TimeUnit.SECONDS)
+            .build()
 
     @Serializable
     data class RequestModifications(
@@ -42,7 +41,7 @@ class NetworkReplayEngine(private val context: Context) {
         val headers: Map<String, String> = emptyMap(),
         val removeHeaders: List<String> = emptyList(),
         val body: String? = null,
-        val timeout: Long? = null
+        val timeout: Long? = null,
     )
 
     @Serializable
@@ -50,7 +49,7 @@ class NetworkReplayEngine(private val context: Context) {
         val concurrency: Int = 1,
         val delayBetweenRequests: Long = 0,
         val failFast: Boolean = false,
-        val timeoutPerRequest: Long = DEFAULT_TIMEOUT_SECONDS * 1000
+        val timeoutPerRequest: Long = DEFAULT_TIMEOUT_SECONDS * 1000,
     )
 
     @Serializable
@@ -59,7 +58,7 @@ class NetworkReplayEngine(private val context: Context) {
         val totalRequests: Int = 10,
         val duration: Long? = null,
         val concurrency: Int = 1,
-        val rampUpTime: Long = 0
+        val rampUpTime: Long = 0,
     )
 
     @Serializable
@@ -69,7 +68,7 @@ class NetworkReplayEngine(private val context: Context) {
         val replayedRequest: ReplayedRequest,
         val success: Boolean,
         val error: String? = null,
-        val comparison: ResponseComparison? = null
+        val comparison: ResponseComparison? = null,
     )
 
     @Serializable
@@ -80,7 +79,7 @@ class NetworkReplayEngine(private val context: Context) {
         val successfulRequests: Int,
         val failedRequests: Int,
         val totalDuration: Long,
-        val averageRequestTime: Double
+        val averageRequestTime: Double,
     )
 
     @Serializable
@@ -89,7 +88,7 @@ class NetworkReplayEngine(private val context: Context) {
         val config: LoadTestConfig,
         val results: List<ReplayResult>,
         val statistics: LoadTestStatistics,
-        val duration: Long
+        val duration: Long,
     )
 
     @Serializable
@@ -106,7 +105,7 @@ class NetworkReplayEngine(private val context: Context) {
         val endTime: Long? = null,
         val duration: Long? = null,
         val size: Long = 0,
-        val error: String? = null
+        val error: String? = null,
     )
 
     @Serializable
@@ -116,7 +115,7 @@ class NetworkReplayEngine(private val context: Context) {
         val bodyMatch: Boolean,
         val sizeChange: Long,
         val timingChange: Long,
-        val differences: List<String>
+        val differences: List<String>,
     )
 
     @Serializable
@@ -129,7 +128,7 @@ class NetworkReplayEngine(private val context: Context) {
         val p95ResponseTime: Double,
         val p99ResponseTime: Double,
         val errorRate: Double,
-        val throughput: Double
+        val throughput: Double,
     )
 
     @Serializable
@@ -137,310 +136,327 @@ class NetworkReplayEngine(private val context: Context) {
         val id: String,
         val startTime: Long,
         val type: SessionType,
-        val status: SessionStatus
+        val status: SessionStatus,
     )
 
     enum class SessionType {
         SINGLE_REPLAY,
         BATCH_REPLAY,
-        LOAD_TEST
+        LOAD_TEST,
     }
 
     enum class SessionStatus {
         RUNNING,
         COMPLETED,
         FAILED,
-        CANCELLED
+        CANCELLED,
     }
 
     suspend fun replayRequest(
         request: NetworkInspector.NetworkRequest,
-        modifications: RequestModifications? = null
-    ): ReplayResult = withContext(Dispatchers.IO) {
-        val replayId = "replay_${replayIdGenerator.incrementAndGet()}"
-        val session = ReplaySession(
-            id = replayId,
-            startTime = System.currentTimeMillis(),
-            type = SessionType.SINGLE_REPLAY,
-            status = SessionStatus.RUNNING
-        )
-
-        mutex.withLock {
-            activeReplays[replayId] = session
-        }
-
-        try {
-            Log.d(TAG, "Starting replay of request ${request.id} as $replayId")
-
-            val modifiedRequest = applyModifications(request, modifications)
-            val replayedRequest = executeRequest(modifiedRequest, replayId)
-            val comparison = compareResponses(request, replayedRequest)
-
-            val result = ReplayResult(
-                replayId = replayId,
-                originalRequest = request,
-                replayedRequest = replayedRequest,
-                success = replayedRequest.error == null,
-                comparison = comparison
-            )
-
-            mutex.withLock {
-                activeReplays[replayId] = session.copy(status = SessionStatus.COMPLETED)
-            }
-
-            Log.d(TAG, "Completed replay $replayId successfully")
-            result
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to replay request $replayId", e)
-
-            val errorResult = ReplayResult(
-                replayId = replayId,
-                originalRequest = request,
-                replayedRequest = ReplayedRequest(
+        modifications: RequestModifications? = null,
+    ): ReplayResult =
+        withContext(Dispatchers.IO) {
+            val replayId = "replay_${replayIdGenerator.incrementAndGet()}"
+            val session =
+                ReplaySession(
                     id = replayId,
-                    url = request.url,
-                    method = request.method,
-                    headers = request.headers,
                     startTime = System.currentTimeMillis(),
-                    error = e.message
-                ),
-                success = false,
-                error = e.message
-            )
+                    type = SessionType.SINGLE_REPLAY,
+                    status = SessionStatus.RUNNING,
+                )
 
-            mutex.withLock {
-                activeReplays[replayId] = session.copy(status = SessionStatus.FAILED)
+            mutex.withLock { activeReplays[replayId] = session }
+
+            try {
+                Log.d(TAG, "Starting replay of request ${request.id} as $replayId")
+
+                val modifiedRequest = applyModifications(request, modifications)
+                val replayedRequest = executeRequest(modifiedRequest, replayId)
+                val comparison = compareResponses(request, replayedRequest)
+
+                val result =
+                    ReplayResult(
+                        replayId = replayId,
+                        originalRequest = request,
+                        replayedRequest = replayedRequest,
+                        success = replayedRequest.error == null,
+                        comparison = comparison,
+                    )
+
+                mutex.withLock {
+                    activeReplays[replayId] = session.copy(status = SessionStatus.COMPLETED)
+                }
+
+                Log.d(TAG, "Completed replay $replayId successfully")
+                result
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to replay request $replayId", e)
+
+                val errorResult =
+                    ReplayResult(
+                        replayId = replayId,
+                        originalRequest = request,
+                        replayedRequest =
+                            ReplayedRequest(
+                                id = replayId,
+                                url = request.url,
+                                method = request.method,
+                                headers = request.headers,
+                                startTime = System.currentTimeMillis(),
+                                error = e.message,
+                            ),
+                        success = false,
+                        error = e.message,
+                    )
+
+                mutex.withLock {
+                    activeReplays[replayId] = session.copy(status = SessionStatus.FAILED)
+                }
+
+                errorResult
             }
-
-            errorResult
         }
-    }
 
     suspend fun batchReplay(
         requests: List<NetworkInspector.NetworkRequest>,
         config: BatchConfig,
-        modifications: Map<String, RequestModifications> = emptyMap()
-    ): BatchReplayResult = withContext(Dispatchers.IO) {
-        val batchId = "batch_${replayIdGenerator.incrementAndGet()}"
-        val session = ReplaySession(
-            id = batchId,
-            startTime = System.currentTimeMillis(),
-            type = SessionType.BATCH_REPLAY,
-            status = SessionStatus.RUNNING
-        )
-
-        mutex.withLock {
-            activeReplays[batchId] = session
-        }
-
-        val startTime = System.currentTimeMillis()
-        val results = mutableListOf<ReplayResult>()
-
-        try {
-            Log.d(TAG, "Starting batch replay of ${requests.size} requests")
-
-            // Create semaphore to limit concurrency
-            val semaphore = kotlinx.coroutines.sync.Semaphore(
-                minOf(
-                    config.concurrency,
-                    MAX_CONCURRENT_REQUESTS
+        modifications: Map<String, RequestModifications> = emptyMap(),
+    ): BatchReplayResult =
+        withContext(Dispatchers.IO) {
+            val batchId = "batch_${replayIdGenerator.incrementAndGet()}"
+            val session =
+                ReplaySession(
+                    id = batchId,
+                    startTime = System.currentTimeMillis(),
+                    type = SessionType.BATCH_REPLAY,
+                    status = SessionStatus.RUNNING,
                 )
-            )
 
-            val jobs = requests.chunked(config.concurrency).map { batch ->
-                async {
-                    batch.map { request ->
-                        async {
-                            semaphore.withPermit {
-                                try {
-                                    val result = replayRequest(request, modifications[request.id])
+            mutex.withLock { activeReplays[batchId] = session }
 
-                                    if (config.delayBetweenRequests > 0) {
-                                        delay(config.delayBetweenRequests)
+            val startTime = System.currentTimeMillis()
+            val results = mutableListOf<ReplayResult>()
+
+            try {
+                Log.d(TAG, "Starting batch replay of ${requests.size} requests")
+
+                // Create semaphore to limit concurrency
+                val semaphore =
+                    kotlinx.coroutines.sync.Semaphore(
+                        minOf(config.concurrency, MAX_CONCURRENT_REQUESTS)
+                    )
+
+                val jobs =
+                    requests
+                        .chunked(config.concurrency)
+                        .map { batch ->
+                            async {
+                                batch
+                                    .map { request ->
+                                        async {
+                                            semaphore.withPermit {
+                                                try {
+                                                    val result =
+                                                        replayRequest(
+                                                            request,
+                                                            modifications[request.id],
+                                                        )
+
+                                                    if (config.delayBetweenRequests > 0) {
+                                                        delay(config.delayBetweenRequests)
+                                                    }
+
+                                                    result
+                                                } catch (e: Exception) {
+                                                    if (config.failFast) {
+                                                        throw e
+                                                    }
+                                                    ReplayResult(
+                                                        replayId = "failed_${request.id}",
+                                                        originalRequest = request,
+                                                        replayedRequest =
+                                                            ReplayedRequest(
+                                                                id = "failed_${request.id}",
+                                                                url = request.url,
+                                                                method = request.method,
+                                                                headers = request.headers,
+                                                                startTime =
+                                                                    System.currentTimeMillis(),
+                                                                error = e.message,
+                                                            ),
+                                                        success = false,
+                                                        error = e.message,
+                                                    )
+                                                }
+                                            }
+                                        }
                                     }
-
-                                    result
-                                } catch (e: Exception) {
-                                    if (config.failFast) {
-                                        throw e
-                                    }
-                                    ReplayResult(
-                                        replayId = "failed_${request.id}",
-                                        originalRequest = request,
-                                        replayedRequest = ReplayedRequest(
-                                            id = "failed_${request.id}",
-                                            url = request.url,
-                                            method = request.method,
-                                            headers = request.headers,
-                                            startTime = System.currentTimeMillis(),
-                                            error = e.message
-                                        ),
-                                        success = false,
-                                        error = e.message
-                                    )
-                                }
+                                    .awaitAll()
                             }
                         }
-                    }.awaitAll()
+                        .awaitAll()
+                        .flatten()
+
+                results.addAll(jobs)
+
+                val endTime = System.currentTimeMillis()
+                val totalDuration = endTime - startTime
+                val successfulRequests = results.count { it.success }
+                val averageRequestTime =
+                    if (results.isNotEmpty()) {
+                        results.mapNotNull { it.replayedRequest.duration }.average()
+                    } else 0.0
+
+                val batchResult =
+                    BatchReplayResult(
+                        batchId = batchId,
+                        results = results,
+                        totalRequests = requests.size,
+                        successfulRequests = successfulRequests,
+                        failedRequests = requests.size - successfulRequests,
+                        totalDuration = totalDuration,
+                        averageRequestTime = averageRequestTime,
+                    )
+
+                mutex.withLock {
+                    activeReplays[batchId] = session.copy(status = SessionStatus.COMPLETED)
                 }
-            }.awaitAll().flatten()
 
-            results.addAll(jobs)
+                Log.d(
+                    TAG,
+                    "Completed batch replay $batchId: $successfulRequests/${requests.size} successful",
+                )
+                batchResult
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed batch replay $batchId", e)
 
-            val endTime = System.currentTimeMillis()
-            val totalDuration = endTime - startTime
-            val successfulRequests = results.count { it.success }
-            val averageRequestTime = if (results.isNotEmpty()) {
-                results.mapNotNull { it.replayedRequest.duration }.average()
-            } else 0.0
+                mutex.withLock {
+                    activeReplays[batchId] = session.copy(status = SessionStatus.FAILED)
+                }
 
-            val batchResult = BatchReplayResult(
-                batchId = batchId,
-                results = results,
-                totalRequests = requests.size,
-                successfulRequests = successfulRequests,
-                failedRequests = requests.size - successfulRequests,
-                totalDuration = totalDuration,
-                averageRequestTime = averageRequestTime
-            )
-
-            mutex.withLock {
-                activeReplays[batchId] = session.copy(status = SessionStatus.COMPLETED)
+                throw e
             }
-
-            Log.d(
-                TAG,
-                "Completed batch replay $batchId: $successfulRequests/${requests.size} successful"
-            )
-            batchResult
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed batch replay $batchId", e)
-
-            mutex.withLock {
-                activeReplays[batchId] = session.copy(status = SessionStatus.FAILED)
-            }
-
-            throw e
         }
-    }
 
     suspend fun loadTest(
         request: NetworkInspector.NetworkRequest,
         loadConfig: LoadTestConfig,
-        modifications: RequestModifications? = null
-    ): LoadTestResult = withContext(Dispatchers.IO) {
-        val testId = "load_${replayIdGenerator.incrementAndGet()}"
-        val session = ReplaySession(
-            id = testId,
-            startTime = System.currentTimeMillis(),
-            type = SessionType.LOAD_TEST,
-            status = SessionStatus.RUNNING
-        )
+        modifications: RequestModifications? = null,
+    ): LoadTestResult =
+        withContext(Dispatchers.IO) {
+            val testId = "load_${replayIdGenerator.incrementAndGet()}"
+            val session =
+                ReplaySession(
+                    id = testId,
+                    startTime = System.currentTimeMillis(),
+                    type = SessionType.LOAD_TEST,
+                    status = SessionStatus.RUNNING,
+                )
 
-        mutex.withLock {
-            activeReplays[testId] = session
-        }
+            mutex.withLock { activeReplays[testId] = session }
 
-        val startTime = System.currentTimeMillis()
-        val results = mutableListOf<ReplayResult>()
+            val startTime = System.currentTimeMillis()
+            val results = mutableListOf<ReplayResult>()
 
-        try {
-            Log.d(TAG, "Starting load test $testId with ${loadConfig.totalRequests} requests")
+            try {
+                Log.d(TAG, "Starting load test $testId with ${loadConfig.totalRequests} requests")
 
-            val delayBetweenRequests = (1000.0 / loadConfig.requestsPerSecond).toLong()
-            val semaphore = kotlinx.coroutines.sync.Semaphore(loadConfig.concurrency)
+                val delayBetweenRequests = (1000.0 / loadConfig.requestsPerSecond).toLong()
+                val semaphore = kotlinx.coroutines.sync.Semaphore(loadConfig.concurrency)
 
-            // Ramp up if configured
-            if (loadConfig.rampUpTime > 0) {
-                delay(loadConfig.rampUpTime)
-            }
+                // Ramp up if configured
+                if (loadConfig.rampUpTime > 0) {
+                    delay(loadConfig.rampUpTime)
+                }
 
-            val jobs = (1..loadConfig.totalRequests).map { requestNumber ->
-                async {
-                    semaphore.withPermit {
-                        val replayResult = replayRequest(request, modifications)
+                val jobs =
+                    (1..loadConfig.totalRequests).map { requestNumber ->
+                        async {
+                            semaphore.withPermit {
+                                val replayResult = replayRequest(request, modifications)
 
-                        // Control request rate
-                        if (delayBetweenRequests > 0) {
-                            delay(delayBetweenRequests)
+                                // Control request rate
+                                if (delayBetweenRequests > 0) {
+                                    delay(delayBetweenRequests)
+                                }
+
+                                replayResult
+                            }
                         }
+                    }
 
-                        replayResult
+                // Wait for completion or duration limit
+                val timeoutMillis =
+                    loadConfig.duration ?: (loadConfig.totalRequests * delayBetweenRequests + 60000)
+                val completedJobs = withTimeoutOrNull(timeoutMillis) { jobs.awaitAll() }
+
+                if (completedJobs != null) {
+                    results.addAll(completedJobs)
+                } else {
+                    // Timeout occurred, collect completed results
+                    jobs.forEach { job ->
+                        if (job.isCompleted) {
+                            results.add(job.getCompleted())
+                        }
                     }
                 }
-            }
 
-            // Wait for completion or duration limit
-            val timeoutMillis =
-                loadConfig.duration ?: (loadConfig.totalRequests * delayBetweenRequests + 60000)
-            val completedJobs = withTimeoutOrNull(timeoutMillis) {
-                jobs.awaitAll()
-            }
+                val endTime = System.currentTimeMillis()
+                val testDuration = endTime - startTime
+                val statistics = calculateLoadTestStatistics(results, testDuration, loadConfig)
 
-            if (completedJobs != null) {
-                results.addAll(completedJobs)
-            } else {
-                // Timeout occurred, collect completed results
-                jobs.forEach { job ->
-                    if (job.isCompleted) {
-                        results.add(job.getCompleted())
-                    }
+                val loadTestResult =
+                    LoadTestResult(
+                        testId = testId,
+                        config = loadConfig,
+                        results = results,
+                        statistics = statistics,
+                        duration = testDuration,
+                    )
+
+                mutex.withLock {
+                    activeReplays[testId] = session.copy(status = SessionStatus.COMPLETED)
                 }
+
+                Log.d(
+                    TAG,
+                    "Completed load test $testId: ${results.size} requests in ${testDuration}ms",
+                )
+                loadTestResult
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed load test $testId", e)
+
+                mutex.withLock {
+                    activeReplays[testId] = session.copy(status = SessionStatus.FAILED)
+                }
+
+                throw e
             }
-
-            val endTime = System.currentTimeMillis()
-            val testDuration = endTime - startTime
-            val statistics = calculateLoadTestStatistics(results, testDuration, loadConfig)
-
-            val loadTestResult = LoadTestResult(
-                testId = testId,
-                config = loadConfig,
-                results = results,
-                statistics = statistics,
-                duration = testDuration
-            )
-
-            mutex.withLock {
-                activeReplays[testId] = session.copy(status = SessionStatus.COMPLETED)
-            }
-
-            Log.d(TAG, "Completed load test $testId: ${results.size} requests in ${testDuration}ms")
-            loadTestResult
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed load test $testId", e)
-
-            mutex.withLock {
-                activeReplays[testId] = session.copy(status = SessionStatus.FAILED)
-            }
-
-            throw e
         }
-    }
 
-    suspend fun getActiveSessions(): List<ReplaySession> = mutex.withLock {
-        activeReplays.values.toList()
-    }
+    suspend fun getActiveSessions(): List<ReplaySession> =
+        mutex.withLock { activeReplays.values.toList() }
 
-    suspend fun cancelSession(sessionId: String): Boolean = mutex.withLock {
-        activeReplays[sessionId]?.let { session ->
-            activeReplays[sessionId] = session.copy(status = SessionStatus.CANCELLED)
-            Log.d(TAG, "Cancelled replay session $sessionId")
-            true
-        } ?: false
-    }
+    suspend fun cancelSession(sessionId: String): Boolean =
+        mutex.withLock {
+            activeReplays[sessionId]?.let { session ->
+                activeReplays[sessionId] = session.copy(status = SessionStatus.CANCELLED)
+                Log.d(TAG, "Cancelled replay session $sessionId")
+                true
+            } ?: false
+        }
 
     private fun applyModifications(
         original: NetworkInspector.NetworkRequest,
-        modifications: RequestModifications?
+        modifications: RequestModifications?,
     ): NetworkInspector.NetworkRequest {
         if (modifications == null) return original
 
         val modifiedHeaders = original.headers.toMutableMap()
 
         // Remove specified headers
-        modifications.removeHeaders.forEach { header ->
-            modifiedHeaders.remove(header)
-        }
+        modifications.removeHeaders.forEach { header -> modifiedHeaders.remove(header) }
 
         // Add/update headers
         modifiedHeaders.putAll(modifications.headers)
@@ -449,30 +465,29 @@ class NetworkReplayEngine(private val context: Context) {
             url = modifications.url ?: original.url,
             method = modifications.method ?: original.method,
             headers = modifiedHeaders.toMap(),
-            requestBody = modifications.body ?: original.requestBody
+            requestBody = modifications.body ?: original.requestBody,
         )
     }
 
     private suspend fun executeRequest(
         request: NetworkInspector.NetworkRequest,
-        replayId: String
+        replayId: String,
     ): ReplayedRequest {
         val startTime = System.currentTimeMillis()
 
         try {
-            val requestBuilder = Request.Builder()
-                .url(request.url)
-                .method(
-                    request.method,
-                    request.requestBody?.let {
-                        RequestBody.create("application/json".toMediaType(), it)
-                    }
-                )
+            val requestBuilder =
+                Request.Builder()
+                    .url(request.url)
+                    .method(
+                        request.method,
+                        request.requestBody?.let {
+                            RequestBody.create("application/json".toMediaType(), it)
+                        },
+                    )
 
             // Add headers
-            request.headers.forEach { (key, value) ->
-                requestBuilder.addHeader(key, value)
-            }
+            request.headers.forEach { (key, value) -> requestBuilder.addHeader(key, value) }
 
             val okHttpRequest = requestBuilder.build()
             val response = okHttpClient.newCall(okHttpRequest).execute()
@@ -492,7 +507,7 @@ class NetworkReplayEngine(private val context: Context) {
                 startTime = startTime,
                 endTime = endTime,
                 duration = endTime - startTime,
-                size = responseBody?.length?.toLong() ?: 0
+                size = responseBody?.length?.toLong() ?: 0,
             )
         } catch (e: Exception) {
             val endTime = System.currentTimeMillis()
@@ -505,14 +520,14 @@ class NetworkReplayEngine(private val context: Context) {
                 startTime = startTime,
                 endTime = endTime,
                 duration = endTime - startTime,
-                error = e.message
+                error = e.message,
             )
         }
     }
 
     private fun compareResponses(
         original: NetworkInspector.NetworkRequest,
-        replayed: ReplayedRequest
+        replayed: ReplayedRequest,
     ): ResponseComparison {
         val differences = mutableListOf<String>()
 
@@ -548,36 +563,41 @@ class NetworkReplayEngine(private val context: Context) {
             bodyMatch = bodyMatch,
             sizeChange = sizeChange,
             timingChange = timingChange,
-            differences = differences
+            differences = differences,
         )
     }
 
     private fun calculateLoadTestStatistics(
         results: List<ReplayResult>,
         duration: Long,
-        config: LoadTestConfig
+        config: LoadTestConfig,
     ): LoadTestStatistics {
         val responseTimes = results.mapNotNull { it.replayedRequest.duration }
         val successfulRequests = results.count { it.success }
-        val errorRate = if (results.isNotEmpty()) {
-            (results.size - successfulRequests).toDouble() / results.size
-        } else 0.0
+        val errorRate =
+            if (results.isNotEmpty()) {
+                (results.size - successfulRequests).toDouble() / results.size
+            } else 0.0
 
         val sortedResponseTimes = responseTimes.sorted()
-        val p50 = if (sortedResponseTimes.isNotEmpty()) {
-            sortedResponseTimes[sortedResponseTimes.size / 2].toDouble()
-        } else 0.0
+        val p50 =
+            if (sortedResponseTimes.isNotEmpty()) {
+                sortedResponseTimes[sortedResponseTimes.size / 2].toDouble()
+            } else 0.0
 
-        val p95 = if (sortedResponseTimes.isNotEmpty()) {
-            sortedResponseTimes[(sortedResponseTimes.size * 0.95).toInt()].toDouble()
-        } else 0.0
+        val p95 =
+            if (sortedResponseTimes.isNotEmpty()) {
+                sortedResponseTimes[(sortedResponseTimes.size * 0.95).toInt()].toDouble()
+            } else 0.0
 
-        val p99 = if (sortedResponseTimes.isNotEmpty()) {
-            sortedResponseTimes[(sortedResponseTimes.size * 0.99).toInt()].toDouble()
-        } else 0.0
+        val p99 =
+            if (sortedResponseTimes.isNotEmpty()) {
+                sortedResponseTimes[(sortedResponseTimes.size * 0.99).toInt()].toDouble()
+            } else 0.0
 
         return LoadTestStatistics(
-            requestsPerSecond = if (duration > 0) results.size.toDouble() / (duration / 1000.0) else 0.0,
+            requestsPerSecond =
+                if (duration > 0) results.size.toDouble() / (duration / 1000.0) else 0.0,
             averageResponseTime = responseTimes.average(),
             minResponseTime = responseTimes.minOrNull() ?: 0,
             maxResponseTime = responseTimes.maxOrNull() ?: 0,
@@ -585,7 +605,8 @@ class NetworkReplayEngine(private val context: Context) {
             p95ResponseTime = p95,
             p99ResponseTime = p99,
             errorRate = errorRate,
-            throughput = if (duration > 0) successfulRequests.toDouble() / (duration / 1000.0) else 0.0
+            throughput =
+                if (duration > 0) successfulRequests.toDouble() / (duration / 1000.0) else 0.0,
         )
     }
 

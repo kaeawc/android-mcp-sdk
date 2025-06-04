@@ -3,15 +3,15 @@ package dev.jasonpearson.androidmcpsdk.debugbridge.preferences
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
-import java.io.File
-import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Provides comprehensive SharedPreferences access and management.
- * Supports regular SharedPreferences files with optional encryption support.
+ * Provides comprehensive SharedPreferences access and management. Supports regular
+ * SharedPreferences files with optional encryption support.
  */
 class SharedPreferencesProvider(private val context: Context) {
 
@@ -28,7 +28,7 @@ class SharedPreferencesProvider(private val context: Context) {
         val fileName: String,
         val mode: Int = Context.MODE_PRIVATE,
         val readOnly: Boolean = false,
-        val enableChangeNotifications: Boolean = true
+        val enableChangeNotifications: Boolean = true,
     )
 
     @Serializable
@@ -37,7 +37,7 @@ class SharedPreferencesProvider(private val context: Context) {
         val path: String,
         val size: Long,
         val lastModified: Long,
-        val keyCount: Int
+        val keyCount: Int,
     )
 
     @Serializable
@@ -45,7 +45,7 @@ class SharedPreferencesProvider(private val context: Context) {
         val fileName: String,
         val preferences: Map<String, PreferenceValue>,
         val lastModified: Long,
-        val size: Int
+        val size: Int,
     )
 
     @Serializable
@@ -53,184 +53,185 @@ class SharedPreferencesProvider(private val context: Context) {
         val key: String,
         val value: String, // Serialized as string for MCP compatibility
         val originalType: PreferenceType,
-        val lastModified: Long = System.currentTimeMillis()
+        val lastModified: Long = System.currentTimeMillis(),
     )
 
     @Serializable
     enum class PreferenceType {
-        STRING, INT, BOOLEAN, FLOAT, LONG, STRING_SET
+        STRING,
+        INT,
+        BOOLEAN,
+        FLOAT,
+        LONG,
+        STRING_SET,
     }
 
-    /**
-     * Add or configure a SharedPreferences file for MCP access
-     */
-    suspend fun addPreferencesFile(
-        uri: String,
-        config: PreferencesConfig
-    ): Result<Unit> = withContext(Dispatchers.IO) {
-        try {
-            val preferences = context.getSharedPreferences(config.fileName, config.mode)
-            preferencesCache[config.fileName] = preferences
+    /** Add or configure a SharedPreferences file for MCP access */
+    suspend fun addPreferencesFile(uri: String, config: PreferencesConfig): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            try {
+                val preferences = context.getSharedPreferences(config.fileName, config.mode)
+                preferencesCache[config.fileName] = preferences
 
-            if (config.enableChangeNotifications) {
-                startObserving(config.fileName)
-            }
-
-            Log.i(TAG, "Added preferences file: ${config.fileName}")
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to add preferences file: ${config.fileName}", e)
-            Result.failure(e)
-        }
-    }
-
-    /**
-     * Get all available SharedPreferences files
-     */
-    suspend fun getAllPreferenceFiles(): List<PreferencesFileInfo> = withContext(Dispatchers.IO) {
-        val files = mutableListOf<PreferencesFileInfo>()
-
-        try {
-            // Add default preferences if exists
-            val defaultPrefs = context.getSharedPreferences(DEFAULT_PREFS_NAME, Context.MODE_PRIVATE)
-            val defaultFile = getPreferencesFile(DEFAULT_PREFS_NAME)
-            if (defaultFile.exists()) {
-                files.add(createFileInfo(DEFAULT_PREFS_NAME, defaultFile, defaultPrefs))
-            }
-
-            // Scan for other preference files in shared_prefs directory
-            val sharedPrefsDir = File(context.applicationInfo.dataDir, "shared_prefs")
-            if (sharedPrefsDir.exists()) {
-                sharedPrefsDir.listFiles { _, name -> name.endsWith(".xml") }?.forEach { file ->
-                    val fileName = file.nameWithoutExtension
-                    if (fileName != DEFAULT_PREFS_NAME) {
-                        try {
-                            val prefs = context.getSharedPreferences(fileName, Context.MODE_PRIVATE)
-                            files.add(createFileInfo(fileName, file, prefs))
-                        } catch (e: Exception) {
-                            Log.w(TAG, "Failed to read preferences file: $fileName", e)
-                        }
-                    }
+                if (config.enableChangeNotifications) {
+                    startObserving(config.fileName)
                 }
+
+                Log.i(TAG, "Added preferences file: ${config.fileName}")
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to add preferences file: ${config.fileName}", e)
+                Result.failure(e)
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to scan preference files", e)
         }
 
-        files
-    }
+    /** Get all available SharedPreferences files */
+    suspend fun getAllPreferenceFiles(): List<PreferencesFileInfo> =
+        withContext(Dispatchers.IO) {
+            val files = mutableListOf<PreferencesFileInfo>()
 
-    /**
-     * Get content of a specific SharedPreferences file
-     */
-    suspend fun getPreferencesContent(fileName: String): PreferencesContent = withContext(Dispatchers.IO) {
-        val preferences = getOrCreatePreferences(fileName)
-        val allPrefs = preferences.all
+            try {
+                // Add default preferences if exists
+                val defaultPrefs =
+                    context.getSharedPreferences(DEFAULT_PREFS_NAME, Context.MODE_PRIVATE)
+                val defaultFile = getPreferencesFile(DEFAULT_PREFS_NAME)
+                if (defaultFile.exists()) {
+                    files.add(createFileInfo(DEFAULT_PREFS_NAME, defaultFile, defaultPrefs))
+                }
 
-        val prefValues = allPrefs.map { (key, value) ->
-            key to PreferenceValue(
-                key = key,
-                value = serializeValue(value),
-                originalType = getValueType(value),
-                lastModified = System.currentTimeMillis()
-            )
-        }.toMap()
+                // Scan for other preference files in shared_prefs directory
+                val sharedPrefsDir = File(context.applicationInfo.dataDir, "shared_prefs")
+                if (sharedPrefsDir.exists()) {
+                    sharedPrefsDir
+                        .listFiles { _, name -> name.endsWith(".xml") }
+                        ?.forEach { file ->
+                            val fileName = file.nameWithoutExtension
+                            if (fileName != DEFAULT_PREFS_NAME) {
+                                try {
+                                    val prefs =
+                                        context.getSharedPreferences(fileName, Context.MODE_PRIVATE)
+                                    files.add(createFileInfo(fileName, file, prefs))
+                                } catch (e: Exception) {
+                                    Log.w(TAG, "Failed to read preferences file: $fileName", e)
+                                }
+                            }
+                        }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to scan preference files", e)
+            }
 
-        PreferencesContent(
-            fileName = fileName,
-            preferences = prefValues,
-            lastModified = getPreferencesFile(fileName).lastModified(),
-            size = prefValues.size
-        )
-    }
+            files
+        }
 
-    /**
-     * Get a specific preference value
-     */
-    suspend fun getPreferenceValue(fileName: String, key: String): PreferenceValue? = withContext(Dispatchers.IO) {
-        try {
+    /** Get content of a specific SharedPreferences file */
+    suspend fun getPreferencesContent(fileName: String): PreferencesContent =
+        withContext(Dispatchers.IO) {
             val preferences = getOrCreatePreferences(fileName)
-            val value = preferences.all[key] ?: return@withContext null
+            val allPrefs = preferences.all
 
-            PreferenceValue(
-                key = key,
-                value = serializeValue(value),
-                originalType = getValueType(value),
-                lastModified = System.currentTimeMillis()
+            val prefValues =
+                allPrefs
+                    .map { (key, value) ->
+                        key to
+                            PreferenceValue(
+                                key = key,
+                                value = serializeValue(value),
+                                originalType = getValueType(value),
+                                lastModified = System.currentTimeMillis(),
+                            )
+                    }
+                    .toMap()
+
+            PreferencesContent(
+                fileName = fileName,
+                preferences = prefValues,
+                lastModified = getPreferencesFile(fileName).lastModified(),
+                size = prefValues.size,
             )
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to get preference value: $fileName.$key", e)
-            null
         }
-    }
 
-    /**
-     * Set a preference value with type conversion
-     */
+    /** Get a specific preference value */
+    suspend fun getPreferenceValue(fileName: String, key: String): PreferenceValue? =
+        withContext(Dispatchers.IO) {
+            try {
+                val preferences = getOrCreatePreferences(fileName)
+                val value = preferences.all[key] ?: return@withContext null
+
+                PreferenceValue(
+                    key = key,
+                    value = serializeValue(value),
+                    originalType = getValueType(value),
+                    lastModified = System.currentTimeMillis(),
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to get preference value: $fileName.$key", e)
+                null
+            }
+        }
+
+    /** Set a preference value with type conversion */
     suspend fun setPreferenceValue(
         fileName: String,
         key: String,
         value: String,
-        type: PreferenceType
-    ): Result<Unit> = withContext(Dispatchers.IO) {
-        try {
-            val preferences = getOrCreatePreferences(fileName)
-            val editor = preferences.edit()
+        type: PreferenceType,
+    ): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            try {
+                val preferences = getOrCreatePreferences(fileName)
+                val editor = preferences.edit()
 
-            when (type) {
-                PreferenceType.STRING -> editor.putString(key, value)
-                PreferenceType.INT -> editor.putInt(key, value.toInt())
-                PreferenceType.BOOLEAN -> editor.putBoolean(key, value.toBoolean())
-                PreferenceType.FLOAT -> editor.putFloat(key, value.toFloat())
-                PreferenceType.LONG -> editor.putLong(key, value.toLong())
-                PreferenceType.STRING_SET -> {
-                    val stringSet = value.split(",").map { it.trim() }.toSet()
-                    editor.putStringSet(key, stringSet)
+                when (type) {
+                    PreferenceType.STRING -> editor.putString(key, value)
+                    PreferenceType.INT -> editor.putInt(key, value.toInt())
+                    PreferenceType.BOOLEAN -> editor.putBoolean(key, value.toBoolean())
+                    PreferenceType.FLOAT -> editor.putFloat(key, value.toFloat())
+                    PreferenceType.LONG -> editor.putLong(key, value.toLong())
+                    PreferenceType.STRING_SET -> {
+                        val stringSet = value.split(",").map { it.trim() }.toSet()
+                        editor.putStringSet(key, stringSet)
+                    }
                 }
+
+                editor.apply()
+                Log.d(TAG, "Set preference: $fileName.$key = $value ($type)")
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to set preference: $fileName.$key", e)
+                Result.failure(e)
             }
-
-            editor.apply()
-            Log.d(TAG, "Set preference: $fileName.$key = $value ($type)")
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to set preference: $fileName.$key", e)
-            Result.failure(e)
         }
-    }
 
-    /**
-     * Remove a preference key
-     */
-    suspend fun removePreferenceKey(fileName: String, key: String): Result<Unit> = withContext(Dispatchers.IO) {
-        try {
-            val preferences = getOrCreatePreferences(fileName)
-            preferences.edit().remove(key).apply()
-            Log.d(TAG, "Removed preference key: $fileName.$key")
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to remove preference key: $fileName.$key", e)
-            Result.failure(e)
+    /** Remove a preference key */
+    suspend fun removePreferenceKey(fileName: String, key: String): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            try {
+                val preferences = getOrCreatePreferences(fileName)
+                preferences.edit().remove(key).apply()
+                Log.d(TAG, "Removed preference key: $fileName.$key")
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to remove preference key: $fileName.$key", e)
+                Result.failure(e)
+            }
         }
-    }
 
-    /**
-     * Clear all preferences in a file
-     */
-    suspend fun clearPreferences(fileName: String): Result<Unit> = withContext(Dispatchers.IO) {
-        try {
-            val preferences = getOrCreatePreferences(fileName)
-            preferences.edit().clear().apply()
-            Log.d(TAG, "Cleared preferences: $fileName")
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to clear preferences: $fileName", e)
-            Result.failure(e)
+    /** Clear all preferences in a file */
+    suspend fun clearPreferences(fileName: String): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            try {
+                val preferences = getOrCreatePreferences(fileName)
+                preferences.edit().clear().apply()
+                Log.d(TAG, "Cleared preferences: $fileName")
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to clear preferences: $fileName", e)
+                Result.failure(e)
+            }
         }
-    }
 
-    /**
-     * Start observing changes for a preferences file
-     */
+    /** Start observing changes for a preferences file */
     fun startObserving(fileName: String) {
         if (observerRegistry.containsKey(fileName)) {
             Log.d(TAG, "Already observing: $fileName")
@@ -247,9 +248,7 @@ class SharedPreferencesProvider(private val context: Context) {
         }
     }
 
-    /**
-     * Stop observing changes for a preferences file
-     */
+    /** Stop observing changes for a preferences file */
     fun stopObserving(fileName: String) {
         observerRegistry.remove(fileName)?.let { observer ->
             observer.stop()
@@ -257,9 +256,7 @@ class SharedPreferencesProvider(private val context: Context) {
         }
     }
 
-    /**
-     * Stop all observers
-     */
+    /** Stop all observers */
     fun stopAllObservers() {
         observerRegistry.values.forEach { it.stop() }
         observerRegistry.clear()
@@ -267,7 +264,8 @@ class SharedPreferencesProvider(private val context: Context) {
     }
 
     private fun getOrCreatePreferences(fileName: String): SharedPreferences {
-        return preferencesCache[fileName] ?: context.getSharedPreferences(fileName, Context.MODE_PRIVATE)
+        return preferencesCache[fileName]
+            ?: context.getSharedPreferences(fileName, Context.MODE_PRIVATE)
     }
 
     private fun getPreferencesFile(fileName: String): File {
@@ -277,14 +275,14 @@ class SharedPreferencesProvider(private val context: Context) {
     private fun createFileInfo(
         fileName: String,
         file: File,
-        preferences: SharedPreferences
+        preferences: SharedPreferences,
     ): PreferencesFileInfo {
         return PreferencesFileInfo(
             fileName = fileName,
             path = file.absolutePath,
             size = file.length(),
             lastModified = file.lastModified(),
-            keyCount = preferences.all.size
+            keyCount = preferences.all.size,
         )
     }
 
