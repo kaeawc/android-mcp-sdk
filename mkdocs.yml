@@ -45,7 +45,7 @@ theme:
 
 extra:
   social:
-    - icon: fontawesome/emojis/nerd-face
+    - icon: material/web
       link: https://www.jasonpearson.dev
     - icon: fontawesome/brands/github
       link: https://github.com/kaeawc
