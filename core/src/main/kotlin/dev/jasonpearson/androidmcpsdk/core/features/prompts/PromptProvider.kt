@@ -365,7 +365,7 @@ class PromptProvider(private val context: Context) {
             appendLine("Please provide:")
             appendLine("1. Complete test implementation")
             appendLine("2. Test all public methods and edge cases")
-            appendLine("3. Use appropriate testing frameworks (JUnit, Mockito, Espresso, etc.)")
+            appendLine("3. Use appropriate testing frameworks (JUnit, Mockk, Espresso, etc.)")
             appendLine("4. Include setup and teardown if needed")
             appendLine("5. Mock dependencies appropriately")
             appendLine("6. Test both success and failure scenarios")
