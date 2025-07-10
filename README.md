@@ -43,7 +43,7 @@ builds:
 
 ## Documentation
 
-📚 **[Read the full documentation →](https://github.io/kaeawc/android-mcp-sdk/)**
+📚 **[Read the full documentation →](https://kaeawc.github.io/android-mcp-sdk/)**
 
 - [Getting Started Guide](docs/getting-started.md)
 - [Usage Examples](docs/usage.md)
