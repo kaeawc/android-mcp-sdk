@@ -45,10 +45,10 @@ builds:
 
 📚 **[Read the full documentation →](https://kaeawc.github.io/android-mcp-sdk/)**
 
-- [Getting Started Guide](docs/getting-started.md)
-- [Usage Examples](docs/usage.md)
-- [API Reference](docs/api-reference.md)
-- [Transport Configuration](docs/transport.md)
+- [Getting Started Guide](https://kaeawc.github.io/android-mcp-sdk/getting-started/)
+- [Usage Examples](https://kaeawc.github.io/android-mcp-sdk/usage/)
+- [Transport Configuration](https://kaeawc.github.io/android-mcp-sdk/transport/)
+- [API Reference](https://kaeawc.github.io/android-mcp-sdk/api-reference/)
 - [Development Roadmap](roadmap/README.md)
 
 ## License
