@@ -45,9 +45,7 @@ android {
     }
 }
 
-kotlin {
-    jvmToolchain(libs.versions.jdk.get().toInt())
-}
+kotlin { jvmToolchain(libs.versions.jdk.get().toInt()) }
 
 dependencies {
     // Remove debug-bridge dependency to fix circular dependency - core should not depend on

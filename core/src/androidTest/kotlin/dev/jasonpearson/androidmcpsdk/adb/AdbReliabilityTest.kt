@@ -96,7 +96,7 @@ class AdbReliabilityTest {
                 "method": "tools/list",
                 "params": {}
             }
-        """
+            """
                 .trimIndent()
 
         // Test initial connections

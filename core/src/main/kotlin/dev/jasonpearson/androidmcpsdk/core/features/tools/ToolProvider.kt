@@ -473,16 +473,16 @@ class ToolProvider(private val context: Context) : McpToolProvider {
         val serializer = serializer<T>()
         val properties = descriptorToJsonSchemaProperties(serializer.descriptor)
 
-        val schemaJson =
-            buildJsonObject {
-                put("type", JsonPrimitive("object"))
-                put("properties", properties)
-                if (validatedRequired.isNotEmpty()) {
-                    put("required", JsonArray(validatedRequired.map { JsonPrimitive(it) }))
-                }
+        val schemaJson = buildJsonObject {
+            put("type", JsonPrimitive("object"))
+            put("properties", properties)
+            if (validatedRequired.isNotEmpty()) {
+                put("required", JsonArray(validatedRequired.map { JsonPrimitive(it) }))
             }
+        }
 
-        val tool = Tool(name = name, description = description, inputSchema = ToolSchema(schemaJson))
+        val tool =
+            Tool(name = name, description = description, inputSchema = ToolSchema(schemaJson))
 
         // Wrapper handler that converts Map to typed input
         val typedHandler: suspend (Map<String, Any>) -> CallToolResult = { arguments ->

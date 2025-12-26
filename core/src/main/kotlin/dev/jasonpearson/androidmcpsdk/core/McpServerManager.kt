@@ -206,7 +206,8 @@ class McpServerManager private constructor() {
     /** Add a custom MCP tool with its handler */
     fun addMcpTool(
         tool: io.modelcontextprotocol.kotlin.sdk.types.Tool,
-        handler: suspend (Map<String, Any>) -> io.modelcontextprotocol.kotlin.sdk.types.CallToolResult,
+        handler:
+            suspend (Map<String, Any>) -> io.modelcontextprotocol.kotlin.sdk.types.CallToolResult,
     ) {
         checkInitialized()
         mcpServer!!.addMcpTool(tool, handler)

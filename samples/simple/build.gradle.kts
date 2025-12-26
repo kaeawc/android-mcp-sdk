@@ -59,9 +59,7 @@ android {
     buildToolsVersion = "36.0.0"
 }
 
-kotlin {
-    jvmToolchain(libs.versions.jdk.get().toInt())
-}
+kotlin { jvmToolchain(libs.versions.jdk.get().toInt()) }
 
 dependencies {
     debugImplementation(project(":core"))

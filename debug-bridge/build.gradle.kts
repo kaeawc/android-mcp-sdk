@@ -40,9 +40,7 @@ android {
     }
 }
 
-kotlin {
-    jvmToolchain(libs.versions.jdk.get().toInt())
-}
+kotlin { jvmToolchain(libs.versions.jdk.get().toInt()) }
 
 dependencies {
     // MCP Kotlin SDK

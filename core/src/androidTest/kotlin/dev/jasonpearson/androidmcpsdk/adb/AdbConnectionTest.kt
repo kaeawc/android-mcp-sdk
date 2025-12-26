@@ -85,7 +85,7 @@ class AdbConnectionTest {
                 "method": "tools/list",
                 "params": {}
             }
-        """
+            """
                 .trimIndent()
 
         val result = AdbTestUtils.sendMcpSseMessage(testMessage)

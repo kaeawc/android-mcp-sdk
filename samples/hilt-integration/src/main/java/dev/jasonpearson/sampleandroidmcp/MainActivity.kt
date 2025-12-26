@@ -80,19 +80,19 @@ fun HiltMcpDemo(modifier: Modifier = Modifier) {
         demoText =
             """
             🎯 Hilt MCP Integration Demo
-            
+
             This sample demonstrates:
             • Hilt dependency injection with MCP
             • Manual initialization via DI
             • Configuration management
             • Production-ready patterns
-            
+
             ✅ MCP Server initialized via Hilt DI
             ✅ Custom tools configured
             ✅ Transport layer active
-            
+
             Check the logs for detailed information!
-        """
+            """
                 .trimIndent()
     }
 
@@ -174,9 +174,9 @@ fun HiltMcpDemo(modifier: Modifier = Modifier) {
                         ├── di/McpModule.kt
                         ├── McpConfiguration.kt
                         └── MainActivity.kt
-                        
+
                         See these files for complete implementation details.
-                    """
+                        """
                             .trimIndent(),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSecondaryContainer,

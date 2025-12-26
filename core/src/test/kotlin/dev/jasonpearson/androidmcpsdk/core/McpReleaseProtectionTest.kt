@@ -42,16 +42,16 @@ class McpReleaseProtectionTest {
         val documentedBehavior =
             """
             Release Build Protection:
-            
+
             1. Library checks ApplicationInfo.FLAG_DEBUGGABLE flag
             2. If flag is not set (release build), throws IllegalStateException
             3. Error message guides user to use debugImplementation
             4. Prevents accidental production deployment
-            
+
             This behavior is tested in:
             - Integration tests with real Android contexts
             - Manual testing with debug/release build variants
-        """
+            """
                 .trimIndent()
 
         assertTrue("Documentation should exist", documentedBehavior.isNotEmpty())

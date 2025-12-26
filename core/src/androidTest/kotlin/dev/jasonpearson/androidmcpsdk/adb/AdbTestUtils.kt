@@ -97,7 +97,7 @@ object AdbTestUtils {
                 "method": "tools/list",
                 "params": {}
             }
-        """
+            """
                 .trimIndent()
 
         // Test SSE latency
