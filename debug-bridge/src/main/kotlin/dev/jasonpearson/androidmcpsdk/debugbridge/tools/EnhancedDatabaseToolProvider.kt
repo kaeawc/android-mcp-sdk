@@ -8,8 +8,8 @@ import dev.jasonpearson.androidmcpsdk.debugbridge.database.DatabaseOperations
 import dev.jasonpearson.androidmcpsdk.debugbridge.database.StandardSqliteDatabaseFactory
 import dev.jasonpearson.androidmcpsdk.debugbridge.database.query.IntelligentQueryValidator
 import dev.jasonpearson.androidmcpsdk.debugbridge.database.schema.DatabaseSchemaCache
-import io.modelcontextprotocol.kotlin.sdk.CallToolResult
-import io.modelcontextprotocol.kotlin.sdk.TextContent
+import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
+import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put

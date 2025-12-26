@@ -1,7 +1,7 @@
 package dev.jasonpearson.androidmcpsdk.core.features.tools
 
-import io.modelcontextprotocol.kotlin.sdk.CallToolResult
-import io.modelcontextprotocol.kotlin.sdk.Tool
+import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
+import io.modelcontextprotocol.kotlin.sdk.types.Tool
 
 /**
  * Registry for MCP tools that can be implemented by different modules.

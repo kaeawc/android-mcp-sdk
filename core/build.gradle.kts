@@ -29,7 +29,6 @@ android {
         sourceCompatibility = javaVer
         targetCompatibility = javaVer
     }
-    kotlinOptions { jvmTarget = libs.versions.javaSource.get() }
 
     packaging {
         resources {
@@ -44,6 +43,10 @@ android {
             isIncludeAndroidResources = true
         }
     }
+}
+
+kotlin {
+    jvmToolchain(libs.versions.jdk.get().toInt())
 }
 
 dependencies {

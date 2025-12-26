@@ -3,7 +3,7 @@ package dev.jasonpearson.androidmcpsdk.core.features.resources
 import android.content.Context
 import android.util.Log
 import dev.jasonpearson.androidmcpsdk.core.models.AndroidResourceContent
-import io.modelcontextprotocol.kotlin.sdk.Resource
+import io.modelcontextprotocol.kotlin.sdk.types.Resource
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

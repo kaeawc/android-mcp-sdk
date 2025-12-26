@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import dev.jasonpearson.androidmcpsdk.core.lifecycle.McpLifecycleManager
 import dev.jasonpearson.androidmcpsdk.core.models.AndroidResourceContent
-import io.modelcontextprotocol.kotlin.sdk.*
+import io.modelcontextprotocol.kotlin.sdk.types.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.buildJsonObject
 import org.junit.After
@@ -42,7 +42,7 @@ class McpHelperMethodsTest {
             Tool(
                 name = "test_tool",
                 description = "A test tool",
-                inputSchema = Tool.Input(properties = buildJsonObject {}, required = emptyList()),
+                inputSchema = ToolSchema(buildJsonObject {}),
             )
 
         val handler: suspend (Map<String, Any>) -> CallToolResult = { _ ->
@@ -63,7 +63,7 @@ class McpHelperMethodsTest {
             Tool(
                 name = "removable_tool",
                 description = "A removable test tool",
-                inputSchema = Tool.Input(properties = buildJsonObject {}, required = emptyList()),
+                inputSchema = ToolSchema(buildJsonObject {}),
             )
 
         val handler: suspend (Map<String, Any>) -> CallToolResult = { _ ->
@@ -172,7 +172,7 @@ class McpHelperMethodsTest {
                 messages =
                     listOf(
                         PromptMessage(
-                            role = Role.user,
+                            role = Role.User,
                             content = TextContent(text = "Test prompt with input: $input"),
                         )
                     ),
@@ -210,7 +210,7 @@ class McpHelperMethodsTest {
                 messages =
                     listOf(
                         PromptMessage(
-                            role = Role.user,
+                            role = Role.User,
                             content = TextContent(text = "Received message: $message"),
                         )
                     ),

@@ -5,13 +5,13 @@ import android.util.Log
 import dev.jasonpearson.androidmcpsdk.core.models.AndroidResourceContent
 import dev.jasonpearson.androidmcpsdk.core.models.ComprehensiveServerInfo
 import dev.jasonpearson.androidmcpsdk.core.models.SamplingRequest
-import io.modelcontextprotocol.kotlin.sdk.CallToolResult
-import io.modelcontextprotocol.kotlin.sdk.GetPromptResult
-import io.modelcontextprotocol.kotlin.sdk.Prompt
-import io.modelcontextprotocol.kotlin.sdk.Resource
-import io.modelcontextprotocol.kotlin.sdk.ResourceTemplate
-import io.modelcontextprotocol.kotlin.sdk.Root
-import io.modelcontextprotocol.kotlin.sdk.Tool
+import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
+import io.modelcontextprotocol.kotlin.sdk.types.GetPromptResult
+import io.modelcontextprotocol.kotlin.sdk.types.Prompt
+import io.modelcontextprotocol.kotlin.sdk.types.Resource
+import io.modelcontextprotocol.kotlin.sdk.types.ResourceTemplate
+import io.modelcontextprotocol.kotlin.sdk.types.Root
+import io.modelcontextprotocol.kotlin.sdk.types.Tool
 
 /**
  * Comprehensive MCP Server implementation that provides full MCP specification support including

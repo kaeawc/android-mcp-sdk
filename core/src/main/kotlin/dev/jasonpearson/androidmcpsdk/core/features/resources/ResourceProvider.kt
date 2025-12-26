@@ -6,8 +6,8 @@ import android.os.FileObserver
 import android.util.Log
 import androidx.core.net.toUri
 import dev.jasonpearson.androidmcpsdk.core.models.AndroidResourceContent
-import io.modelcontextprotocol.kotlin.sdk.Resource
-import io.modelcontextprotocol.kotlin.sdk.ResourceTemplate
+import io.modelcontextprotocol.kotlin.sdk.types.Resource
+import io.modelcontextprotocol.kotlin.sdk.types.ResourceTemplate
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap

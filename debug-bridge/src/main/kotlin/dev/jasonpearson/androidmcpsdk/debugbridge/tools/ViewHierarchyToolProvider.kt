@@ -14,8 +14,8 @@ import android.view.ViewTreeObserver
 import androidx.core.view.isVisible
 import dev.jasonpearson.androidmcpsdk.core.features.tools.McpToolProvider
 import dev.jasonpearson.androidmcpsdk.core.features.tools.addTool
-import io.modelcontextprotocol.kotlin.sdk.CallToolResult
-import io.modelcontextprotocol.kotlin.sdk.TextContent
+import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
+import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.util.WeakHashMap

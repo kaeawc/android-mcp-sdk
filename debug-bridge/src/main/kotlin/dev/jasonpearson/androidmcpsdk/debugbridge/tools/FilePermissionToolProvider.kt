@@ -7,8 +7,8 @@ import androidx.core.net.toUri
 import dev.jasonpearson.androidmcpsdk.core.features.permissions.FilePermissionManager
 import dev.jasonpearson.androidmcpsdk.core.features.tools.McpToolProvider
 import dev.jasonpearson.androidmcpsdk.core.features.tools.addTool
-import io.modelcontextprotocol.kotlin.sdk.CallToolResult
-import io.modelcontextprotocol.kotlin.sdk.TextContent
+import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
+import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import kotlinx.serialization.Serializable
 
 /** Tool provider for file permission management and storage access debugging. */

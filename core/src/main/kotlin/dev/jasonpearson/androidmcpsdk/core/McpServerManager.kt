@@ -162,7 +162,7 @@ class McpServerManager private constructor() {
     // MCP SDK Tool operations
 
     /** Get all available MCP tools */
-    fun getMcpTools(): List<io.modelcontextprotocol.kotlin.sdk.Tool> {
+    fun getMcpTools(): List<io.modelcontextprotocol.kotlin.sdk.types.Tool> {
         checkInitialized()
         return mcpServer!!.getMcpTools()
     }
@@ -171,7 +171,7 @@ class McpServerManager private constructor() {
     suspend fun callMcpTool(
         name: String,
         arguments: Map<String, Any>,
-    ): io.modelcontextprotocol.kotlin.sdk.CallToolResult {
+    ): io.modelcontextprotocol.kotlin.sdk.types.CallToolResult {
         checkInitialized()
         return mcpServer!!.callMcpTool(name, arguments)
     }
@@ -179,7 +179,7 @@ class McpServerManager private constructor() {
     // MCP SDK Resource operations
 
     /** Get all available MCP resources */
-    fun getMcpResources(): List<io.modelcontextprotocol.kotlin.sdk.Resource> {
+    fun getMcpResources(): List<io.modelcontextprotocol.kotlin.sdk.types.Resource> {
         checkInitialized()
         return mcpServer!!.getMcpResources()
     }
@@ -187,7 +187,7 @@ class McpServerManager private constructor() {
     // MCP SDK Prompt operations
 
     /** Get all available MCP prompts */
-    fun getMcpPrompts(): List<io.modelcontextprotocol.kotlin.sdk.Prompt> {
+    fun getMcpPrompts(): List<io.modelcontextprotocol.kotlin.sdk.types.Prompt> {
         checkInitialized()
         return mcpServer!!.getMcpPrompts()
     }
@@ -196,7 +196,7 @@ class McpServerManager private constructor() {
     suspend fun getMcpPrompt(
         name: String,
         arguments: Map<String, Any?> = emptyMap(),
-    ): io.modelcontextprotocol.kotlin.sdk.GetPromptResult {
+    ): io.modelcontextprotocol.kotlin.sdk.types.GetPromptResult {
         checkInitialized()
         return mcpServer!!.getMcpPrompt(name, arguments)
     }
@@ -205,8 +205,8 @@ class McpServerManager private constructor() {
 
     /** Add a custom MCP tool with its handler */
     fun addMcpTool(
-        tool: io.modelcontextprotocol.kotlin.sdk.Tool,
-        handler: suspend (Map<String, Any>) -> io.modelcontextprotocol.kotlin.sdk.CallToolResult,
+        tool: io.modelcontextprotocol.kotlin.sdk.types.Tool,
+        handler: suspend (Map<String, Any>) -> io.modelcontextprotocol.kotlin.sdk.types.CallToolResult,
     ) {
         checkInitialized()
         mcpServer!!.addMcpTool(tool, handler)

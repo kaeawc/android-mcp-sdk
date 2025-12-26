@@ -16,7 +16,7 @@ import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.jasonpearson.androidmcpsdk.core.features.tools.ToolProvider
 import io.mockk.*
-import io.modelcontextprotocol.kotlin.sdk.TextContent
+import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.*

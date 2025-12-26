@@ -44,7 +44,6 @@ android {
         sourceCompatibility = javaVer
         targetCompatibility = javaVer
     }
-    kotlinOptions { jvmTarget = libs.versions.javaSource.get() }
     buildFeatures { compose = true }
 
     packaging {
@@ -59,6 +58,10 @@ android {
     lint { abortOnError = false }
 
     buildToolsVersion = "36.0.0"
+}
+
+kotlin {
+    jvmToolchain(libs.versions.jdk.get().toInt())
 }
 
 dependencies {

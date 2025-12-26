@@ -1,9 +1,9 @@
 package dev.jasonpearson.androidmcpsdk.core.features.tools
 
 import android.util.Log
-import io.modelcontextprotocol.kotlin.sdk.CallToolResult
-import io.modelcontextprotocol.kotlin.sdk.TextContent
-import io.modelcontextprotocol.kotlin.sdk.Tool
+import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
+import io.modelcontextprotocol.kotlin.sdk.types.TextContent
+import io.modelcontextprotocol.kotlin.sdk.types.Tool
 import java.util.concurrent.ConcurrentHashMap
 
 /**

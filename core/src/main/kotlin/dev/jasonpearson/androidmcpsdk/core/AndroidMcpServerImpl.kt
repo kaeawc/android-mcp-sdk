@@ -12,13 +12,13 @@ import dev.jasonpearson.androidmcpsdk.core.models.ResourcesCapability
 import dev.jasonpearson.androidmcpsdk.core.models.SamplingRequest
 import dev.jasonpearson.androidmcpsdk.core.models.ServerCapabilities
 import dev.jasonpearson.androidmcpsdk.core.models.ToolsCapability
-import io.modelcontextprotocol.kotlin.sdk.CallToolResult
-import io.modelcontextprotocol.kotlin.sdk.GetPromptResult
-import io.modelcontextprotocol.kotlin.sdk.Prompt
-import io.modelcontextprotocol.kotlin.sdk.Resource
-import io.modelcontextprotocol.kotlin.sdk.ResourceTemplate
-import io.modelcontextprotocol.kotlin.sdk.Root
-import io.modelcontextprotocol.kotlin.sdk.Tool
+import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
+import io.modelcontextprotocol.kotlin.sdk.types.GetPromptResult
+import io.modelcontextprotocol.kotlin.sdk.types.Prompt
+import io.modelcontextprotocol.kotlin.sdk.types.Resource
+import io.modelcontextprotocol.kotlin.sdk.types.ResourceTemplate
+import io.modelcontextprotocol.kotlin.sdk.types.Root
+import io.modelcontextprotocol.kotlin.sdk.types.Tool
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -206,7 +206,7 @@ private constructor(
     }
 
     fun addTool(tool: Tool, handler: suspend (Map<String, Any>) -> CallToolResult) {
-        Log.d(TAG, "Adding tool: ${tool.name}")
+        Log.d(TAG, "Adding tool: ${tool}")
         toolProvider.addToolInternal(tool, handler)
     }
 

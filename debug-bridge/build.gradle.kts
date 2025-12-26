@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "dev.jasonpearson.androidmcpsdk.debugbridge"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 29
@@ -31,7 +31,6 @@ android {
         sourceCompatibility = javaVer
         targetCompatibility = javaVer
     }
-    kotlinOptions { jvmTarget = libs.versions.javaSource.get() }
 
     testOptions {
         unitTests {
@@ -39,6 +38,10 @@ android {
             isIncludeAndroidResources = true
         }
     }
+}
+
+kotlin {
+    jvmToolchain(libs.versions.jdk.get().toInt())
 }
 
 dependencies {

@@ -2,8 +2,9 @@ package dev.jasonpearson.androidmcpsdk.core.features.tools
 
 import android.content.Context
 import android.util.Log
-import io.modelcontextprotocol.kotlin.sdk.CallToolResult
-import io.modelcontextprotocol.kotlin.sdk.Tool
+import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
+import io.modelcontextprotocol.kotlin.sdk.types.Tool
+import io.modelcontextprotocol.kotlin.sdk.types.ToolSchema
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.SerialKind
@@ -472,17 +473,16 @@ class ToolProvider(private val context: Context) : McpToolProvider {
         val serializer = serializer<T>()
         val properties = descriptorToJsonSchemaProperties(serializer.descriptor)
 
-        val inputSchema =
-            Tool.Input(
-                properties =
-                    buildJsonObject {
-                        put("type", JsonPrimitive("object"))
-                        put("properties", properties)
-                    },
-                required = validatedRequired,
-            )
+        val schemaJson =
+            buildJsonObject {
+                put("type", JsonPrimitive("object"))
+                put("properties", properties)
+                if (validatedRequired.isNotEmpty()) {
+                    put("required", JsonArray(validatedRequired.map { JsonPrimitive(it) }))
+                }
+            }
 
-        val tool = Tool(name = name, description = description, inputSchema = inputSchema)
+        val tool = Tool(name = name, description = description, inputSchema = ToolSchema(schemaJson))
 
         // Wrapper handler that converts Map to typed input
         val typedHandler: suspend (Map<String, Any>) -> CallToolResult = { arguments ->

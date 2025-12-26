@@ -4,8 +4,8 @@ import android.content.Context
 import android.util.Log
 import dev.jasonpearson.androidmcpsdk.core.features.tools.McpToolProvider
 import dev.jasonpearson.androidmcpsdk.core.features.tools.addTool
-import io.modelcontextprotocol.kotlin.sdk.CallToolResult
-import io.modelcontextprotocol.kotlin.sdk.TextContent
+import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
+import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

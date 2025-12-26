@@ -25,8 +25,8 @@ import androidx.core.view.isEmpty
 import androidx.core.view.isVisible
 import dev.jasonpearson.androidmcpsdk.core.features.tools.McpToolProvider
 import dev.jasonpearson.androidmcpsdk.core.features.tools.addTool
-import io.modelcontextprotocol.kotlin.sdk.CallToolResult
-import io.modelcontextprotocol.kotlin.sdk.TextContent
+import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
+import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.pow

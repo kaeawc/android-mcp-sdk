@@ -15,10 +15,10 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.routing.*
 import io.ktor.server.sse.*
-import io.modelcontextprotocol.kotlin.sdk.*
 import io.modelcontextprotocol.kotlin.sdk.server.Server
 import io.modelcontextprotocol.kotlin.sdk.server.ServerOptions
 import io.modelcontextprotocol.kotlin.sdk.server.mcp
+import io.modelcontextprotocol.kotlin.sdk.types.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.*
 
@@ -26,7 +26,7 @@ import kotlinx.coroutines.*
  * Android-specific wrapper for MCP Server functionality. Provides easy integration of MCP servers
  * in Android applications with MCP Kotlin SDK integration and transport support.
  *
- * This library integrates the MCP Kotlin SDK (io.modelcontextprotocol:kotlin-sdk:0.5.0) to enable
+ * This library integrates the MCP Kotlin SDK (io.modelcontextprotocol:kotlin-sdk:0.8.1) to enable
  * Android apps to host MCP servers and expose them to MCP clients via the official SDK transports.
  *
  * KEY IMPLEMENTATION NOTES:
@@ -49,7 +49,7 @@ private constructor(
 
         /** Get the MCP SDK version. */
         fun getMcpSdkVersion(): String {
-            return "0.5.0"
+            return "0.8.1"
         }
 
         /** Create a basic MCP server instance. */
@@ -325,7 +325,7 @@ private constructor(
                 messages =
                     listOf(
                         PromptMessage(
-                            role = Role.user,
+                            role = Role.User,
                             content = TextContent(text = "Server not initialized"),
                         )
                     ),
@@ -488,7 +488,7 @@ private constructor(
                 description = description,
                 messages =
                     listOf(
-                        PromptMessage(role = Role.user, content = TextContent(text = promptText))
+                        PromptMessage(role = Role.User, content = TextContent(text = promptText))
                     ),
             )
         }
