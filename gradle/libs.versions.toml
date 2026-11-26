@@ -24,7 +24,7 @@ mcpKotlinSdk = "0.8.1"
 mockk = "1.14.7"
 robolectric = "4.18.1"
 startupRuntime = "1.2.0"
-ktor = "3.3.3"
+ktor = "3.6.1"
 okhttp = "5.3.2"
 
 [libraries]
