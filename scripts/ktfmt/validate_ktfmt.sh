@@ -52,7 +52,7 @@ if [[ -n "$ONLY_CHANGED_SINCE_SHA" ]]; then
   fi
 
   # Run ktfmt check on the modified files
-  errors=$(echo "$unique_files" | PATH="$PATH" xargs -n 1 -P "$(nproc 2>/dev/null || echo 4)" ktfmt --kotlinlang-style --dry-run 2>&1)
+  errors=$(echo "$unique_files" | PATH="$PATH" xargs -n 1 -P "$(nproc 2>/dev/null || echo 4)" ktfmt --kotlinlang-style --dry-run 2>&1 | grep -v "^WARNING:")
 elif [[ "${ONLY_TOUCHED_FILES}" == "true" ]]; then
   # use git so we are only checking changed kotlin source files
   echo "Checking only git touched Kotlin files..."
@@ -69,7 +69,7 @@ elif [[ "${ONLY_TOUCHED_FILES}" == "true" ]]; then
   fi
 
   # Run ktfmt check on the modified files
-  errors=$(echo "$unique_files" | PATH="$PATH" xargs -n 1 -P "$(nproc 2>/dev/null || echo 4)" ktfmt --kotlinlang-style --dry-run 2>&1)
+  errors=$(echo "$unique_files" | PATH="$PATH" xargs -n 1 -P "$(nproc 2>/dev/null || echo 4)" ktfmt --kotlinlang-style --dry-run 2>&1 | grep -v "^WARNING:")
 else
   # simply apply ktfmt to all kotlin source files
   echo "Checking all Kotlin files in the project..."
@@ -83,7 +83,7 @@ else
   fi
 
   # Run ktfmt check on all Kotlin files
-  errors=$(echo "$files" | PATH="$PATH" xargs -n 1 -P "$(nproc 2>/dev/null || echo 4)" ktfmt --kotlinlang-style --dry-run 2>&1)
+  errors=$(echo "$files" | PATH="$PATH" xargs -n 1 -P "$(nproc 2>/dev/null || echo 4)" ktfmt --kotlinlang-style --dry-run 2>&1 | grep -v "^WARNING:")
 fi
 
 # Calculate total elapsed time

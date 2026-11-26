@@ -19,7 +19,7 @@ class McpServerManagerTest {
     @Test
     fun `getMcpSdkVersion should return correct version`() {
         val manager = McpServerManager.getInstance()
-        assertEquals("0.5.0", manager.getMcpSdkVersion())
+        assertEquals("0.8.1", manager.getMcpSdkVersion())
     }
 
     @Test

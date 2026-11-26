@@ -178,7 +178,7 @@ private constructor(
         return ComprehensiveServerInfo(
             name = serverName,
             version = serverVersion,
-            sdkVersion = "0.5.0",
+            sdkVersion = "0.8.1",
             isRunning = isRunning(),
             isInitialized = isInitialized(),
             capabilities = serverCapabilities,

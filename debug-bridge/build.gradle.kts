@@ -1,12 +1,11 @@
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.serialization)
 }
 
 android {
     namespace = "dev.jasonpearson.androidmcpsdk.debugbridge"
-    compileSdk = 36
+    compileSdk { version = release(37) { minorApiLevel = 1 } }
 
     defaultConfig {
         minSdk = 29

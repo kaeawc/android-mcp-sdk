@@ -213,7 +213,7 @@ class ToolProviderTest {
 
         assertEquals("test", receivedInput?.name)
         assertEquals(30, receivedInput?.age)
-        assertFalse(result.isError ?: true)
+        assertFalse(result.isError ?: false)
     }
 
     @Test
@@ -241,7 +241,7 @@ class ToolProviderTest {
         assertEquals(false, receivedInput?.user?.notifications)
         assertEquals(true, receivedInput?.enabled)
         assertEquals(5, receivedInput?.count)
-        assertFalse(result.isError ?: true)
+        assertFalse(result.isError ?: false)
     }
 
     @Test
@@ -337,7 +337,7 @@ class ToolProviderTest {
         val validArgs =
             mapOf("user" to mapOf("notifications" to true, "language" to "en"), "enabled" to true)
         val result = toolProvider.callTool("calculated_required", validArgs)
-        assertFalse(result.isError ?: true)
+        assertFalse(result.isError ?: false)
     }
 
     // Tool Execution Tests
@@ -362,7 +362,7 @@ class ToolProviderTest {
         assertEquals("test123", executedInput?.id)
         assertEquals("dark", executedInput?.settings?.theme)
         assertEquals(false, executedInput?.active)
-        assertFalse(result.isError ?: true)
+        assertFalse(result.isError ?: false)
         val message = (result.content.first() as TextContent).text ?: ""
         assertTrue(message.contains("Executed with id: test123"))
     }
