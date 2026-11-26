@@ -9,7 +9,7 @@ class McpAndroidServerTest {
 
     @Test
     fun `getMcpSdkVersion should return correct version`() {
-        assertEquals("0.5.0", McpAndroidServer.getMcpSdkVersion())
+        assertEquals("0.8.1", McpAndroidServer.getMcpSdkVersion())
     }
 
     @Test
@@ -18,13 +18,13 @@ class McpAndroidServerTest {
             ServerInfo(
                 name = "test-server",
                 version = "1.0.0",
-                sdkVersion = "0.5.0",
+                sdkVersion = "0.8.1",
                 isRunning = false,
             )
 
         assertEquals("test-server", serverInfo.name)
         assertEquals("1.0.0", serverInfo.version)
-        assertEquals("0.5.0", serverInfo.sdkVersion)
+        assertEquals("0.8.1", serverInfo.sdkVersion)
         assertFalse(serverInfo.isRunning)
     }
 
@@ -34,7 +34,7 @@ class McpAndroidServerTest {
             ServerInfo(
                 name = "running-server",
                 version = "2.0.0",
-                sdkVersion = "0.5.0",
+                sdkVersion = "0.8.1",
                 isRunning = true,
             )
 
@@ -43,9 +43,9 @@ class McpAndroidServerTest {
 
     @Test
     fun `ServerInfo data class should implement equality correctly`() {
-        val server1 = ServerInfo("test", "1.0", "0.5.0", false)
-        val server2 = ServerInfo("test", "1.0", "0.5.0", false)
-        val server3 = ServerInfo("test", "1.0", "0.5.0", true)
+        val server1 = ServerInfo("test", "1.0", "0.8.1", false)
+        val server2 = ServerInfo("test", "1.0", "0.8.1", false)
+        val server3 = ServerInfo("test", "1.0", "0.8.1", true)
 
         assertEquals("Identical ServerInfo objects should be equal", server1, server2)
         assertNotEquals("Different ServerInfo objects should not be equal", server1, server3)

@@ -296,8 +296,8 @@ class AccessibilityInspectionToolProviderTest {
     @Test
     fun `isButtonRole should return true for Button class`() {
         // Given
-        val nodeInfo = mockk<AccessibilityNodeInfoCompat>(relaxed = true)
-        every { nodeInfo.className } returns Button::class.java.name
+        val nodeInfo = AccessibilityNodeInfoCompat.obtain()
+        nodeInfo.className = Button::class.java.name
 
         // When
         val result = provider.isButtonRole(nodeInfo)
