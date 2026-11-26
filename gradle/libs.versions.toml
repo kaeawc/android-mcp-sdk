@@ -1,8 +1,8 @@
 [versions]
-agp = "8.13.2"
+agp = "9.5.3"
 core = "1.7.0"
 documentfile = "1.1.0"
-hilt = "2.58"
+hilt = "2.60.1"
 jdk = "23"
 javaSource = "23"
 kotlin = "2.3.0"
