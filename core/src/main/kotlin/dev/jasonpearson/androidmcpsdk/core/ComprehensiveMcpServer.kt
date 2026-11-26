@@ -33,7 +33,7 @@ private constructor(
             return ComprehensiveMcpServer(context, name, version)
         }
 
-        fun getMcpSdkVersion(): String = "0.5.0"
+        fun getMcpSdkVersion(): String = "0.8.1"
     }
 
     // Delegate to the actual implementation

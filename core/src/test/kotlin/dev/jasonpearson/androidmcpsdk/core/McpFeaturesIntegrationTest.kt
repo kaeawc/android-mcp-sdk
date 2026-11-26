@@ -244,7 +244,7 @@ class McpFeaturesIntegrationTest {
         assertNotNull("Server info should not be null", serverInfo)
         assertEquals("Server name should match", "Test Server", serverInfo?.name)
         assertEquals("Server version should match", "1.0.0", serverInfo?.version)
-        assertEquals("SDK version should match", "0.5.0", serverInfo?.sdkVersion)
+        assertEquals("SDK version should match", "0.8.1", serverInfo?.sdkVersion)
     }
 
     @Test
@@ -254,7 +254,7 @@ class McpFeaturesIntegrationTest {
         assertNotNull("Comprehensive server info should not be null", serverInfo)
         assertEquals("Server name should match", "Test Server", serverInfo?.name)
         assertEquals("Server version should match", "1.0.0", serverInfo?.version)
-        assertEquals("SDK version should match", "0.5.0", serverInfo?.sdkVersion)
+        assertEquals("SDK version should match", "0.8.1", serverInfo?.sdkVersion)
         assertTrue("Server should be initialized", serverInfo?.isInitialized ?: false)
     }
 

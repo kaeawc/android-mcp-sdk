@@ -9,7 +9,7 @@ class ComprehensiveMcpServerTest {
 
     @Test
     fun `getMcpSdkVersion should return correct version`() {
-        assertEquals("0.5.0", ComprehensiveMcpServer.getMcpSdkVersion())
+        assertEquals("0.8.1", ComprehensiveMcpServer.getMcpSdkVersion())
     }
 
     @Test
@@ -18,7 +18,7 @@ class ComprehensiveMcpServerTest {
             ComprehensiveServerInfo(
                 name = "Test Server",
                 version = "1.0.0",
-                sdkVersion = "0.5.0",
+                sdkVersion = "0.8.1",
                 isRunning = false,
                 isInitialized = true,
                 capabilities = ServerCapabilities(),
@@ -30,7 +30,7 @@ class ComprehensiveMcpServerTest {
 
         assertEquals("Test Server", info.name)
         assertEquals("1.0.0", info.version)
-        assertEquals("0.5.0", info.sdkVersion)
+        assertEquals("0.8.1", info.sdkVersion)
         assertFalse(info.isRunning)
         assertTrue(info.isInitialized)
         assertEquals(5, info.toolCount)
